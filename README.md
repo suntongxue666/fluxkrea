@@ -29,6 +29,10 @@ cd kflux
 uv sync
 ```
 
+### Live Demo
+
+Generate on [krea.ai](https://www.krea.ai/apps/image/flux-krea)
+
 ## Running the model
 
 ```bash
