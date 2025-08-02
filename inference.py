@@ -21,22 +21,22 @@ def generate(prompt, width, height, guidance, num_steps, seed, output, device):
     
     # Load models
     click.echo("Loading AE...")
-    ae = load_ae("flux-krea-dev")
+    ae = load_ae("flux-schnell", device=device)
 
     click.echo("Loading CLIP...")
-    clip = load_clip()
+    clip = load_clip(device=device)
     
     click.echo("Loading T5...")
-    t5 = load_t5()
+    t5 = load_t5(device=device)
     
     click.echo("Loading MMDiT...")
-    model = load_flow_model("flux-krea-dev", device="cpu")
-    model = model.to(device=device, dtype=torch_dtype)
+    model = load_flow_model("flux-schnell", device=device)
     
-    # Move models to device with specified dtype
-    ae = ae.to(device=device, dtype=torch_dtype)
-    clip = clip.to(device=device, dtype=torch_dtype)
-    t5 = t5.to(device=device, dtype=torch_dtype)
+    # Move models to specified dtype
+    ae = ae.to(dtype=torch_dtype)
+    clip = clip.to(dtype=torch_dtype)
+    t5 = t5.to(dtype=torch_dtype)
+    model = model.to(dtype=torch_dtype)
 
     # Create sampler
     sampler = Sampler(

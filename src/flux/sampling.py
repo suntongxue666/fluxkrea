@@ -1,5 +1,5 @@
 import math
-from typing import Callable
+from typing import Callable, List, Dict
 
 import torch
 from einops import rearrange, repeat
@@ -29,7 +29,7 @@ def get_noise(
     )
 
 
-def prepare(t5: HFEmbedder, clip: HFEmbedder, img: Tensor, prompt: list[str]) -> dict[str, Tensor]:
+def prepare(t5: HFEmbedder, clip: HFEmbedder, img: Tensor, prompt: List[str]) -> Dict[str, Tensor]:
     bs, c, h, w = img.shape
     img = rearrange(img, "b c (h ph) (w pw) -> b (h w) (c ph pw)", ph=2, pw=2)
 
@@ -70,7 +70,7 @@ def get_schedule(
     max_shift: float = 1.15,
     sigma: float = 1.0,
     shift: bool = True,
-) -> list[float]:
+) -> List[float]:
     # extra step for zerod
     timesteps = torch.linspace(1, 0, num_steps + 1)
 
@@ -92,7 +92,7 @@ def denoise(
     txt_ids: Tensor,
     vec: Tensor,
     # sampling parameters
-    timesteps: list[float],
+    timesteps: List[float],
     guidance: float = 4.0,
 ):
     b, *_ = img.shape

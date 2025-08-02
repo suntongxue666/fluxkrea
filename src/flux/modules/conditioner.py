@@ -1,9 +1,10 @@
 import torch
+from typing import Union, List
 from torch import Tensor, nn
 from transformers import CLIPTextModel, CLIPTokenizer, T5EncoderModel, T5Tokenizer
 
 class HFEmbedder(nn.Module):
-    def __init__(self, version: str, max_length: int, torch_dtype = torch.bfloat16, device: str | torch.device = "cuda", **hf_kwargs):
+    def __init__(self, version: str, max_length: int, torch_dtype = torch.bfloat16, device: Union[str, torch.device] = "cuda", **hf_kwargs):
         super().__init__()
         self.is_clip = version.startswith("openai")
         self.max_length = max_length
@@ -21,15 +22,15 @@ class HFEmbedder(nn.Module):
         self.hf_module.compile()
 
 
-    def load_t5(self, version: str, device: str | torch.device = "cuda", torch_dtype = torch.bfloat16, **hf_kwargs):
+    def load_t5(self, version: str, device: Union[str, torch.device] = "cuda", torch_dtype = torch.bfloat16, **hf_kwargs):
         t5 = T5EncoderModel.from_pretrained(version, torch_dtype=torch_dtype, **hf_kwargs)
         return t5.to(device)
     
-    def load_clip(self, version: str, device: str | torch.device = "cuda", torch_dtype = torch.bfloat16, **hf_kwargs):
+    def load_clip(self, version: str, device: Union[str, torch.device] = "cuda", torch_dtype = torch.bfloat16, **hf_kwargs):
         clip = CLIPTextModel.from_pretrained(version, torch_dtype=torch_dtype, **hf_kwargs)
         return clip.to(device)
 
-    def forward(self, text: list[str]) -> Tensor:
+    def forward(self, text: List[str]) -> Tensor:
         batch_encoding = self.tokenizer(
             text,
             truncation=True,

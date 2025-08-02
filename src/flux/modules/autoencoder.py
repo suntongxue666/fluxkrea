@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import List
 
 import torch
 import torch.nn.functional as F
@@ -12,7 +13,7 @@ class AutoEncoderParams:
     in_channels: int
     ch: int
     out_ch: int
-    ch_mult: list[int]
+    ch_mult: List[int]
     num_res_blocks: int
     z_channels: int
     scale_factor: float
@@ -113,7 +114,7 @@ class Encoder(nn.Module):
         resolution: int,
         in_channels: int,
         ch: int,
-        ch_mult: list[int],
+        ch_mult: List[int],
         num_res_blocks: int,
         z_channels: int,
     ):
@@ -186,7 +187,7 @@ class Decoder(nn.Module):
         self,
         ch: int,
         out_ch: int,
-        ch_mult: list[int],
+        ch_mult: List[int],
         num_res_blocks: int,
         in_channels: int,
         resolution: int,

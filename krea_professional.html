@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>FLUX Krea AI - Professional AI Image Generator | Create Stunning Images Instantly</title>
+    <meta name="description" content="Generate high-quality AI images with FLUX Krea AI. Transform your creative prompts into professional-quality images instantly. Free AI image generator powered by advanced FLUX technology.">
+    <meta name="keywords" content="AI image generator, FLUX AI, text to image, AI art generator, free image generator, professional AI images, FLUX Krea, artificial intelligence, digital art">
+    <meta name="author" content="FLUX Krea AI">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="FLUX Krea AI - Professional AI Image Generator">
+    <meta property="og:description" content="Create stunning, professional-quality images from text prompts using advanced FLUX AI technology. Generate images in seconds with superior quality and control.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://flux-krea-ai.com">
+    <meta property="og:image" content="https://flux-krea-ai.com/og-image.jpg">
+    
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="FLUX Krea AI - Professional AI Image Generator">
+    <meta name="twitter:description" content="Generate high-quality AI images instantly with FLUX Krea AI. Professional results in seconds.">
+    <meta name="twitter:image" content="https://flux-krea-ai.com/twitter-image.jpg">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://flux-krea-ai.com">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    
+    <!-- External Resources -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "FLUX Krea AI",
+        "description": "Professional AI Image Generator powered by FLUX technology",
+        "url": "https://flux-krea-ai.com",
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "creator": {
+            "@type": "Organization",
+            "name": "FLUX Krea AI"
+        }
+    }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f8fafc;
+            color: #1a202c;
+            line-height: 1.6;
+        }
+        
+        /* Header Navigation */
+        .header {
+            background: white;
+            padding: 16px 0;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .nav {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: #6366f1;
+            text-decoration: none;
+        }
+        
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: #6366f1;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 12px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+            align-items: center;
+        }
+        
+        .nav-links a {
+            text-decoration: none;
+            color: #64748b;
+            font-weight: 500;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+        
+        .nav-links a:hover {
+            color: #6366f1;
+        }
+        
+        .get-started-btn {
+            background: #6366f1;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 14px;
+            transition: all 0.2s;
+            width: 140px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .get-started-btn:hover {
+            background: #5856eb;
+            transform: translateY(-1px);
+        }
+        
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 60px 32px 60px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .hero-badge {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #6366f1;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+        
+        .hero-badges {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        
+        .badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: white;
+        }
+        
+        .badge.orange {
+            background: #f97316;
+        }
+        
+        .badge.green {
+            background: #10b981;
+        }
+        
+        .badge.blue {
+            background: #3b82f6;
+        }
+        
+        .badge.purple {
+            background: #8b5cf6;
+        }
+        
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1.1;
+        }
+        
+        .hero p {
+            font-size: 16px;
+            color: #64748b;
+            margin: 0px 0px 0px;
+            line-height: 1.6;
+        }
+        
+        /* Main Generator */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 48px;
+            margin: 0px 0px 60px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .card h2 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .card-subtitle {
+            color: #64748b;
+            margin-bottom: 32px;
+            font-size: 16px;
+        }
+        
+        /* Generation Mode */
+        .mode-buttons {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+        
+        .mode-btn {
+            flex: 1;
+            padding: 16px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-weight: 600;
+            font-size: 16px;
+            position: relative;
+        }
+        
+        .mode-btn.active {
+            border-color: #6366f1;
+            background: #6366f1;
+            color: white;
+        }
+        
+        .mode-btn:hover:not(.active) {
+            border-color: #6366f1;
+            background: #f8faff;
+        }
+        
+        .coming-soon {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #f97316;
+            color: white;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+        }
+        
+        /* Prompt Input */
+        .prompt-section h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #374151;
+        }
+        
+        .prompt-textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 16px;
+            resize: vertical;
+            transition: border-color 0.2s;
+            font-family: inherit;
+        }
+        
+        .prompt-textarea::placeholder {
+            color: rgba(100, 116, 139, 0.5);
+            opacity: 1;
+        }
+        
+        .prompt-textarea:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+        
+        .copy-btn {
+            margin-top: 12px;
+            margin-right: 8px;
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        
+        .copy-btn:hover {
+            background: #e2e8f0;
+        }
+        
+        .clear-btn {
+            margin-top: 12px;
+            padding: 8px 16px;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+        
+        .clear-btn:hover {
+            background: #fee2e2;
+            color: #dc2626;
+            border-color: #fca5a5;
+        }
+        
+        /* Settings */
+        .settings-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+        
+        .setting-item label {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        
+        .setting-item select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+        
+        .setting-item select:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        .slider-container {
+            grid-column: span 2;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: #e2e8f0;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #6366f1;
+            cursor: pointer;
+        }
+        
+        .slider-value {
+            float: right;
+            font-weight: 600;
+            color: #6366f1;
+        }
+        
+        /* Generate Button */
+        .generate-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .generate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+        
+        .generate-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Result Section */
+        .result-placeholder {
+            text-align: center;
+            padding: 80px 24px;
+            color: #94a3b8;
+        }
+        
+        .result-placeholder i {
+            font-size: 64px;
+            margin-bottom: 24px;
+            opacity: 0.5;
+        }
+        
+        .result-image {
+            width: 100%;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 80px 24px;
+            color: #6366f1;
+        }
+        
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Steps Section */
+        .steps-section {
+            background: white;
+            padding: 60px 0;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+        
+        .section-header h2 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 24px;
+            color: #1a202c;
+        }
+        
+        .section-header p {
+            font-size: 20px;
+            color: #64748b;
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+        
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 48px;
+        }
+        
+        .step-card {
+            text-align: center;
+            padding: 32px;
+        }
+        
+        .step-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: white;
+            font-size: 32px;
+        }
+        
+        .step-card h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a202c;
+        }
+        
+        .step-card p {
+            color: #64748b;
+            line-height: 1.6;
+        }
+        
+        /* Features Section */
+        .features-section {
+            background: #f8fafc;
+            padding: 60px 0;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 48px;
+            margin-top: 80px;
+        }
+        
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .feature-image {
+            margin-bottom: 24px;
+        }
+        
+        .feature-image img {
+            width: 100%;
+            border-radius: 12px;
+        }
+        
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #1a202c;
+        }
+        
+        .feature-card p {
+            color: #64748b;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            flex-grow: 1;
+        }
+        
+        .demo-btn {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            width: 180px;
+            justify-content: center;
+            margin: 0 auto;
+            align-self: flex-end;
+        }
+        
+        .demo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+        
+        /* CTA Buttons */
+        .cta-btn {
+            display: inline-block;
+            padding: 16px 32px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        
+        .cta-btn.primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+        
+        .cta-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+        
+        /* Testimonials Section */
+        .testimonials-section {
+            background: white;
+            padding: 60px 0;
+        }
+        
+        .testimonials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 32px;
+            margin-top: 80px;
+        }
+        
+        .testimonial-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .stars {
+            color: #fbbf24;
+            margin-bottom: 24px;
+            font-size: 18px;
+        }
+        
+        .testimonial-card p {
+            color: #374151;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-style: italic;
+        }
+        
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .author-avatar {
+            width: 48px;
+            height: 48px;
+            background: #6366f1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        
+        .author-name {
+            font-weight: 600;
+            color: #1a202c;
+        }
+        
+        .author-title {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .stats {
+            text-align: center;
+            margin-top: 80px;
+        }
+        
+        .stats-grid {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 80px;
+            flex-wrap: wrap;
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 40px;
+            font-weight: 800;
+            color: #6366f1;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 16px;
+        }
+        
+        /* FAQ Section */
+        .faq-section {
+            background: #f8fafc;
+            padding: 60px 0;
+        }
+        
+        .faq-container {
+            max-width: 800px;
+            margin: 80px auto 0;
+        }
+        
+        .faq-item {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e2e8f0;
+        }
+        
+        .faq-question {
+            padding: 24px 32px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        
+        .faq-question:hover {
+            background: #f8fafc;
+        }
+        
+        .faq-question h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a202c;
+            margin: 0;
+        }
+        
+        .faq-question i {
+            color: #64748b;
+            transition: transform 0.2s;
+        }
+        
+        .faq-answer {
+            padding: 0 32px 24px;
+            display: none;
+        }
+        
+        .faq-answer p {
+            color: #64748b;
+            line-height: 1.6;
+            margin: 0;
+        }
+        
+        .faq-item.active .faq-answer {
+            display: block;
+        }
+        
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+        
+        /* Footer */
+        .footer {
+            background: #1a202c;
+            color: white;
+            padding: 80px 0 32px;
+        }
+        
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 48px;
+            margin-bottom: 48px;
+        }
+        
+        .footer-logo {
+            color: white;
+            margin-bottom: 24px;
+        }
+        
+        .footer-description {
+            color: #94a3b8;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 16px;
+        }
+        
+        .social-links a {
+            color: #94a3b8;
+            font-size: 20px;
+            transition: color 0.2s;
+        }
+        
+        .social-links a:hover {
+            color: #6366f1;
+        }
+        
+        .footer-section h4 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 24px;
+        }
+        
+        .footer-links {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: 12px;
+        }
+        
+        .footer-links a {
+            color: #94a3b8;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .footer-links a:hover {
+            color: white;
+        }
+        
+        .footer-bottom {
+            border-top: 1px solid #374151;
+            padding-top: 32px;
+            text-align: center;
+            color: #94a3b8;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+            
+            .hero h1 {
+                font-size: 32px;
+            }
+            
+            .hero p {
+                font-size: 18px;
+            }
+            
+            .main-grid {
+                grid-template-columns: 1fr;
+                gap: 32px;
+            }
+            
+            .settings-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .mode-buttons {
+                flex-direction: column;
+            }
+            
+            .section-header h2 {
+                font-size: 32px;
+            }
+            
+            .stats-grid {
+                gap: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <nav class="nav">
+            <a href="#" class="logo">
+                <div class="logo-icon">K</div>
+                Flux Krea AI
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#showcase">Showcase</a></li>
+                <li><a href="#generator">AI Generator</a></li>
+                <li><a href="#faq">FAQ</a></li>
+            </ul>
+            <a href="#generator" class="get-started-btn">Get Started</a>
+        </nav>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-badges">
+            <span class="badge orange">Free Create</span>
+            <span class="badge green">No-Signup</span>
+            <span class="badge blue">High-Quality</span>
+            <span class="badge purple">Fast&Realistic</span>
+        </div>
+        <h1>Create Stunning Images with FLUX.1 Krea Dev Model</h1>
+        <p>Turn text into stunning, HQ images with Flux.1 Krea Dev — Powered by 12B-Parameter AI model.</p>
+    </section>
+    
+    <!-- Main Generator -->
+    <section id="generator" class="container">
+        <div class="main-grid">
+            <!-- Left Panel -->
+            <div class="card">
+                <h2>
+                    <i class="fas fa-magic"></i>
+                    Generation Mode
+                </h2>
+                <p class="card-subtitle">Create stunning AI images from text prompts</p>
+                
+                <div class="mode-buttons">
+                    <button class="mode-btn active" data-mode="text">
+                        <i class="fas fa-pen"></i>
+                        Text to Image
+                    </button>
+                    <button class="mode-btn" data-mode="image">
+                        <i class="fas fa-image"></i>
+                        Image to Image
+                        <span class="coming-soon">Coming soon</span>
+                    </button>
+                </div>
+                
+                <div class="prompt-section">
+                    <h3>Positive Prompt</h3>
+                    <textarea 
+                        class="prompt-textarea" 
+                        id="prompt"
+                        placeholder="360 image tiny planet, tiny round planet, urban, the pand in this pic walking tiny planet Norway northern lights, perfectly centered, centered in frame."
+                    ></textarea>
+                    <button class="copy-btn" onclick="copyPrompt()">
+                        <i class="fas fa-copy"></i> Copy
+                    </button>
+                    <button class="clear-btn" onclick="clearPrompt()">
+                        <i class="fas fa-trash"></i> Clear
+                    </button>
+                </div>
+                
+                <div style="margin-top: 32px;">
+                    <div class="settings-grid">
+                        <div class="setting-item">
+                            <label>
+                                <i class="fas fa-expand-arrows-alt"></i>
+                                Image Size
+                            </label>
+                            <select id="imageSize">
+                                <option value="1024x1024">Square HD (1024×1024)</option>
+                                <option value="1024x768">Landscape (1024×768)</option>
+                                <option value="768x1024">Portrait (768×1024)</option>
+                                <option value="512x512">Square (512×512)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="slider-container">
+                            <label>
+                                <i class="fas fa-layer-group"></i>
+                                Inference Steps
+                                <span class="slider-value" id="stepsValue">4</span>
+                            </label>
+                            <input type="range" min="4" max="50" value="4" class="slider" id="stepsSlider">
+                        </div>
+                    </div>
+                    
+                    <button class="generate-btn" id="generateBtn" onclick="generateImage()">
+                        <i class="fas fa-bolt"></i>
+                        Generate Images
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Right Panel -->
+            <div class="card">
+                <h2>Generated Images</h2>
+                <p class="card-subtitle">Your AI-generated artwork will appear here</p>
+                
+                <div id="resultArea">
+                    <div class="result-placeholder">
+                        <i class="fas fa-image"></i>
+                        <h3>No images generated yet</h3>
+                        <p>Enter a prompt and click generate to create your first image</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Steps Section -->
+    <section class="steps-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Generate AI images in 3 easy steps</h2>
+                <p>Create stunning visuals with our advanced AI technology in just a few clicks</p>
+            </div>
+            
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-pen"></i>
+                    </div>
+                    <h3>1. Write Your Prompt</h3>
+                    <p>Describe what you want to create. Be as detailed or as simple as you like - our AI understands natural language perfectly.</p>
+                </div>
+                
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <h3>2. Customize Settings</h3>
+                    <p>Choose your preferred image size, style, and quality settings. Fine-tune the generation process to match your vision.</p>
+                </div>
+                
+                <div class="step-card">
+                    <div class="step-icon">
+                        <i class="fas fa-download"></i>
+                    </div>
+                    <h3>3. Download & Share</h3>
+                    <p>Get your high-quality image in seconds. Download, share, or use it in your projects - it's yours to keep forever.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section id="features" class="features-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Why use FLUX.1 Krea?</h2>
+                <p style="margin: 0px 24px; max-width: 1120px; margin-left: auto; margin-right: auto;">FLUX.1 Krea is a state of the art open source text to image model created with an emphasis on aesthetics and photorealism. Unlike other models trained on massive datasets, FLUX.1 Krea was trained on hand curated, high-quality training data to deliver the best results.</p>
+                <div style="margin-top: 32px;">
+                    <a href="#generator" class="cta-btn primary" onclick="scrollToGenerator()">
+                        Try Flux.1 Krea in the main tool
+                    </a>
+                    <p style="margin-top: 16px; color: #64748b; font-size: 16px;">
+                        Free AI image generator. No sign up, no credit card.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <img src="https://pic4.zhimg.com/v2-e1374c41f099af1c9714b09a13f4c29f_1440w.jpg" alt="AI Images that Don't Look So AI">
+                    </div>
+                    <h3>Reality - Don't Look So AI</h3>
+                    <p>Our new model offers accurate skin textures, dynamic camera angles, and expressive color. Discover striking visuals in an exceptionally artistic latent space.</p>
+                    <button class="demo-btn" onclick="demoGenerate('photorealistic portrait of a person with detailed skin texture, dynamic camera angle, professional photography')">
+                        <i class="fas fa-play"></i> Try now
+                    </button>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <img src="https://pic1.zhimg.com/v2-4dfe15bc9d72a0eaa6048ae2efbb755e_1440w.jpg" alt="Lightning Fast Generation">
+                    </div>
+                    <h3>Lightning fast</h3>
+                    <p>Get high definition images back in seconds. Fast iteration lets you explore, experiment, and evolve your vision without interrupting your flow.</p>
+                    <button class="demo-btn" onclick="demoGenerate('a futuristic cityscape at golden hour, high definition, cinematic lighting')">
+                        <i class="fas fa-play"></i> Try now
+                    </button>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <img src="https://picx.zhimg.com/v2-972099fcef030036a5583bd4ba8aac69_1440w.jpg" alt="Free Access">
+                    </div>
+                    <h3>Free AI Image Generator</h3>
+                    <p>Enjoy free FLUX.1 Krea generations on Krea or download the weights and run it on your own hardware. No sign up or credit card required. Generate AI images online for free.</p>
+                    <button class="demo-btn" onclick="demoGenerate('beautiful landscape with mountains and lake, golden hour lighting, artistic style')">
+                        <i class="fas fa-play"></i> Try now
+                    </button>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <img src="https://pic4.zhimg.com/v2-c1bbf18cfc3c15c39dff6041451bc9eb_1440w.jpg" alt="Hand Curated Training">
+                    </div>
+                    <h3>Hand Curated Training Data</h3>
+                    <p>Unlike other models trained on massive datasets, FLUX.1 Krea was trained on hand curated, high-quality training data to deliver the best aesthetic results.</p>
+                    <button class="demo-btn" onclick="demoGenerate('artistic portrait with exceptional detail and aesthetic composition, professional quality')">
+                        <i class="fas fa-play"></i> Try now
+                    </button>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <img src="https://pic4.zhimg.com/v2-06b9a280b8a4c331a35fca57342956eb_1440w.jpg" alt="Open Source">
+                    </div>
+                    <h3>Open Source Excellence</h3>
+                    <p>FLUX.1 Krea is open source, allowing you to download the weights and run it on your own hardware for complete control and privacy.</p>
+                    <button class="demo-btn" onclick="demoGenerate('tech illustration showing open source concept, clean design, modern style')">
+                        <i class="fas fa-play"></i> Try now
+                    </button>
+                </div>
+                
+                <div class="feature-card">
+                    <div class="feature-image">
+                        <img src="https://pica.zhimg.com/v2-ffa8c449ab7c46656eb31ac01c4d693c_1440w.jpg" alt="Photorealism">
+                    </div>
+                    <h3>Emphasis on Photorealism</h3>
+                    <p>Created with a special focus on aesthetics and photorealistic results, delivering images that are virtually indistinguishable from real photography.</p>
+                    <button class="demo-btn" onclick="demoGenerate('photorealistic nature scene with incredible detail, professional photography style')">
+                        <i class="fas fa-play"></i> Try now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Testimonials Section -->
+    <section class="testimonials-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Trusted by creators worldwide</h2>
+                <p>Join thousands of artists, designers, and creators who use FLUX.1 Krea daily</p>
+            </div>
+            
+            <div class="testimonials-grid">
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p>"FLUX.1 Krea has revolutionized my creative workflow. The quality is incredible and the speed is unmatched. I can now create professional-grade images in seconds!"</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">S</div>
+                        <div>
+                            <div class="author-name">Sarah Chen</div>
+                            <div class="author-title">Digital Artist</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p>"As a marketing professional, I need high-quality visuals fast. FLUX.1 Krea delivers exactly what I need - stunning images that perfectly match my vision."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">M</div>
+                        <div>
+                            <div class="author-name">Mike Rodriguez</div>
+                            <div class="author-title">Marketing Director</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                    </div>
+                    <p>"The level of detail and realism is mind-blowing. I've tried many AI image generators, but FLUX.1 Krea is in a league of its own."</p>
+                    <div class="testimonial-author">
+                        <div class="author-avatar">E</div>
+                        <div>
+                            <div class="author-name">Emily Watson</div>
+                            <div class="author-title">Freelance Designer</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats">
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-number">50K+</div>
+                        <div class="stat-label">Active Users</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">1M+</div>
+                        <div class="stat-label">Images Generated</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">4.9/5</div>
+                        <div class="stat-label">User Rating</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number">99.9%</div>
+                        <div class="stat-label">Uptime</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- FAQ Section -->
+    <section id="faq" class="faq-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>Frequently Asked Questions</h2>
+                <p>Everything you need to know about FLUX.1 Krea</p>
+            </div>
+            
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h3>What is FLUX.1 Krea?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>FLUX.1 Krea is a state-of-the-art AI image generation model that creates high-quality, photorealistic images from text descriptions. It's designed to understand complex prompts and generate professional-grade visuals in seconds.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h3>How fast is image generation?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>FLUX.1 Krea generates high-quality images in just 4-10 seconds, making it one of the fastest AI image generators available while maintaining exceptional quality.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h3>Can I use generated images commercially?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! All images generated with FLUX.1 Krea can be used for commercial purposes without restrictions. You own the rights to your generated content.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h3>What image sizes are supported?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>FLUX.1 Krea supports various aspect ratios including square (1024×1024), landscape (1024×768), and portrait (768×1024) formats, all in high resolution.</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h3>How do I write effective prompts?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Be descriptive and specific. Include details about style, lighting, composition, and mood. For example: "A serene mountain lake at sunset, oil painting style, warm golden lighting, peaceful atmosphere."</p>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        <h3>Is there a free trial available?</h3>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes! We offer free credits for new users to try FLUX.1 Krea. You can generate several images to experience the quality and speed before upgrading.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-grid">
+                <div>
+                    <div class="logo footer-logo">
+                        <div class="logo-icon">K</div>
+                        Flux Krea AI
+                    </div>
+                    <p class="footer-description">
+                        Transform your creative vision into stunning reality with the power of advanced AI image generation.
+                    </p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-linkedin"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Product</h4>
+                    <ul class="footer-links">
+                        <li><a href="#features">Features</a></li>
+                        <li><a href="#pricing">Pricing</a></li>
+                        <li><a href="#api">API</a></li>
+                        <li><a href="#docs">Documentation</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Company</h4>
+                    <ul class="footer-links">
+                        <li><a href="#about">About</a></li>
+                        <li><a href="#blog">Blog</a></li>
+                        <li><a href="#careers">Careers</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Support</h4>
+                    <ul class="footer-links">
+                        <li><a href="#help">Help Center</a></li>
+                        <li><a href="#community">Community</a></li>
+                        <li><a href="#privacy">Privacy Policy</a></li>
+                        <li><a href="#terms">Terms of Service</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2024 Flux Krea AI. All rights reserved. Powered by advanced AI technology.</p>
+            </div>
+        </div>
+    </footer>
+    
+    <script>
+        const HF_API_TOKEN = "your-huggingface-token-here";
+        
+        // Mode switching
+        document.querySelectorAll('.mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+        
+        // Steps slider
+        const stepsSlider = document.getElementById('stepsSlider');
+        const stepsValue = document.getElementById('stepsValue');
+        
+        stepsSlider.addEventListener('input', () => {
+            stepsValue.textContent = stepsSlider.value;
+        });
+        
+        // Copy prompt function
+        function copyPrompt() {
+            const prompt = document.getElementById('prompt');
+            prompt.select();
+            document.execCommand('copy');
+            
+            const btn = document.querySelector('.copy-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+            setTimeout(() => {
+                btn.innerHTML = originalText;
+            }, 2000);
+        }
+        
+        // Clear prompt function
+        function clearPrompt() {
+            document.getElementById('prompt').value = '';
+            document.getElementById('prompt').focus();
+        }
+        
+        // Generate image function
+        async function generateImage() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const imageSize = document.getElementById('imageSize').value;
+            const steps = parseInt(document.getElementById('stepsSlider').value);
+            const resultArea = document.getElementById('resultArea');
+            const generateBtn = document.getElementById('generateBtn');
+            
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+            
+            // Show loading
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            
+            resultArea.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <h3>Generating image...</h3>
+                    <p>This may take 10-30 seconds, please wait</p>
+                </div>
+            `;
+            
+            try {
+                const [width, height] = imageSize.split('x').map(Number);
+                
+                const response = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${HF_API_TOKEN}`,
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        inputs: prompt,
+                        parameters: {
+                            num_inference_steps: steps,
+                            guidance_scale: 0.0,
+                            width: Math.min(width, 1024),
+                            height: Math.min(height, 1024)
+                        }
+                    }),
+                });
+                
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const imageUrl = URL.createObjectURL(blob);
+                    
+                    resultArea.innerHTML = `
+                        <img src="${imageUrl}" alt="Generated image" class="result-image">
+                        <div style="margin-top: 24px; text-align: center;">
+                            <p style="color: #64748b; font-size: 16px;">
+                                <strong>Prompt:</strong> ${prompt}
+                            </p>
+                            <p style="color: #64748b; font-size: 14px; margin-top: 8px;">
+                                Size: ${width}×${height} | Steps: ${steps}
+                            </p>
+                            <a href="${imageUrl}" download="flux_krea_generated.png" style="margin-top: 16px; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">
+                                <i class="fas fa-download"></i> Download Image
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    const errorText = await response.text();
+                    throw new Error(`API Error ${response.status}: ${errorText.substring(0, 100)}`);
+                }
+                
+            } catch (error) {
+                console.error('Generation error:', error);
+                resultArea.innerHTML = `
+                    <div style="text-align: center; color: #dc3545; padding: 48px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 24px;"></i>
+                        <h3>Generation Failed</h3>
+                        <p>${error.message}</p>
+                        <p>Please try again or check if your prompt is appropriate</p>
+                    </div>
+                `;
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = '<i class="fas fa-bolt"></i> Generate Images';
+            }
+        }
+        
+        // Demo generation function
+        function demoGenerate(prompt) {
+            document.getElementById('prompt').value = prompt;
+            generateImage();
+            
+            // Scroll to generator
+            document.getElementById('generator').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+        
+        // Scroll to generator function
+        function scrollToGenerator() {
+            document.getElementById('generator').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+        
+        // FAQ toggle function
+        function toggleFAQ(element) {
+            const faqItem = element.parentElement;
+            const isActive = faqItem.classList.contains('active');
+            
+            // Close all FAQ items
+            document.querySelectorAll('.faq-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Open clicked item if it wasn't active
+            if (!isActive) {
+                faqItem.classList.add('active');
+            }
+        }
+        
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

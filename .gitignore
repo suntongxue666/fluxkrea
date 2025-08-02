@@ -168,4 +168,4 @@ cython_debug/
 wandb
 trace
 tmp*
-logs
+logsgenerated_images/

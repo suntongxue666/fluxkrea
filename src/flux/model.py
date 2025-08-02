@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Union, List
 
 import torch
 from torch import Tensor, nn
@@ -15,7 +16,7 @@ class FluxParams:
     num_heads: int
     depth: int
     depth_single_blocks: int
-    axes_dim: list[int]
+    axes_dim: List[int]
     theta: int
     qkv_bias: bool
     guidance_embed: bool
@@ -69,7 +70,7 @@ class Flux(nn.Module):
         txt_ids: Tensor,
         timesteps: Tensor,
         y: Tensor,
-        guidance: Tensor | None = None,
+        guidance: Union[Tensor, None] = None,
     ) -> Tensor:
         # running on sequences img
         img = self.img_in(img)
