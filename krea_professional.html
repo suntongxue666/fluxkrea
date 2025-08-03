@@ -901,6 +901,12 @@
                 display: none;
             }
             
+            /* 隐藏移动端的Get Started按钮 */
+            .get-started-btn,
+            .showcase-get-started {
+                display: none !important;
+            }
+            
             .hero h1 {
                 font-size: 32px;
             }
@@ -1061,6 +1067,10 @@
             </div>
             <img class="showcase-image" id="showcaseImage" src="" alt="AI Generated Showcase">
             <h2 class="showcase-title">FLUX.1 Krea AI Generated Images</h2>
+            <button class="showcase-get-started" onclick="closeShowcase()">
+                <i class="fas fa-rocket"></i>
+                Get Started
+            </button>
         </div>
     </div>
 
@@ -1077,6 +1087,7 @@
                 <li><a href="#generator">AI Generator</a></li>
                 <li><a href="#faq">FAQ</a></li>
             </ul>
+            <a href="#generator" class="get-started-btn">Get Started</a>
         </nav>
     </header>
     
