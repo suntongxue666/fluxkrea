@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
     <!-- SEO Meta Tags -->
-    <title>FLUX Krea AI - Professional AI Image Generator | Create Stunning Images Instantly</title>
+    <title>FluxKrea.me AI - Professional AI Image Generator | Create Stunning Images Instantly</title>
     <meta name="description" content="Generate high-quality AI images with FLUX Krea AI. Transform your creative prompts into professional-quality images instantly. Free AI image generator powered by advanced FLUX technology.">
     <meta name="keywords" content="AI image generator, FLUX AI, text to image, AI art generator, free image generator, professional AI images, FLUX Krea, artificial intelligence, digital art">
     <meta name="author" content="FLUX Krea AI">
@@ -1069,7 +1069,7 @@
         <nav class="nav">
             <a href="#" class="logo">
                 <div class="logo-icon">K</div>
-                Flux Krea AI
+                FluxKrea.me AI
             </a>
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
@@ -1084,10 +1084,10 @@
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-badges">
-            <span class="badge orange">Free Create</span>
-            <span class="badge green">No-Signup</span>
-            <span class="badge blue">High-Quality</span>
-            <span class="badge purple">Fast&Realistic</span>
+            <span class="badge orange">✅ Free Create</span>
+            <span class="badge green">🎉 No-Signup</span>
+            <span class="badge blue">🏞️ High-Quality</span>
+            <span class="badge purple">🥇 Fast&Realistic</span>
         </div>
         <h1>Create Stunning Images with FLUX.1 Krea Dev Model</h1>
         <p>Turn text into stunning, HQ images with Flux.1 Krea Dev — Powered by 12B-Parameter AI model.</p>
@@ -1102,17 +1102,11 @@
                     <i class="fas fa-magic"></i>
                     Generation Mode
                 </h2>
-                <p class="card-subtitle">Create stunning AI images from text prompts</p>
                 
                 <div class="mode-buttons">
                     <button class="mode-btn active" data-mode="text">
                         <i class="fas fa-pen"></i>
                         Text to Image
-                    </button>
-                    <button class="mode-btn" data-mode="image">
-                        <i class="fas fa-image"></i>
-                        Image to Image
-                        <span class="coming-soon">Coming soon</span>
                     </button>
                 </div>
                 
@@ -1455,7 +1449,7 @@
                 <div>
                     <div class="logo footer-logo">
                         <div class="logo-icon">K</div>
-                        Flux Krea AI
+                        FluxKrea.me AI
                     </div>
                     <p class="footer-description">
                         Create Stunning Images with FLUX.1 Krea Dev Model
@@ -1560,7 +1554,7 @@
                 <div class="loading">
                     <div class="spinner"></div>
                     <h3>Generating image...</h3>
-                    <p>This may take 10-30 seconds, please wait</p>
+                    <p>This may take 3-15 seconds, please wait</p>
                 </div>
             `;
             
@@ -1599,6 +1593,14 @@
                                 </a>
                             </div>
                         `;
+                        
+                        // Auto-scroll to Generated Images area
+                        setTimeout(() => {
+                            resultArea.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'start' 
+                            });
+                        }, 500);
                     } else {
                         throw new Error(data.error || 'Unknown error occurred');
                     }
