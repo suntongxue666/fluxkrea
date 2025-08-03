@@ -1567,7 +1567,8 @@
             try {
                 const [width, height] = imageSize.split('x').map(Number);
                 
-                const response = await fetch("/api/test-sd", {
+                console.log('Using Replicate FLUX-schnell API endpoint: /api/generate');
+                const response = await fetch("/api/generate", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
