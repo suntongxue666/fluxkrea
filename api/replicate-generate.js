@@ -43,7 +43,7 @@ export default async function handler(req, res) {
           prompt: prompt,
           width: Math.min(width, 1024),
           height: Math.min(height, 1024),
-          num_inference_steps: Math.min(steps, 50),
+          num_inference_steps: Math.min(steps, 4),
           guidance_scale: 0.0,
           num_outputs: 1
         }
