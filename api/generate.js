@@ -11,8 +11,21 @@ export default async function handler(req, res) {
 
   const HF_API_TOKEN = process.env.HF_API_TOKEN;
 
+  console.log('Environment check:', {
+    hasToken: !!HF_API_TOKEN,
+    tokenLength: HF_API_TOKEN ? HF_API_TOKEN.length : 0,
+    tokenPrefix: HF_API_TOKEN ? HF_API_TOKEN.substring(0, 10) + '...' : 'null'
+  });
+
   if (!HF_API_TOKEN || HF_API_TOKEN === 'your-huggingface-token-here') {
-    return res.status(500).json({ error: 'HF_API_TOKEN not configured' });
+    console.error('HF_API_TOKEN not configured properly');
+    return res.status(500).json({ 
+      error: 'HF_API_TOKEN not configured',
+      debug: {
+        hasToken: !!HF_API_TOKEN,
+        tokenLength: HF_API_TOKEN ? HF_API_TOKEN.length : 0
+      }
+    });
   }
 
   try {
@@ -35,10 +48,23 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('HF API Error:', response.status, errorText);
+      console.error('HF API Error Details:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries()),
+        errorBody: errorText,
+        requestHeaders: {
+          Authorization: `Bearer ${HF_API_TOKEN ? HF_API_TOKEN.substring(0, 10) + '...' : 'null'}`,
+          ContentType: 'application/json'
+        }
+      });
       return res.status(response.status).json({ 
         error: `API Error ${response.status}`,
-        details: errorText
+        details: errorText,
+        debug: {
+          status: response.status,
+          statusText: response.statusText
+        }
       });
     }
 
