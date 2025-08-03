@@ -18,7 +18,7 @@ def generate_with_replicate(prompt, api_token):
     }
     
     data = {
-        "version": "black-forest-labs/flux-schnell",
+        "version": "5599ed30703defd1d160a25a63321b4dec97101d98b4674bcc56e41f62f35637",
         "input": {
             "prompt": prompt,
             "num_outputs": 1,
