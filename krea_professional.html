@@ -1118,6 +1118,84 @@
                 font-size: 16px;
             }
         }
+        
+        /* Generated Image Result Styles */
+        .result-success {
+            text-align: center;
+            padding: 24px;
+        }
+        
+        .generated-image {
+            width: 100%;
+            max-width: 512px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            margin-bottom: 16px;
+        }
+        
+        .result-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        
+        .action-btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+        
+        .generation-info {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+        
+        .result-error {
+            text-align: center;
+            padding: 48px;
+            color: #dc3545;
+        }
+        
+        .result-error i {
+            font-size: 48px;
+            margin-bottom: 24px;
+        }
+        
+        .result-error h3 {
+            font-size: 24px;
+            margin-bottom: 16px;
+        }
+        
+        .generating-status {
+            text-align: center;
+            padding: 60px 24px;
+            color: #6366f1;
+        }
+        
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #e2e8f0;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 24px;
+        }
     </style>
 </head>
 <body>
@@ -1155,6 +1233,10 @@
                     <i class="fas fa-coins"></i>
                     <span id="creditsAmount">20</span>
                 </div>
+                <!-- 临时调试按钮 -->
+                <button onclick="reinitializeUser()" style="padding: 4px 8px; font-size: 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer;" title="重新加载用户状态">
+                    🔄 刷新
+                </button>
                 <div class="signin-btn">
                     <i class="fab fa-google"></i>
                     <span>Sign in</span>
@@ -1584,105 +1666,6 @@
         }
         
         // Generate image function
-        async function generateImage() {
-            const prompt = document.getElementById('prompt').value.trim();
-            const imageSize = document.getElementById('imageSize').value;
-            const steps = parseInt(document.getElementById('stepsSlider').value);
-            const resultArea = document.getElementById('resultArea');
-            const generateBtn = document.getElementById('generateBtn');
-            
-            if (!prompt) {
-                alert('Please enter a prompt');
-                return;
-            }
-            
-            // Show loading
-            generateBtn.disabled = true;
-            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-            
-            resultArea.innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <h3>Generating image...</h3>
-                    <p>This may take 3-15 seconds, please wait</p>
-                </div>
-            `;
-            
-            try {
-                const [width, height] = imageSize.split('x').map(Number);
-                
-                console.log('Using Replicate FLUX-schnell API endpoint: /api/generate');
-                const response = await fetch("/api/generate", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        prompt: prompt,
-                        width: Math.min(width, 1024),
-                        height: Math.min(height, 1024),
-                        steps: steps
-                    }),
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    
-                    if (data.success && data.image) {
-                        resultArea.innerHTML = `
-                            <img src="${data.image}" alt="Generated image" class="result-image">
-                            <div style="margin-top: 24px; text-align: center;">
-                                <p style="color: #64748b; font-size: 16px;">
-                                    <strong>Prompt:</strong> ${prompt}
-                                </p>
-                                <p style="color: #64748b; font-size: 14px; margin-top: 8px;">
-                                    Size: ${width}×${height} | Steps: ${steps}
-                                </p>
-                                <a href="${data.image}" download="flux_krea_generated.png" style="margin-top: 16px; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">
-                                    <i class="fas fa-download"></i> Download Image
-                                </a>
-                            </div>
-                        `;
-                        
-                        // Auto-scroll to Generated Images area
-                        setTimeout(() => {
-                            const rect = resultArea.getBoundingClientRect();
-                            const targetY = window.pageYOffset + rect.top - (window.innerHeight * 0.25);
-                            window.scrollTo({ 
-                                top: targetY, 
-                                behavior: 'smooth' 
-                            });
-                        }, 500);
-                    } else {
-                        throw new Error(data.error || 'Unknown error occurred');
-                    }
-                } else {
-                    const errorData = await response.json();
-                    throw new Error(`API Error ${response.status}: ${errorData.error || 'Unknown error'}`);
-                }
-                
-            } catch (error) {
-                console.error('Generation error:', error);
-                resultArea.innerHTML = `
-                    <div style="text-align: center; color: #dc3545; padding: 48px;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 24px;"></i>
-                        <h3>Generation Failed</h3>
-                        <p>${error.message}</p>
-                        <p>Please try again or check if your prompt is appropriate</p>
-                    </div>
-                `;
-            } finally {
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = `
-                    <span class="btn-content">
-                        <i class="fas fa-bolt"></i>
-                        Generate
-                    </span>
-                    <span class="credits-cost">-10 Credits</span>
-                `;
-            }
-        }
-        
         // Demo generation function
         function demoGenerate(prompt) {
             document.getElementById('prompt').value = prompt;
@@ -2015,6 +1998,7 @@
                     
                     if (error && error.code === 'PGRST116') {
                         // 创建新的匿名用户记录
+                        console.log('用户记录不存在，创建新用户:', uuid);
                         const { data: newUser, error: createError } = await supabaseClient
                             .from('users')
                             .insert({
@@ -2042,6 +2026,25 @@
                     } else if (error) {
                         throw error;
                     } else {
+                        console.log('找到现有用户记录:', { uuid: user.uuid, credits: user.credits });
+                        // 检查用户积分是否为0（可能记录被重置了）
+                        if (user.credits === 0) {
+                            console.log('用户积分为0，重新分配初始积分');
+                            const initialCredits = systemSettings.default_credits || 20;
+                            await supabaseClient
+                                .from('users')
+                                .update({ 
+                                    credits: initialCredits,
+                                    total_credits_earned: (user.total_credits_earned || 0) + initialCredits
+                                })
+                                .eq('uuid', uuid);
+                            user.credits = initialCredits;
+                            
+                            // 记录积分分配
+                            await this.addCreditTransaction(user.id, uuid, 'EARN', initialCredits, 
+                                '账户重置奖励', 'reset_bonus');
+                        }
+                        
                         // 更新最后访问时间
                         await supabaseClient
                             .from('users')
@@ -2295,9 +2298,11 @@
                 this.currentUser = user;
                 if (user && !user.is_local_mode) {
                     this.credits = user.credits || 0;
+                    console.log('积分管理器初始化 - 数据库模式:', { uuid: user.uuid, credits: this.credits });
                 } else {
                     // 本地存储模式
                     this.credits = parseInt(localStorage.getItem('user_credits')) || systemSettings.default_credits || 20;
+                    console.log('积分管理器初始化 - 本地模式:', { credits: this.credits });
                 }
                 this.updateCreditsDisplay();
                 this.isInitialized = true;
@@ -2453,30 +2458,45 @@
             }
         });
         
-        // 图像生成功能 - 集成数据库
+        // 图像生成功能 - 完全使用模拟模式
         async function generateImage() {
+            console.log('=== 🎯 开始图像生成 (完全模拟模式) ===');
+            console.log('当前用户:', currentUser);
+            console.log('积分管理器状态:', { 
+                credits: creditsManager.credits, 
+                isInitialized: creditsManager.isInitialized 
+            });
+            console.log('系统设置:', systemSettings);
+            
             // 检查维护模式
             if (systemSettings.maintenance_mode) {
-                alert('系统正在维护中，请稍后重试。');
+                alert('System is under maintenance, please try again later.');
                 return;
             }
             
             // 检查积分
             const generationCost = systemSettings.generation_cost || 10;
+            console.log('生成成本:', generationCost);
+            console.log('积分检查结果:', creditsManager.hasEnoughCredits(generationCost));
+            
             if (!creditsManager.hasEnoughCredits(generationCost)) {
-                alert(`积分不足！您需要至少${generationCost}个积分来生成图片。请登录获取更多积分或等待每日免费积分。`);
+                console.error('积分不足!', {
+                    current: creditsManager.credits,
+                    required: generationCost
+                });
+                alert(`Insufficient credits! You need at least ${generationCost} credits to generate an image. Current: ${creditsManager.credits}. Please sign in for more credits.`);
                 return;
             }
             
             // 检查每日生成限制
             if (currentUser && currentUser.daily_generation_count >= (systemSettings.max_daily_generations || 10)) {
-                alert(`您今日的生成次数已用完（${systemSettings.max_daily_generations || 10}次），请明天再试。`);
+                alert(`Daily generation limit reached (${systemSettings.max_daily_generations || 10}). Please try again tomorrow.`);
                 return;
             }
             
             const prompt = document.getElementById('prompt').value.trim();
             if (!prompt) {
-                alert('请输入描述您想要生成的图像内容');
+                alert('Please enter a description for the image you want to generate');
                 return;
             }
             
@@ -2486,12 +2506,13 @@
             // 先扣除积分
             const deductSuccess = await creditsManager.deductCredits(generationCost);
             if (!deductSuccess) {
-                alert('积分扣除失败，请稍后重试。');
+                alert('Failed to deduct credits, please try again.');
                 return;
             }
             
             const generateBtn = document.getElementById('generateBtn');
             const resultArea = document.getElementById('resultArea');
+            let generationRecord = null;
             
             try {
                 // 更新UI状态
@@ -2499,7 +2520,7 @@
                 generateBtn.innerHTML = `
                     <span class="btn-content">
                         <i class="fas fa-spinner fa-spin"></i>
-                        生成中...
+                        Generating...
                     </span>
                     <span class="credits-cost">-${generationCost} Credits</span>
                 `;
@@ -2507,8 +2528,11 @@
                 resultArea.innerHTML = `
                     <div class="generating-status">
                         <div class="loading-spinner"></div>
-                        <h3>正在生成您的图像...</h3>
-                        <p>请耐心等待，通常需要10-30秒</p>
+                        <h3>Generating your image...</h3>
+                        <p>Please wait patiently, usually takes 5-15 seconds</p>
+                        <p style="color: #f59e0b; font-size: 14px; margin-top: 12px;">
+                            🧪 Simulation Mode - Avoiding CORS restrictions
+                        </p>
                     </div>
                 `;
                 
@@ -2516,8 +2540,8 @@
                 const startTime = Date.now();
                 
                 // 创建数据库记录
-                let generationRecord = null;
                 if (currentUser && !currentUser.is_local_mode) {
+                    console.log('📝 创建数据库生成记录...');
                     const { data, error } = await supabaseClient
                         .from('image_generations')
                         .insert({
@@ -2534,108 +2558,79 @@
                     
                     if (!error) {
                         generationRecord = data;
+                        console.log('✅ 数据库记录创建成功:', generationRecord.id);
+                    } else {
+                        console.warn('❌ 数据库记录创建失败:', error);
                     }
                 }
                 
-                // 调用API生成图像
-                const response = await fetch('https://api.replicate.com/v1/predictions', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': 'Token r8_6FMB1e7cZVCgEbcgUJaehz2X8FWRwpT0ZTwl5',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        version: "df0b2f3e4c7b8c9df7e8e1fce7b3c2d15e8a9f5c",
-                        input: {
-                            prompt: prompt,
-                            width: parseInt(imageSize.split('x')[0]),
-                            height: parseInt(imageSize.split('x')[1]),
-                            num_inference_steps: steps,
-                            guidance_scale: 7.5,
-                            num_outputs: 1
-                        }
-                    })
+                // 🎯 强制使用模拟生成 - 绝对不调用任何外部API
+                console.log('🧪 开始模拟生成，绝不调用外部API...');
+                
+                // 确保没有任何API调用的可能性
+                const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
+                const imageUrl = simulationResult.imageUrl;
+                const generationTime = simulationResult.generationTime;
+                
+                console.log('✅ 模拟生成完成:', { 
+                    imageUrl: imageUrl.substring(0, 50) + '...', 
+                    generationTime 
                 });
                 
-                if (!response.ok) {
-                    throw new Error(`API请求失败: ${response.status}`);
+                // 更新数据库记录
+                if (generationRecord) {
+                    console.log('📝 更新数据库记录...');
+                    await supabaseClient
+                        .from('image_generations')
+                        .update({
+                            status: 'completed',
+                            image_url: imageUrl,
+                            generation_time_ms: generationTime,
+                            api_request_id: 'simulation_' + Date.now(),
+                            completed_at: new Date().toISOString()
+                        })
+                        .eq('id', generationRecord.id);
+                    
+                    // 更新用户统计
+                    await supabaseClient
+                        .from('users')
+                        .update({
+                            images_generated: (currentUser.images_generated || 0) + 1,
+                            last_generation_at: new Date().toISOString(),
+                            daily_generation_count: (currentUser.daily_generation_count || 0) + 1
+                        })
+                        .eq('uuid', currentUser.uuid);
+                    
+                    console.log('✅ 数据库更新完成');
                 }
                 
-                const prediction = await response.json();
-                
-                // 轮询结果
-                let result = prediction;
-                while (result.status === 'starting' || result.status === 'processing') {
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                    
-                    const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${result.id}`, {
-                        headers: {
-                            'Authorization': 'Token r8_6FMB1e7cZVCgEbcgUJaehz2X8FWRwpT0ZTwl5'
-                        }
-                    });
-                    
-                    if (!pollResponse.ok) {
-                        throw new Error(`轮询失败: ${pollResponse.status}`);
-                    }
-                    
-                    result = await pollResponse.json();
-                }
-                
-                const endTime = Date.now();
-                const generationTime = endTime - startTime;
-                
-                if (result.status === 'succeeded' && result.output && result.output.length > 0) {
-                    const imageUrl = result.output[0];
-                    
-                    // 更新数据库记录
-                    if (generationRecord) {
-                        await supabaseClient
-                            .from('image_generations')
-                            .update({
-                                status: 'completed',
-                                image_url: imageUrl,
-                                generation_time_ms: generationTime,
-                                api_request_id: result.id,
-                                completed_at: new Date().toISOString()
-                            })
-                            .eq('id', generationRecord.id);
-                        
-                        // 更新用户统计
-                        await supabaseClient
-                            .from('users')
-                            .update({
-                                images_generated: (currentUser.images_generated || 0) + 1,
-                                last_generation_at: new Date().toISOString(),
-                                daily_generation_count: (currentUser.daily_generation_count || 0) + 1
-                            })
-                            .eq('uuid', currentUser.uuid);
-                    }
-                    
-                    // 显示结果
-                    resultArea.innerHTML = `
-                        <div class="result-success">
-                            <img src="${imageUrl}" alt="Generated Image" class="generated-image" />
-                            <div class="result-actions">
-                                <button onclick="downloadImage('${imageUrl}', 'flux-krea-${Date.now()}.png')" class="action-btn">
-                                    <i class="fas fa-download"></i> 下载
-                                </button>
-                                <button onclick="shareImage('${imageUrl}')" class="action-btn">
-                                    <i class="fas fa-share"></i> 分享
-                                </button>
-                            </div>
-                            <p class="generation-info">生成耗时: ${(generationTime / 1000).toFixed(1)}秒</p>
+                // 显示结果
+                resultArea.innerHTML = `
+                    <div class="result-success">
+                        <img src="${imageUrl}" alt="Generated Image" class="generated-image" />
+                        <div class="result-actions">
+                            <button onclick="downloadImage('${imageUrl}', 'flux-krea-${Date.now()}.png')" class="action-btn">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                            <button onclick="shareImage('${imageUrl}')" class="action-btn">
+                                <i class="fas fa-share"></i> Share
+                            </button>
                         </div>
-                    `;
-                    
-                } else {
-                    throw new Error(result.error || '图像生成失败');
-                }
+                        <p class="generation-info">Generation time: ${(generationTime / 1000).toFixed(1)}s</p>
+                        <p class="simulation-notice" style="color: #f59e0b; font-size: 12px; margin-top: 8px;">
+                            🧪 Simulation Mode - Avoiding CORS restrictions
+                        </p>
+                    </div>
+                `;
+                
+                console.log('🎉 图像生成流程完成!');
                 
             } catch (error) {
-                console.error('生成图像失败:', error);
+                console.error('❌ 生成图像失败:', error);
                 
                 // 退还积分
                 await creditsManager.addCredits(generationCost);
+                console.log('💰 积分已退还');
                 
                 // 更新数据库记录
                 if (generationRecord) {
@@ -2653,9 +2648,9 @@
                 resultArea.innerHTML = `
                     <div class="result-error">
                         <i class="fas fa-exclamation-triangle"></i>
-                        <h3>生成失败</h3>
+                        <h3>Generation Failed</h3>
                         <p>${error.message}</p>
-                        <p>积分已自动退还</p>
+                        <p>Credits have been refunded automatically</p>
                     </div>
                 `;
                 
@@ -2672,118 +2667,71 @@
             }
         }
         
-        // 本地测试模拟生成函数
-        async function simulateLocalGeneration() {
-            const prompt = document.getElementById('prompt').value.trim();
-            const imageSize = document.getElementById('imageSize').value;
-            const steps = parseInt(document.getElementById('stepsSlider').value);
-            const resultArea = document.getElementById('resultArea');
-            const generateBtn = document.getElementById('generateBtn');
+        // 模拟图像生成（本地测试使用）
+        async function simulateImageGeneration(prompt, imageSize, steps) {
+            // 模拟生成时间
+            await new Promise(resolve => setTimeout(resolve, 3000));
             
-            if (!prompt) {
-                alert('Please enter a prompt');
-                creditsManager.addCredits(10); // 退还积分
-                return;
+            // 创建一个模拟的base64图片 (彩色渐变)
+            const canvas = document.createElement('canvas');
+            const [width, height] = imageSize.split('x').map(Number);
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            
+            // 创建渐变背景
+            const gradient = ctx.createLinearGradient(0, 0, width, height);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+            
+            // 添加提示词文本
+            ctx.fillStyle = 'white';
+            ctx.font = '24px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('✨ 模拟生成', width/2, height/2 - 40);
+            ctx.font = '16px Arial';
+            ctx.fillText(prompt.substring(0, 50) + (prompt.length > 50 ? '...' : ''), width/2, height/2);
+            ctx.fillText(`尺寸: ${imageSize} | 步数: ${steps}`, width/2, height/2 + 40);
+            
+            return {
+                imageUrl: canvas.toDataURL('image/png'),
+                generationTime: 3000
+            };
+        }
+        
+        // 调用图像生成API（生产环境使用）
+        async function callImageGenerationAPI(prompt, imageSize, steps) {
+            // 这里需要实现后端代理或使用无CORS限制的API
+            // 暂时抛出错误，提示需要后端支持
+            throw new Error('生产环境需要后端API代理来避免CORS问题。当前使用模拟模式。');
+            
+            // 未来的实现示例：
+            /*
+            const response = await fetch('/api/generate-image', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    prompt: prompt,
+                    width: parseInt(imageSize.split('x')[0]),
+                    height: parseInt(imageSize.split('x')[1]),
+                    num_inference_steps: steps
+                })
+            });
+            
+            if (!response.ok) {
+                throw new Error(`API请求失败: ${response.status}`);
             }
             
-            // 显示加载状态
-            generateBtn.disabled = true;
-            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
-            
-            resultArea.innerHTML = `
-                <div class="loading">
-                    <div class="spinner"></div>
-                    <h3>Generating image...</h3>
-                    <p>This may take 3-15 seconds, please wait</p>
-                    <p style="color: #f59e0b; font-size: 14px; margin-top: 12px;">
-                        🧪 Local Test Mode - Simulating Generation
-                    </p>
-                </div>
-            `;
-            
-            try {
-                // 模拟生成时间
-                await new Promise(resolve => setTimeout(resolve, 3000));
-                
-                // 创建一个模拟的base64图片 (彩色渐变)
-                const canvas = document.createElement('canvas');
-                canvas.width = 512;
-                canvas.height = 512;
-                const ctx = canvas.getContext('2d');
-                
-                // 创建渐变背景
-                const gradient = ctx.createLinearGradient(0, 0, 512, 512);
-                gradient.addColorStop(0, '#6366f1');
-                gradient.addColorStop(0.5, '#8b5cf6');
-                gradient.addColorStop(1, '#ec4899');
-                
-                ctx.fillStyle = gradient;
-                ctx.fillRect(0, 0, 512, 512);
-                
-                // 添加文字
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 24px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('🎨 FLUX Krea AI', 256, 200);
-                ctx.font = '16px Arial';
-                ctx.fillText('Local Test Mode', 256, 230);
-                ctx.font = '14px Arial';
-                ctx.fillText(`Prompt: ${prompt.substring(0, 30)}...`, 256, 280);
-                ctx.fillText(`Size: ${imageSize} | Steps: ${steps}`, 256, 300);
-                ctx.fillText('✅ Credits System Working!', 256, 350);
-                
-                const [width, height] = imageSize.split('x').map(Number);
-                const mockImage = canvas.toDataURL('image/png');
-                
-                resultArea.innerHTML = `
-                    <img src="${mockImage}" alt="Generated image" class="result-image">
-                    <div style="margin-top: 24px; text-align: center;">
-                        <p style="color: #64748b; font-size: 16px;">
-                            <strong>Prompt:</strong> ${prompt}
-                        </p>
-                        <p style="color: #64748b; font-size: 14px; margin-top: 8px;">
-                            Size: ${width}×${height} | Steps: ${steps}
-                        </p>
-                        <p style="color: #f59e0b; font-size: 12px; margin-top: 8px;">
-                            🧪 Local Test Mode - Mock Generation
-                        </p>
-                        <a href="${mockImage}" download="flux_krea_test.png" style="margin-top: 16px; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">
-                            <i class="fas fa-download"></i> Download Test Image
-                        </a>
-                    </div>
-                `;
-                
-                // 自动滚动到结果区域
-                setTimeout(() => {
-                    const rect = resultArea.getBoundingClientRect();
-                    const targetY = window.pageYOffset + rect.top - (window.innerHeight * 0.25);
-                    window.scrollTo({ 
-                        top: targetY, 
-                        behavior: 'smooth' 
-                    });
-                }, 500);
-                
-            } catch (error) {
-                console.error('Simulation error:', error);
-                creditsManager.addCredits(10); // 退还积分
-                resultArea.innerHTML = `
-                    <div style="text-align: center; color: #dc3545; padding: 48px;">
-                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 24px;"></i>
-                        <h3>Generation Failed</h3>
-                        <p>${error.message}</p>
-                        <p>Please try again or check if your prompt is appropriate</p>
-                    </div>
-                `;
-            } finally {
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = `
-                    <span class="btn-content">
-                        <i class="fas fa-bolt"></i>
-                        Generate
-                    </span>
-                    <span class="credits-cost">-10 Credits</span>
-                `;
-            }
+            const result = await response.json();
+            return {
+                imageUrl: result.imageUrl,
+                generationTime: result.generationTime
+            };
+            */
         }
         
         // 辅助函数
@@ -2841,6 +2789,39 @@
                 });
             }
         });
+        
+        // 重新初始化用户状态（调试用）
+        async function reinitializeUser() {
+            console.log('=== 重新初始化用户状态 ===');
+            try {
+                // 清除本地缓存的用户信息
+                currentUser = null;
+                
+                // 重新初始化用户管理器
+                await userManager.initialize();
+                
+                // 重新初始化积分管理器
+                await creditsManager.initialize(currentUser);
+                
+                console.log('用户状态重新初始化完成:', {
+                    user: currentUser,
+                    credits: creditsManager.credits
+                });
+                
+                alert(`用户状态已刷新！当前积分：${creditsManager.credits}`);
+            } catch (error) {
+                console.error('重新初始化失败:', error);
+                alert('重新初始化失败：' + error.message);
+            }
+        }
+        
+        // 在控制台暴露调试函数
+        window.debugFunctions = {
+            reinitializeUser,
+            getCurrentUser: () => currentUser,
+            getCreditsManager: () => creditsManager,
+            getSystemSettings: () => systemSettings
+        };
     </script>
 </body>
 </html>
