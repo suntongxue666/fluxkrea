@@ -41,6 +41,9 @@
       gtag('config', 'G-HRV45ZRFKT');
     </script>
     
+    <!-- Supabase Client -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
     <!-- External Resources -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -1829,11 +1832,340 @@
         document.getElementById('showcaseModal').addEventListener('mouseenter', stopAutoplay);
         document.getElementById('showcaseModal').addEventListener('mouseleave', startAutoplay);
         
-        // 积分系统和用户管理
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL'
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'
+        // 积分系统和用户管理 - Supabase集成
+        const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co'
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI'
         
-        // 用户标识生成
+        // 初始化Supabase客户端
+        const { createClient } = supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                autoRefreshToken: true,
+                persistSession: true,
+                detectSessionInUrl: true
+            }
+        });
+        
+        // 全局变量
+        let currentUser = null;
+        let systemSettings = {};
+        
+        // 加载系统配置
+        async function loadSystemSettings() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('system_settings')
+                    .select('key, value, data_type')
+                    .eq('is_public', true);
+                    
+                if (error) throw error;
+                
+                // 转换为对象格式
+                data.forEach(setting => {
+                    let value = setting.value;
+                    if (setting.data_type === 'integer') {
+                        value = parseInt(value);
+                    } else if (setting.data_type === 'boolean') {
+                        value = value === 'true';
+                    }
+                    systemSettings[setting.key] = value;
+                });
+                
+                console.log('系统配置加载成功:', systemSettings);
+            } catch (error) {
+                console.error('加载系统配置失败:', error);
+                // 使用默认值
+                systemSettings = {
+                    default_credits: 20,
+                    generation_cost: 10,
+                    daily_free_credits: 5,
+                    max_daily_generations: 10,
+                    maintenance_mode: false,
+                    welcome_message: 'Welcome to Flux Krea AI!'
+                };
+            }
+        }
+        
+        // 高级用户管理系统
+        class UserManager {
+            constructor() {
+                this.currentUser = null;
+                this.isInitialized = false;
+            }
+            
+            // 初始化用户管理器
+            async initialize() {
+                if (this.isInitialized) return;
+                
+                try {
+                    // 检查现有会话
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    if (session) {
+                        await this.handleAuthenticatedUser(session.user);
+                    } else {
+                        await this.handleAnonymousUser();
+                    }
+                    
+                    this.isInitialized = true;
+                    console.log('用户管理器初始化完成');
+                } catch (error) {
+                    console.error('用户管理器初始化失败:', error);
+                    // 降级到本地存储模式
+                    await this.handleAnonymousUser();
+                }
+            }
+            
+            // 处理已认证用户
+            async handleAuthenticatedUser(authUser) {
+                try {
+                    // 设置用户上下文
+                    await supabaseClient.rpc('set_user_context', { user_uuid: authUser.id });
+                    
+                    // 获取或创建用户记录
+                    let { data: user, error } = await supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('uuid', authUser.id)
+                        .single();
+                    
+                    if (error && error.code === 'PGRST116') {
+                        // 用户不存在，创建新用户
+                        const userData = await this.createUserRecord(authUser);
+                        user = userData;
+                    } else if (error) {
+                        throw error;
+                    }
+                    
+                    // 更新最后登录时间
+                    await supabaseClient
+                        .from('users')
+                        .update({ 
+                            last_seen_at: new Date().toISOString(),
+                            is_signed_in: true,
+                            email: authUser.email,
+                            name: authUser.user_metadata?.full_name || authUser.email
+                        })
+                        .eq('uuid', authUser.id);
+                    
+                    this.currentUser = { ...user, ...authUser.user_metadata };
+                    currentUser = this.currentUser;
+                    
+                    this.updateUIForAuthenticatedUser();
+                    
+                } catch (error) {
+                    console.error('处理认证用户失败:', error);
+                    await this.handleAnonymousUser();
+                }
+            }
+            
+            // 处理匿名用户
+            async handleAnonymousUser() {
+                const uuid = getUserUUID();
+                const fingerprint = generateUserFingerprint();
+                const ip = await getUserIP();
+                const userIdentifier = await generateUserIdentifier();
+                
+                try {
+                    // 设置匿名用户上下文
+                    await supabaseClient.rpc('set_user_context', { user_uuid: uuid });
+                    
+                    // 查找现有匿名用户
+                    let { data: user, error } = await supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('uuid', uuid)
+                        .single();
+                    
+                    if (error && error.code === 'PGRST116') {
+                        // 创建新的匿名用户记录
+                        const { data: newUser, error: createError } = await supabaseClient
+                            .from('users')
+                            .insert({
+                                uuid: uuid,
+                                user_identifier: userIdentifier,
+                                fingerprint: fingerprint,
+                                ip_address: ip,
+                                user_agent: navigator.userAgent,
+                                language: navigator.language,
+                                platform: navigator.platform,
+                                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                                screen_resolution: `${screen.width}x${screen.height}`,
+                                credits: systemSettings.default_credits || 20,
+                                total_credits_earned: systemSettings.default_credits || 20
+                            })
+                            .select()
+                            .single();
+                        
+                        if (createError) throw createError;
+                        user = newUser;
+                        
+                        // 记录初始积分
+                        await this.addCreditTransaction(user.id, uuid, 'EARN', systemSettings.default_credits || 20, 
+                            '新用户奖励', 'signup_bonus');
+                    } else if (error) {
+                        throw error;
+                    } else {
+                        // 更新最后访问时间
+                        await supabaseClient
+                            .from('users')
+                            .update({ last_seen_at: new Date().toISOString() })
+                            .eq('uuid', uuid);
+                    }
+                    
+                    this.currentUser = user;
+                    currentUser = this.currentUser;
+                    
+                    this.updateUIForAnonymousUser();
+                    
+                } catch (error) {
+                    console.error('处理匿名用户失败，使用本地模式:', error);
+                    this.handleLocalMode();
+                }
+            }
+            
+            // 本地存储模式（数据库不可用时的降级方案）
+            handleLocalMode() {
+                const uuid = getUserUUID();
+                const credits = parseInt(localStorage.getItem('user_credits')) || systemSettings.default_credits || 20;
+                
+                this.currentUser = {
+                    uuid: uuid,
+                    credits: credits,
+                    is_local_mode: true
+                };
+                currentUser = this.currentUser;
+                
+                console.log('使用本地存储模式');
+                this.updateUIForAnonymousUser();
+            }
+            
+            // 创建用户记录
+            async createUserRecord(authUser) {
+                const fingerprint = generateUserFingerprint();
+                const ip = await getUserIP();
+                const userIdentifier = `${authUser.id}_${fingerprint}_${ip}`.replace(/[^a-zA-Z0-9_]/g, '');
+                
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .insert({
+                        uuid: authUser.id,
+                        user_identifier: userIdentifier,
+                        fingerprint: fingerprint,
+                        ip_address: ip,
+                        user_agent: navigator.userAgent,
+                        language: navigator.language,
+                        platform: navigator.platform,
+                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                        screen_resolution: `${screen.width}x${screen.height}`,
+                        is_signed_in: true,
+                        google_id: authUser.id,
+                        email: authUser.email,
+                        name: authUser.user_metadata?.full_name || authUser.email,
+                        avatar_url: authUser.user_metadata?.avatar_url,
+                        credits: systemSettings.default_credits || 20,
+                        total_credits_earned: systemSettings.default_credits || 20
+                    })
+                    .select()
+                    .single();
+                
+                if (error) throw error;
+                
+                // 记录注册奖励积分
+                await this.addCreditTransaction(data.id, authUser.id, 'EARN', systemSettings.default_credits || 20, 
+                    '注册奖励', 'signup_bonus');
+                
+                return data;
+            }
+            
+            // 更新认证用户界面
+            updateUIForAuthenticatedUser() {
+                const signinBtn = document.querySelector('.signin-btn');
+                if (signinBtn && this.currentUser) {
+                    signinBtn.innerHTML = `
+                        <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/24'}" 
+                             alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%;">
+                        <span>${this.currentUser.name || this.currentUser.email}</span>
+                        <i class="fas fa-chevron-down" style="margin-left: 4px; font-size: 12px;"></i>
+                    `;
+                    signinBtn.onclick = () => this.showUserMenu();
+                }
+            }
+            
+            // 更新匿名用户界面
+            updateUIForAnonymousUser() {
+                const signinBtn = document.querySelector('.signin-btn');
+                if (signinBtn) {
+                    signinBtn.innerHTML = `
+                        <i class="fab fa-google"></i>
+                        <span>Sign in</span>
+                    `;
+                    signinBtn.onclick = () => this.signInWithGoogle();
+                }
+            }
+            
+            // 显示用户菜单
+            showUserMenu() {
+                // TODO: 实现用户菜单（退出登录、个人设置等）
+                const menu = confirm('是否退出登录？');
+                if (menu) {
+                    this.signOut();
+                }
+            }
+            
+            // Google登录
+            async signInWithGoogle() {
+                try {
+                    const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin
+                        }
+                    });
+                    
+                    if (error) throw error;
+                } catch (error) {
+                    console.error('Google登录失败:', error);
+                    alert('登录失败，请稍后重试');
+                }
+            }
+            
+            // 退出登录
+            async signOut() {
+                try {
+                    const { error } = await supabaseClient.auth.signOut();
+                    if (error) throw error;
+                    
+                    // 重新初始化为匿名用户
+                    await this.handleAnonymousUser();
+                } catch (error) {
+                    console.error('退出登录失败:', error);
+                }
+            }
+            
+            // 添加积分交易记录
+            async addCreditTransaction(userId, userUuid, type, amount, description, source, relatedResourceId = null) {
+                try {
+                    const balanceAfter = this.currentUser.credits + (type === 'EARN' ? amount : -amount);
+                    
+                    const { error } = await supabaseClient
+                        .from('credit_transactions')
+                        .insert({
+                            user_id: userId,
+                            user_uuid: userUuid,
+                            transaction_type: type,
+                            amount: type === 'EARN' ? amount : -amount,
+                            balance_after: balanceAfter,
+                            description: description,
+                            source: source,
+                            related_resource_id: relatedResourceId
+                        });
+                    
+                    if (error) throw error;
+                } catch (error) {
+                    console.error('添加积分交易记录失败:', error);
+                }
+            }
+        }
         function generateUserFingerprint() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -1884,11 +2216,24 @@
             return `${uuid}_${fingerprint}_${ip}`.replace(/[^a-zA-Z0-9_]/g, '');
         }
         
-        // 积分管理
+        // 新的积分管理系统 - 集成Supabase
         class CreditsManager {
             constructor() {
-                this.credits = parseInt(localStorage.getItem('user_credits')) || 20;
+                this.credits = 0;
+                this.isInitialized = false;
+            }
+            
+            // 初始化积分管理器
+            async initialize(user) {
+                this.currentUser = user;
+                if (user && !user.is_local_mode) {
+                    this.credits = user.credits || 0;
+                } else {
+                    // 本地存储模式
+                    this.credits = parseInt(localStorage.getItem('user_credits')) || systemSettings.default_credits || 20;
+                }
                 this.updateCreditsDisplay();
+                this.isInitialized = true;
             }
             
             updateCreditsDisplay() {
@@ -1898,58 +2243,367 @@
                 }
             }
             
-            hasEnoughCredits(cost = 10) {
-                return this.credits >= cost;
+            hasEnoughCredits(cost = null) {
+                const actualCost = cost || systemSettings.generation_cost || 10;
+                return this.credits >= actualCost;
             }
             
-            deductCredits(cost = 10) {
-                if (this.hasEnoughCredits(cost)) {
-                    this.credits -= cost;
-                    localStorage.setItem('user_credits', this.credits.toString());
+            async deductCredits(cost = null) {
+                const actualCost = cost || systemSettings.generation_cost || 10;
+                
+                if (!this.hasEnoughCredits(actualCost)) {
+                    return false;
+                }
+                
+                this.credits -= actualCost;
+                
+                try {
+                    if (this.currentUser && !this.currentUser.is_local_mode) {
+                        // 更新数据库
+                        const { error } = await supabaseClient
+                            .from('users')
+                            .update({ 
+                                credits: this.credits,
+                                total_credits_used: (this.currentUser.total_credits_used || 0) + actualCost
+                            })
+                            .eq('uuid', this.currentUser.uuid);
+                        
+                        if (error) throw error;
+                        
+                        // 记录积分交易
+                        await userManager.addCreditTransaction(
+                            this.currentUser.id, 
+                            this.currentUser.uuid, 
+                            'SPEND', 
+                            actualCost, 
+                            '图像生成消费', 
+                            'generation'
+                        );
+                    } else {
+                        // 本地存储模式
+                        localStorage.setItem('user_credits', this.credits.toString());
+                    }
+                    
                     this.updateCreditsDisplay();
                     return true;
+                } catch (error) {
+                    console.error('扣除积分失败:', error);
+                    // 回滚积分
+                    this.credits += actualCost;
+                    this.updateCreditsDisplay();
+                    return false;
                 }
-                return false;
             }
             
-            addCredits(amount) {
+            async addCredits(amount) {
                 this.credits += amount;
-                localStorage.setItem('user_credits', this.credits.toString());
-                this.updateCreditsDisplay();
+                
+                try {
+                    if (this.currentUser && !this.currentUser.is_local_mode) {
+                        // 更新数据库
+                        const { error } = await supabaseClient
+                            .from('users')
+                            .update({ 
+                                credits: this.credits,
+                                total_credits_earned: (this.currentUser.total_credits_earned || 0) + amount
+                            })
+                            .eq('uuid', this.currentUser.uuid);
+                        
+                        if (error) throw error;
+                        
+                        // 记录积分交易
+                        await userManager.addCreditTransaction(
+                            this.currentUser.id, 
+                            this.currentUser.uuid, 
+                            'EARN', 
+                            amount, 
+                            '积分返还', 
+                            'refund'
+                        );
+                    } else {
+                        // 本地存储模式
+                        localStorage.setItem('user_credits', this.credits.toString());
+                    }
+                    
+                    this.updateCreditsDisplay();
+                } catch (error) {
+                    console.error('添加积分失败:', error);
+                    // 回滚积分
+                    this.credits -= amount;
+                    this.updateCreditsDisplay();
+                }
+            }
+            
+            // 获取积分余额
+            getBalance() {
+                return this.credits;
             }
         }
         
-        // 初始化积分管理器
-        const creditsManager = new CreditsManager();
         
-        // 修改生成图片函数，添加积分检查
-        const originalGenerateImage = generateImage;
-        generateImage = async function() {
-            if (!creditsManager.hasEnoughCredits(10)) {
-                alert('积分不足！您需要至少10个积分来生成图片。请联系客服充值或等待每日免费积分。');
+        // 初始化系统
+        let userManager;
+        let creditsManager;
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            try {
+                // 1. 加载系统配置
+                await loadSystemSettings();
+                
+                // 2. 初始化用户管理器
+                userManager = new UserManager();
+                await userManager.initialize();
+                
+                // 3. 初始化积分管理器
+                creditsManager = new CreditsManager();
+                await creditsManager.initialize(currentUser);
+                
+                // 4. 初始化其他功能
+                initializeShowcase();
+                
+                // 5. 监听认证状态变化
+                supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                    console.log('认证状态变化:', event, session);
+                    if (event === 'SIGNED_IN' && session) {
+                        await userManager.handleAuthenticatedUser(session.user);
+                        await creditsManager.initialize(currentUser);
+                    } else if (event === 'SIGNED_OUT') {
+                        await userManager.handleAnonymousUser();
+                        await creditsManager.initialize(currentUser);
+                    }
+                });
+                
+                console.log('系统初始化完成');
+            } catch (error) {
+                console.error('系统初始化失败:', error);
+                // 降级到本地模式
+                userManager = new UserManager();
+                userManager.handleLocalMode();
+                creditsManager = new CreditsManager();
+                await creditsManager.initialize(currentUser);
+                initializeShowcase();
+            }
+        });
+        
+        // 图像生成功能 - 集成数据库
+        async function generateImage() {
+            // 检查维护模式
+            if (systemSettings.maintenance_mode) {
+                alert('系统正在维护中，请稍后重试。');
                 return;
             }
             
-            // 扣除积分
-            creditsManager.deductCredits(10);
-            
-            // 检测是否为本地文件测试环境
-            const isLocalFile = window.location.protocol === 'file:';
-            
-            if (isLocalFile) {
-                // 本地文件测试模式 - 模拟生成过程
-                await simulateLocalGeneration();
-            } else {
-                // 正常服务器环境 - 调用真实API
-                try {
-                    await originalGenerateImage();
-                } catch (error) {
-                    // 如果生成失败，退还积分
-                    creditsManager.addCredits(10);
-                    throw error;
-                }
+            // 检查积分
+            const generationCost = systemSettings.generation_cost || 10;
+            if (!creditsManager.hasEnoughCredits(generationCost)) {
+                alert(`积分不足！您需要至少${generationCost}个积分来生成图片。请登录获取更多积分或等待每日免费积分。`);
+                return;
             }
-        };
+            
+            // 检查每日生成限制
+            if (currentUser && currentUser.daily_generation_count >= (systemSettings.max_daily_generations || 10)) {
+                alert(`您今日的生成次数已用完（${systemSettings.max_daily_generations || 10}次），请明天再试。`);
+                return;
+            }
+            
+            const prompt = document.getElementById('prompt').value.trim();
+            if (!prompt) {
+                alert('请输入描述您想要生成的图像内容');
+                return;
+            }
+            
+            const imageSize = document.getElementById('imageSize').value;
+            const steps = parseInt(document.getElementById('stepsSlider').value);
+            
+            // 先扣除积分
+            const deductSuccess = await creditsManager.deductCredits(generationCost);
+            if (!deductSuccess) {
+                alert('积分扣除失败，请稍后重试。');
+                return;
+            }
+            
+            const generateBtn = document.getElementById('generateBtn');
+            const resultArea = document.getElementById('resultArea');
+            
+            try {
+                // 更新UI状态
+                generateBtn.disabled = true;
+                generateBtn.innerHTML = `
+                    <span class="btn-content">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        生成中...
+                    </span>
+                    <span class="credits-cost">-${generationCost} Credits</span>
+                `;
+                
+                resultArea.innerHTML = `
+                    <div class="generating-status">
+                        <div class="loading-spinner"></div>
+                        <h3>正在生成您的图像...</h3>
+                        <p>请耐心等待，通常需要10-30秒</p>
+                    </div>
+                `;
+                
+                // 记录开始时间
+                const startTime = Date.now();
+                
+                // 创建数据库记录
+                let generationRecord = null;
+                if (currentUser && !currentUser.is_local_mode) {
+                    const { data, error } = await supabaseClient
+                        .from('image_generations')
+                        .insert({
+                            user_id: currentUser.id,
+                            user_uuid: currentUser.uuid,
+                            prompt: prompt,
+                            image_size: imageSize,
+                            inference_steps: steps,
+                            credits_cost: generationCost,
+                            status: 'processing'
+                        })
+                        .select()
+                        .single();
+                    
+                    if (!error) {
+                        generationRecord = data;
+                    }
+                }
+                
+                // 调用API生成图像
+                const response = await fetch('https://api.replicate.com/v1/predictions', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Token r8_6FMB1e7cZVCgEbcgUJaehz2X8FWRwpT0ZTwl5',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        version: "df0b2f3e4c7b8c9df7e8e1fce7b3c2d15e8a9f5c",
+                        input: {
+                            prompt: prompt,
+                            width: parseInt(imageSize.split('x')[0]),
+                            height: parseInt(imageSize.split('x')[1]),
+                            num_inference_steps: steps,
+                            guidance_scale: 7.5,
+                            num_outputs: 1
+                        }
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`API请求失败: ${response.status}`);
+                }
+                
+                const prediction = await response.json();
+                
+                // 轮询结果
+                let result = prediction;
+                while (result.status === 'starting' || result.status === 'processing') {
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    const pollResponse = await fetch(`https://api.replicate.com/v1/predictions/${result.id}`, {
+                        headers: {
+                            'Authorization': 'Token r8_6FMB1e7cZVCgEbcgUJaehz2X8FWRwpT0ZTwl5'
+                        }
+                    });
+                    
+                    if (!pollResponse.ok) {
+                        throw new Error(`轮询失败: ${pollResponse.status}`);
+                    }
+                    
+                    result = await pollResponse.json();
+                }
+                
+                const endTime = Date.now();
+                const generationTime = endTime - startTime;
+                
+                if (result.status === 'succeeded' && result.output && result.output.length > 0) {
+                    const imageUrl = result.output[0];
+                    
+                    // 更新数据库记录
+                    if (generationRecord) {
+                        await supabaseClient
+                            .from('image_generations')
+                            .update({
+                                status: 'completed',
+                                image_url: imageUrl,
+                                generation_time_ms: generationTime,
+                                api_request_id: result.id,
+                                completed_at: new Date().toISOString()
+                            })
+                            .eq('id', generationRecord.id);
+                        
+                        // 更新用户统计
+                        await supabaseClient
+                            .from('users')
+                            .update({
+                                images_generated: (currentUser.images_generated || 0) + 1,
+                                last_generation_at: new Date().toISOString(),
+                                daily_generation_count: (currentUser.daily_generation_count || 0) + 1
+                            })
+                            .eq('uuid', currentUser.uuid);
+                    }
+                    
+                    // 显示结果
+                    resultArea.innerHTML = `
+                        <div class="result-success">
+                            <img src="${imageUrl}" alt="Generated Image" class="generated-image" />
+                            <div class="result-actions">
+                                <button onclick="downloadImage('${imageUrl}', 'flux-krea-${Date.now()}.png')" class="action-btn">
+                                    <i class="fas fa-download"></i> 下载
+                                </button>
+                                <button onclick="shareImage('${imageUrl}')" class="action-btn">
+                                    <i class="fas fa-share"></i> 分享
+                                </button>
+                            </div>
+                            <p class="generation-info">生成耗时: ${(generationTime / 1000).toFixed(1)}秒</p>
+                        </div>
+                    `;
+                    
+                } else {
+                    throw new Error(result.error || '图像生成失败');
+                }
+                
+            } catch (error) {
+                console.error('生成图像失败:', error);
+                
+                // 退还积分
+                await creditsManager.addCredits(generationCost);
+                
+                // 更新数据库记录
+                if (generationRecord) {
+                    await supabaseClient
+                        .from('image_generations')
+                        .update({
+                            status: 'failed',
+                            error_message: error.message,
+                            was_refunded: true
+                        })
+                        .eq('id', generationRecord.id);
+                }
+                
+                // 显示错误
+                resultArea.innerHTML = `
+                    <div class="result-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>生成失败</h3>
+                        <p>${error.message}</p>
+                        <p>积分已自动退还</p>
+                    </div>
+                `;
+                
+            } finally {
+                // 恢复UI状态
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = `
+                    <span class="btn-content">
+                        <i class="fas fa-bolt"></i>
+                        Generate
+                    </span>
+                    <span class="credits-cost">-${generationCost} Credits</span>
+                `;
+            }
+        }
         
         // 本地测试模拟生成函数
         async function simulateLocalGeneration() {
@@ -2065,13 +2719,60 @@
             }
         }
         
-        // 页面加载时执行
-        document.addEventListener('DOMContentLoaded', function() {
-            // 生成用户标识（为后续功能准备）
-            generateUserIdentifier().then(identifier => {
-                console.log('用户标识:', identifier);
-                localStorage.setItem('user_identifier', identifier);
+        // 辅助函数
+        function downloadImage(imageUrl, filename) {
+            const a = document.createElement('a');
+            a.href = imageUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        
+        function shareImage(imageUrl) {
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Flux Krea AI生成的图像',
+                    url: imageUrl
+                });
+            } else {
+                navigator.clipboard.writeText(imageUrl).then(() => {
+                    alert('图像链接已复制到剪贴板');
+                }).catch(() => {
+                    alert('无法复制链接：' + imageUrl);
+                });
+            }
+        }
+        
+        function demoGenerate(demoPrompt) {
+            document.getElementById('prompt').value = demoPrompt;
+            document.getElementById('prompt').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        function copyPrompt() {
+            const prompt = document.getElementById('prompt').value;
+            navigator.clipboard.writeText(prompt).then(() => {
+                alert('描述已复制到剪贴板');
             });
+        }
+        
+        function clearPrompt() {
+            document.getElementById('prompt').value = '';
+        }
+        
+        function scrollToGenerator() {
+            document.getElementById('generator').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // 滑块更新事件监听器
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化滑块事件
+            const stepsSlider = document.getElementById('stepsSlider');
+            if (stepsSlider) {
+                stepsSlider.addEventListener('input', function() {
+                    document.getElementById('stepsValue').textContent = this.value;
+                });
+            }
         });
     </script>
 </body>
