@@ -1567,7 +1567,7 @@
             try {
                 const [width, height] = imageSize.split('x').map(Number);
                 
-                const response = await fetch("/api/generate", {
+                const response = await fetch("/api/test-sd", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
