@@ -179,20 +179,28 @@
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
-            background: #f8f9fa;
-            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            border: 1px solid #dadce0;
             border-radius: 8px;
-            color: #64748b;
+            color: #3c4043;
             font-weight: 500;
             font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         
         .signin-btn:hover {
-            background: #f1f5f9;
-            border-color: #cbd5e1;
-            color: #475569;
+            background: #f8f9fa;
+            border-color: #dadce0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .google-icon {
+            width: 18px;
+            height: 18px;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjY0IDkuMjA0NTVDMTcuNjQgOC41NjYzNiAxNy41ODM2IDcuOTUyNzMgMTcuNDggNy4zNjM2NEg5VjEwLjg0NTVIMTMuODQzNkMxMy42MzUgMTEuOTcgMTMuMDAwOSAxMi45MjMgMTIuMTEgMTMuNTYxNFYxNS44MTk1SDEzLjk1NjRDMTUuNjU3MyAxNC4yNTI3IDE2LjY0IDEyLjk0NTUgMTcuNjQgOS4yMDQ1NVoiIGZpbGw9IiM0Mjg1RjQiLz4KPHBhdGggZD0iTTkgMThDMTEuNDMgMTggMTMuNDY3MyAxNy4xOTQxIDE0Ljk1NjQgMTUuODE5NUwxMy4xMSAxMy41NjE0QzEyLjQyIDEzLjk5OTEgMTEuNTQgMTQuMjYxNCAxMC4wMzY0IDE0LjI2MTRDNy42NSAxNC4yNjE0IDUuNjcyNzMgMTMuNjA0MSA0LjM2NCA5LjI1SDE2LjI0NTVWNy4zNjM2NEgzLjI3VjE0LjI2MTRDMy4yNyAxNS4wODQxIDQuMDg2MzYgMTcuNjEzNiA5IDE4WiIgZmlsbD0iIzM0QTg1MyIvPgo8cGF0aCBkPSJNMy4zNjM2NCA5LjI3SDBWMTYuMjczNkMwIDExLjUyNzMgMy4zNjM2NCA4LjE2MzY0IDguMSA4LjE2MzY0VjEwLjM0MTRDNi4xNzQ1NSAxMC4zNDE0IDMuNzMwOTEgMTAuNjEzNiAzLjM2MzY0IDEwLjk5MDlWOS4yN1oiIGZpbGw9IiNGQkJDMDQiLz4KPHBhdGggZD0iTTkgNy4xNkM2LjM4MTgyIDcuMTYgNC4yIDkuMzQxODIgMy4zNjM2NCA3LjUwNDU1TDEuNTQwOTEgNS42M0M2LjAwOTA5IDEuMTU0NTUgMTEuNDMgMS4xNTQ1NSAxNi45IDYuNjM2MzZMMTUuMDc3MyA4LjQ1OTA5Qzg1IDcuMzk1NDUgOS40NzI3MyA3LjE2IDkgNy4xNloiIGZpbGw9IiNFQTQzMzUiLz4KPC9zdmc+Cg==') no-repeat center;
+            background-size: contain;
         }
         
         /* Hero Section */
@@ -1918,39 +1926,68 @@
             // 处理已认证用户
             async handleAuthenticatedUser(authUser) {
                 try {
-                    // 设置用户上下文
-                    await supabaseClient.rpc('set_user_context', { user_uuid: authUser.id });
+                    const anonymousUuid = getUserUUID(); // 获取本地匿名 UUID
                     
-                    // 获取或创建用户记录
+                    // 设置用户上下文（使用匿名 UUID保持连续性）
+                    await supabaseClient.rpc('set_user_context', { user_uuid: anonymousUuid });
+                    
+                    // 查找现有的用户记录（优先查找匿名用户）
                     let { data: user, error } = await supabaseClient
                         .from('users')
                         .select('*')
-                        .eq('uuid', authUser.id)
+                        .eq('uuid', anonymousUuid)
                         .single();
                     
                     if (error && error.code === 'PGRST116') {
-                        // 用户不存在，创建新用户
-                        const userData = await this.createUserRecord(authUser);
-                        user = userData;
+                        // 匿名用户不存在，检查是否已有Google用户记录
+                        const { data: existingGoogleUser, error: googleError } = await supabaseClient
+                            .from('users')
+                            .select('*')
+                            .eq('google_id', authUser.id)
+                            .single();
+                        
+                        if (!googleError && existingGoogleUser) {
+                            // 已有Google用户记录，更新本地UUID为数据库中UUID
+                            localStorage.setItem('user_uuid', existingGoogleUser.uuid);
+                            user = existingGoogleUser;
+                        } else {
+                            // 创建新的用户记录（使用本地UUID作主键）
+                            user = await this.createUserRecord(authUser, anonymousUuid);
+                        }
                     } else if (error) {
                         throw error;
                     }
                     
-                    // 更新最后登录时间
-                    await supabaseClient
+                    // 升级用户为认证用户（更新认证信息）
+                    const { error: updateError } = await supabaseClient
                         .from('users')
                         .update({ 
                             last_seen_at: new Date().toISOString(),
                             is_signed_in: true,
+                            google_id: authUser.id,
                             email: authUser.email,
-                            name: authUser.user_metadata?.full_name || authUser.email
+                            name: authUser.user_metadata?.full_name || authUser.email,
+                            avatar_url: authUser.user_metadata?.avatar_url
                         })
-                        .eq('uuid', authUser.id);
+                        .eq('uuid', anonymousUuid);
                     
-                    this.currentUser = { ...user, ...authUser.user_metadata };
+                    if (updateError) {
+                        console.error('更新用户认证信息失败:', updateError);
+                    }
+                    
+                    // 获取更新后的用户信息
+                    const { data: updatedUser } = await supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('uuid', anonymousUuid)
+                        .single();
+                    
+                    this.currentUser = { ...updatedUser, ...authUser.user_metadata };
                     currentUser = this.currentUser;
                     
                     this.updateUIForAuthenticatedUser();
+                    
+                    console.log('用户认证升级成功:', this.currentUser);
                     
                 } catch (error) {
                     console.error('处理认证用户失败:', error);
@@ -2039,40 +2076,54 @@
                 this.updateUIForAnonymousUser();
             }
             
-            // 创建用户记录
-            async createUserRecord(authUser) {
+            
+            // 创建用户记录（保持相同UUID）
+            async createUserRecord(authUser, existingUuid = null) {
+                const userUuid = existingUuid || authUser.id;
                 const fingerprint = generateUserFingerprint();
                 const ip = await getUserIP();
-                const userIdentifier = `${authUser.id}_${fingerprint}_${ip}`.replace(/[^a-zA-Z0-9_]/g, '');
+                const userIdentifier = `${userUuid}_${fingerprint}_${ip}`.replace(/[^a-zA-Z0-9_]/g, '');
+                
+                const userData = {
+                    uuid: userUuid,
+                    user_identifier: userIdentifier,
+                    fingerprint: fingerprint,
+                    ip_address: ip,
+                    user_agent: navigator.userAgent,
+                    language: navigator.language,
+                    platform: navigator.platform,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    screen_resolution: `${screen.width}x${screen.height}`,
+                    credits: systemSettings.default_credits || 20,
+                    total_credits_earned: systemSettings.default_credits || 20
+                };
+                
+                // 如果是认证用户，添加认证信息
+                if (authUser) {
+                    userData.is_signed_in = true;
+                    userData.google_id = authUser.id;
+                    userData.email = authUser.email;
+                    userData.name = authUser.user_metadata?.full_name || authUser.email;
+                    userData.avatar_url = authUser.user_metadata?.avatar_url;
+                }
                 
                 const { data, error } = await supabaseClient
                     .from('users')
-                    .insert({
-                        uuid: authUser.id,
-                        user_identifier: userIdentifier,
-                        fingerprint: fingerprint,
-                        ip_address: ip,
-                        user_agent: navigator.userAgent,
-                        language: navigator.language,
-                        platform: navigator.platform,
-                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        screen_resolution: `${screen.width}x${screen.height}`,
-                        is_signed_in: true,
-                        google_id: authUser.id,
-                        email: authUser.email,
-                        name: authUser.user_metadata?.full_name || authUser.email,
-                        avatar_url: authUser.user_metadata?.avatar_url,
-                        credits: systemSettings.default_credits || 20,
-                        total_credits_earned: systemSettings.default_credits || 20
-                    })
+                    .insert(userData)
                     .select()
                     .single();
                 
                 if (error) throw error;
                 
-                // 记录注册奖励积分
-                await this.addCreditTransaction(data.id, authUser.id, 'EARN', systemSettings.default_credits || 20, 
-                    '注册奖励', 'signup_bonus');
+                // 记录初始积分
+                await this.addCreditTransaction(
+                    data.id, 
+                    userUuid, 
+                    'EARN', 
+                    systemSettings.default_credits || 20, 
+                    authUser ? '新用户注册奖励' : '新用户奖励', 
+                    authUser ? 'signup_bonus' : 'anonymous_bonus'
+                );
                 
                 return data;
             }
@@ -2096,8 +2147,8 @@
                 const signinBtn = document.querySelector('.signin-btn');
                 if (signinBtn) {
                     signinBtn.innerHTML = `
-                        <i class="fab fa-google"></i>
-                        <span>Sign in</span>
+                        <div class="google-icon"></div>
+                        <span>Sign in with Google</span>
                     `;
                     signinBtn.onclick = () => this.signInWithGoogle();
                 }
@@ -2115,17 +2166,33 @@
             // Google登录
             async signInWithGoogle() {
                 try {
+                    console.log('开始Google登录...');
+                    
                     const { data, error } = await supabaseClient.auth.signInWithOAuth({
                         provider: 'google',
                         options: {
-                            redirectTo: window.location.origin
+                            redirectTo: `${window.location.origin}`,
+                            queryParams: {
+                                access_type: 'offline',
+                                prompt: 'consent',
+                            },
                         }
                     });
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('Google登录错误:', error);
+                        throw error;
+                    }
+                    
+                    console.log('Google登录成功:', data);
                 } catch (error) {
                     console.error('Google登录失败:', error);
-                    alert('登录失败，请稍后重试');
+                    
+                    if (error.message && error.message.includes('provider is not enabled')) {
+                        alert('请检查Supabase中的Google OAuth配置：\n1. Authentication > Providers > Google\n2. 确保“Enable sign in with Google”已开启\n3. 检查Client ID和Client Secret是否正确填入');
+                    } else {
+                        alert('登录失败，请稍后重试：' + (error.message || error));
+                    }
                 }
             }
             
