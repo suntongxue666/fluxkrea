@@ -9,113 +9,57 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Prompt is required' });
   }
 
-  const HF_API_TOKEN = process.env.HF_API_TOKEN;
+  const REPLICATE_API_TOKEN = process.env.REPLICATE_API_TOKEN;
 
-  console.log('Environment check:', {
-    hasToken: !!HF_API_TOKEN,
-    tokenLength: HF_API_TOKEN ? HF_API_TOKEN.length : 0,
-    tokenPrefix: HF_API_TOKEN ? HF_API_TOKEN.substring(0, 10) + '...' : 'null'
+  console.log('Replicate Environment check:', {
+    hasToken: !!REPLICATE_API_TOKEN,
+    tokenLength: REPLICATE_API_TOKEN ? REPLICATE_API_TOKEN.length : 0,
+    tokenPrefix: REPLICATE_API_TOKEN ? REPLICATE_API_TOKEN.substring(0, 10) + '...' : 'null'
   });
 
-  if (!HF_API_TOKEN || HF_API_TOKEN === 'your-huggingface-token-here') {
-    console.error('HF_API_TOKEN not configured properly');
+  if (!REPLICATE_API_TOKEN) {
+    console.error('REPLICATE_API_TOKEN not configured');
     return res.status(500).json({ 
-      error: 'HF_API_TOKEN not configured',
+      error: 'REPLICATE_API_TOKEN not configured',
       debug: {
-        hasToken: !!HF_API_TOKEN,
-        tokenLength: HF_API_TOKEN ? HF_API_TOKEN.length : 0
+        hasToken: !!REPLICATE_API_TOKEN
       }
     });
   }
 
   try {
-    // 先尝试 FLUX.1，如果 402 错误则自动降级到 Stable Diffusion
-    let modelUrl = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell";
-    let requestBody = {
-      inputs: prompt,
-      parameters: {
-        num_inference_steps: steps,
-        guidance_scale: 0.0,
-        width: width,
-        height: height
-      }
-    };
-
-    let response = await fetch(modelUrl, {
+    console.log('Starting FLUX-schnell generation with prompt:', prompt);
+    
+    // Replicate API 调用
+    const response = await fetch("https://api.replicate.com/v1/predictions", {
       method: "POST",
       headers: {
-        "Authorization": `Bearer ${HF_API_TOKEN}`,
+        "Authorization": `Token ${REPLICATE_API_TOKEN}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(requestBody)
-    });
-
-    // 如果 FLUX 返回 402，自动切换到免费的 Stable Diffusion
-    if (response.status === 402) {
-      console.log('FLUX.1 requires payment, switching to Stable Diffusion...');
-      modelUrl = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5";
-      requestBody = {
-        inputs: prompt,
-        parameters: {
+      body: JSON.stringify({
+        version: "f2ab8a5569070ad6c9bf1806e65eb4b3c9e68c5c4d44b64306c7557e6ee5b375", // FLUX-schnell 最新版本
+        input: {
+          prompt: prompt,
+          width: Math.min(width, 1024),
+          height: Math.min(height, 1024),
           num_inference_steps: Math.min(steps, 50),
-          guidance_scale: 7.5,
-          width: Math.min(width, 512),
-          height: Math.min(height, 512)
+          guidance_scale: 0.0,
+          num_outputs: 1
         }
-      };
-
-      response = await fetch(modelUrl, {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${HF_API_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(requestBody)
-      });
-    }
+      })
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('HF API Error Details:', {
+      console.error('Replicate API Error:', {
         status: response.status,
         statusText: response.statusText,
-        headers: Object.fromEntries(response.headers.entries()),
-        errorBody: errorText,
-        requestHeaders: {
-          Authorization: `Bearer ${HF_API_TOKEN ? HF_API_TOKEN.substring(0, 10) + '...' : 'null'}`,
-          ContentType: 'application/json'
-        }
+        errorBody: errorText
       });
       
-      // 特别处理 402 错误
-      if (response.status === 402) {
-        try {
-          const errorJson = JSON.parse(errorText);
-          return res.status(402).json({ 
-            error: `Payment Required (402)`,
-            details: errorText,
-            message: "FLUX.1 model may require paid subscription. Consider switching to free Stable Diffusion models.",
-            debug: {
-              status: response.status,
-              statusText: response.statusText,
-              errorBody: errorJson
-            }
-          });
-        } catch (e) {
-          return res.status(402).json({ 
-            error: `Payment Required (402)`,
-            details: errorText,
-            message: "FLUX.1 model may require paid subscription. Consider switching to free Stable Diffusion models.",
-            debug: {
-              status: response.status,
-              statusText: response.statusText
-            }
-          });
-        }
-      }
-      
       return res.status(response.status).json({ 
-        error: `API Error ${response.status}`,
+        error: `Replicate API Error ${response.status}`,
         details: errorText,
         debug: {
           status: response.status,
@@ -124,18 +68,68 @@ export default async function handler(req, res) {
       });
     }
 
-    const imageBuffer = await response.arrayBuffer();
-    const base64Image = Buffer.from(imageBuffer).toString('base64');
-    
-    res.status(200).json({
-      success: true,
-      image: `data:image/png;base64,${base64Image}`
-    });
+    const prediction = await response.json();
+    console.log('Prediction created:', prediction.id);
+
+    // 轮询检查预测结果
+    let finalPrediction = prediction;
+    let attempts = 0;
+    const maxAttempts = 60; // 最多等待60秒
+
+    while (finalPrediction.status !== 'succeeded' && finalPrediction.status !== 'failed' && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 等待1秒
+      
+      const statusResponse = await fetch(`https://api.replicate.com/v1/predictions/${prediction.id}`, {
+        headers: {
+          "Authorization": `Token ${REPLICATE_API_TOKEN}`,
+        },
+      });
+
+      if (statusResponse.ok) {
+        finalPrediction = await statusResponse.json();
+        console.log(`Attempt ${attempts + 1}: Status = ${finalPrediction.status}`);
+      }
+      
+      attempts++;
+    }
+
+    if (finalPrediction.status === 'succeeded') {
+      console.log('FLUX-schnell generation successful');
+      
+      // Replicate 返回的是图片 URL，我们需要转换为 base64
+      const imageUrl = finalPrediction.output[0];
+      const imageResponse = await fetch(imageUrl);
+      const imageBuffer = await imageResponse.arrayBuffer();
+      const base64Image = Buffer.from(imageBuffer).toString('base64');
+      
+      res.status(200).json({
+        success: true,
+        image: `data:image/png;base64,${base64Image}`,
+        model: "FLUX-schnell (Replicate)",
+        provider: "Replicate", 
+        cost: "$0.003 per image",
+        prediction_id: prediction.id
+      });
+    } else if (finalPrediction.status === 'failed') {
+      console.error('Prediction failed:', finalPrediction.error);
+      res.status(500).json({ 
+        error: 'Generation failed',
+        details: finalPrediction.error || 'Unknown error',
+        prediction_id: prediction.id
+      });
+    } else {
+      console.error('Prediction timeout');
+      res.status(500).json({ 
+        error: 'Generation timeout',
+        details: 'The prediction took too long to complete (>60s)',
+        prediction_id: prediction.id
+      });
+    }
 
   } catch (error) {
-    console.error('Generation error:', error);
+    console.error('Replicate generation error:', error);
     res.status(500).json({ 
-      error: 'Failed to generate image',
+      error: 'Failed to generate image with Replicate FLUX-schnell',
       details: error.message 
     });
   }
