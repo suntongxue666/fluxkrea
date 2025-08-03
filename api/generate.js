@@ -29,22 +29,50 @@ export default async function handler(req, res) {
   }
 
   try {
-    const response = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+    // 先尝试 FLUX.1，如果 402 错误则自动降级到 Stable Diffusion
+    let modelUrl = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell";
+    let requestBody = {
+      inputs: prompt,
+      parameters: {
+        num_inference_steps: steps,
+        guidance_scale: 0.0,
+        width: width,
+        height: height
+      }
+    };
+
+    let response = await fetch(modelUrl, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${HF_API_TOKEN}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({
+      body: JSON.stringify(requestBody)
+    });
+
+    // 如果 FLUX 返回 402，自动切换到免费的 Stable Diffusion
+    if (response.status === 402) {
+      console.log('FLUX.1 requires payment, switching to Stable Diffusion...');
+      modelUrl = "https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5";
+      requestBody = {
         inputs: prompt,
         parameters: {
-          num_inference_steps: steps,
-          guidance_scale: 0.0,
-          width: width,
-          height: height
+          num_inference_steps: Math.min(steps, 50),
+          guidance_scale: 7.5,
+          width: Math.min(width, 512),
+          height: Math.min(height, 512)
         }
-      })
-    });
+      };
+
+      response = await fetch(modelUrl, {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${HF_API_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody)
+      });
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -58,6 +86,34 @@ export default async function handler(req, res) {
           ContentType: 'application/json'
         }
       });
+      
+      // 特别处理 402 错误
+      if (response.status === 402) {
+        try {
+          const errorJson = JSON.parse(errorText);
+          return res.status(402).json({ 
+            error: `Payment Required (402)`,
+            details: errorText,
+            message: "FLUX.1 model may require paid subscription. Consider switching to free Stable Diffusion models.",
+            debug: {
+              status: response.status,
+              statusText: response.statusText,
+              errorBody: errorJson
+            }
+          });
+        } catch (e) {
+          return res.status(402).json({ 
+            error: `Payment Required (402)`,
+            details: errorText,
+            message: "FLUX.1 model may require paid subscription. Consider switching to free Stable Diffusion models.",
+            debug: {
+              status: response.status,
+              statusText: response.statusText
+            }
+          });
+        }
+      }
+      
       return res.status(response.status).json({ 
         error: `API Error ${response.status}`,
         details: errorText,
