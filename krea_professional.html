@@ -30,6 +30,16 @@
     <!-- Favicon -->
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HRV45ZRFKT"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-HRV45ZRFKT');
+    </script>
+    
     <!-- External Resources -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -1910,15 +1920,137 @@
             // 扣除积分
             creditsManager.deductCredits(10);
             
-            // 调用原始生成函数
-            try {
-                await originalGenerateImage();
-            } catch (error) {
-                // 如果生成失败，退还积分
-                creditsManager.addCredits(10);
-                throw error;
+            // 检测是否为本地文件测试环境
+            const isLocalFile = window.location.protocol === 'file:';
+            
+            if (isLocalFile) {
+                // 本地文件测试模式 - 模拟生成过程
+                await simulateLocalGeneration();
+            } else {
+                // 正常服务器环境 - 调用真实API
+                try {
+                    await originalGenerateImage();
+                } catch (error) {
+                    // 如果生成失败，退还积分
+                    creditsManager.addCredits(10);
+                    throw error;
+                }
             }
         };
+        
+        // 本地测试模拟生成函数
+        async function simulateLocalGeneration() {
+            const prompt = document.getElementById('prompt').value.trim();
+            const imageSize = document.getElementById('imageSize').value;
+            const steps = parseInt(document.getElementById('stepsSlider').value);
+            const resultArea = document.getElementById('resultArea');
+            const generateBtn = document.getElementById('generateBtn');
+            
+            if (!prompt) {
+                alert('Please enter a prompt');
+                creditsManager.addCredits(10); // 退还积分
+                return;
+            }
+            
+            // 显示加载状态
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+            
+            resultArea.innerHTML = `
+                <div class="loading">
+                    <div class="spinner"></div>
+                    <h3>Generating image...</h3>
+                    <p>This may take 3-15 seconds, please wait</p>
+                    <p style="color: #f59e0b; font-size: 14px; margin-top: 12px;">
+                        🧪 Local Test Mode - Simulating Generation
+                    </p>
+                </div>
+            `;
+            
+            try {
+                // 模拟生成时间
+                await new Promise(resolve => setTimeout(resolve, 3000));
+                
+                // 创建一个模拟的base64图片 (彩色渐变)
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext('2d');
+                
+                // 创建渐变背景
+                const gradient = ctx.createLinearGradient(0, 0, 512, 512);
+                gradient.addColorStop(0, '#6366f1');
+                gradient.addColorStop(0.5, '#8b5cf6');
+                gradient.addColorStop(1, '#ec4899');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 512, 512);
+                
+                // 添加文字
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 24px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('🎨 FLUX Krea AI', 256, 200);
+                ctx.font = '16px Arial';
+                ctx.fillText('Local Test Mode', 256, 230);
+                ctx.font = '14px Arial';
+                ctx.fillText(`Prompt: ${prompt.substring(0, 30)}...`, 256, 280);
+                ctx.fillText(`Size: ${imageSize} | Steps: ${steps}`, 256, 300);
+                ctx.fillText('✅ Credits System Working!', 256, 350);
+                
+                const [width, height] = imageSize.split('x').map(Number);
+                const mockImage = canvas.toDataURL('image/png');
+                
+                resultArea.innerHTML = `
+                    <img src="${mockImage}" alt="Generated image" class="result-image">
+                    <div style="margin-top: 24px; text-align: center;">
+                        <p style="color: #64748b; font-size: 16px;">
+                            <strong>Prompt:</strong> ${prompt}
+                        </p>
+                        <p style="color: #64748b; font-size: 14px; margin-top: 8px;">
+                            Size: ${width}×${height} | Steps: ${steps}
+                        </p>
+                        <p style="color: #f59e0b; font-size: 12px; margin-top: 8px;">
+                            🧪 Local Test Mode - Mock Generation
+                        </p>
+                        <a href="${mockImage}" download="flux_krea_test.png" style="margin-top: 16px; padding: 12px 24px; background: #28a745; color: white; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: 600;">
+                            <i class="fas fa-download"></i> Download Test Image
+                        </a>
+                    </div>
+                `;
+                
+                // 自动滚动到结果区域
+                setTimeout(() => {
+                    const rect = resultArea.getBoundingClientRect();
+                    const targetY = window.pageYOffset + rect.top - (window.innerHeight * 0.25);
+                    window.scrollTo({ 
+                        top: targetY, 
+                        behavior: 'smooth' 
+                    });
+                }, 500);
+                
+            } catch (error) {
+                console.error('Simulation error:', error);
+                creditsManager.addCredits(10); // 退还积分
+                resultArea.innerHTML = `
+                    <div style="text-align: center; color: #dc3545; padding: 48px;">
+                        <i class="fas fa-exclamation-triangle" style="font-size: 48px; margin-bottom: 24px;"></i>
+                        <h3>Generation Failed</h3>
+                        <p>${error.message}</p>
+                        <p>Please try again or check if your prompt is appropriate</p>
+                    </div>
+                `;
+            } finally {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = `
+                    <span class="btn-content">
+                        <i class="fas fa-bolt"></i>
+                        Generate
+                    </span>
+                    <span class="credits-cost">-10 Credits</span>
+                `;
+            }
+        }
         
         // 页面加载时执行
         document.addEventListener('DOMContentLoaded', function() {
