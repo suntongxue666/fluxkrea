@@ -1607,7 +1607,7 @@
                                 Inference Steps
                                 <span class="slider-value" id="stepsValue">4</span>
                             </label>
-                            <input type="range" min="1" max="12" value="4" class="slider" id="stepsSlider">
+                            <input type="range" min="1" max="4" value="4" class="slider" id="stepsSlider">
                         </div>
                     </div>
                     
@@ -3114,31 +3114,6 @@
                 </div>
             `;
         }
-            
-            // 未来的实现示例：
-            /*
-            const response = await fetch('/api/generate-image', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    prompt: prompt,
-                    width: parseInt(imageSize.split('x')[0]),
-                    height: parseInt(imageSize.split('x')[1]),
-                    num_inference_steps: steps
-                })
-            });
-            
-            if (!response.ok) {
-                throw new Error(`API请求失败: ${response.status}`);
-            }
-            
-            const result = await response.json();
-            return {
-                imageUrl: result.imageUrl,
-                generationTime: result.generationTime
-            };
         
         // 辅助函数
         function downloadImage(imageUrl, filename) {

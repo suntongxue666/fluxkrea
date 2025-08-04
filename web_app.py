@@ -1,3 +1,19 @@
+#支持 .env 的代码-本地文件添加Replicate API token
+from dotenv import load_dotenv, dotenv_values
+import os
+
+load_dotenv()
+
+print("Loaded .env values:", dotenv_values())
+
+api_token = os.getenv("REPLICATE_API_TOKEN")
+print("api_token from os.getenv:", api_token)
+
+if not api_token:
+    print("Please set REPLICATE_API_TOKEN")
+    exit(1)
+
+
 #!/usr/bin/env python3
 """
 简单的 FLUX 文生图 Web 应用
@@ -128,6 +144,29 @@ def index():
     </body>
     </html>
     '''
+
+@app.route('/api/generate-image', methods=['POST'])
+def generate_image_api():
+    data = request.json
+    prompt = data.get('prompt', '')
+    width = data.get('width', 1024)
+    height = data.get('height', 1024)
+    steps = data.get('num_inference_steps', 4)
+    
+    if not prompt:
+        return jsonify({'error': 'No prompt provided'}), 400
+    
+    filename = generate_image(prompt)
+    
+    if filename:
+        # 返回前端期望的格式
+        return jsonify({
+            'image_url': f'/image/{filename}',
+            'url': f'/image/{filename}',
+            'success': True
+        })
+    else:
+        return jsonify({'error': 'Generation failed'}), 500
 
 @app.route('/generate', methods=['POST'])
 def generate():
