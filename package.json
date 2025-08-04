@@ -1,0 +1,20 @@
+{
+  "name": "flux-krea-ai",
+  "version": "1.0.0",
+  "description": "AI Image Generator with FLUX model",
+  "main": "index.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "build": "echo 'Build complete'",
+    "start": "vercel dev",
+    "test-api": "node test_local_api.js",
+    "check-env": "node check_env.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "dotenv": "^16.3.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

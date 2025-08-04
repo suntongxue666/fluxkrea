@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test Page</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        img {
+            max-width: 100%;
+            border-radius: 8px;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>API 测试页面</h1>
+    
+    <div class="test-section">
+        <h2>1. 基础连接测试</h2>
+        <p>测试API端点是否可访问</p>
+        <button onclick="testBasicConnection()">测试基础连接</button>
+        <div id="basicResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>2. 简单图像生成测试</h2>
+        <p>使用简单提示词测试图像生成</p>
+        <input type="text" id="testPrompt" placeholder="输入测试提示词" value="a red apple" style="width: 300px; padding: 8px;">
+        <button onclick="testImageGeneration()">测试图像生成</button>
+        <div id="imageResult" class="result" style="display: none;"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>3. 环境变量检查</h2>
+        <p>检查服务器环境变量配置</p>
+        <button onclick="checkEnvironment()">检查环境</button>
+        <div id="envResult" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        async function testBasicConnection() {
+            const resultDiv = document.getElementById('basicResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在测试基础连接...';
+            
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: 'connection test'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ 连接成功!\n\n响应状态: ${response.status}\n响应数据: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 连接失败!\n\n状态码: ${response.status}\n错误信息: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 请求失败!\n\n错误: ${error.message}`;
+            }
+        }
+        
+        async function testImageGeneration() {
+            const prompt = document.getElementById('testPrompt').value.trim();
+            if (!prompt) {
+                alert('请输入测试提示词');
+                return;
+            }
+            
+            const resultDiv = document.getElementById('imageResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在生成图像，请稍候...';
+            
+            try {
+                const startTime = Date.now();
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        width: 512,
+                        height: 512,
+                        steps: 4
+                    })
+                });
+                
+                const data = await response.json();
+                const endTime = Date.now();
+                const duration = endTime - startTime;
+                
+                if (response.ok && data.image) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        ✅ 图像生成成功!
+                        
+                        生成时间: ${(duration / 1000).toFixed(1)}秒
+                        提示词: ${prompt}
+                        模型: ${data.model || 'Unknown'}
+                        提供商: ${data.provider || 'Unknown'}
+                        
+                        <img src="${data.image}" alt="Generated Image">
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ 图像生成失败!\n\n状态码: ${response.status}\n错误信息: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 生成请求失败!\n\n错误: ${error.message}`;
+            }
+        }
+        
+        async function checkEnvironment() {
+            const resultDiv = document.getElementById('envResult');
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result loading';
+            resultDiv.textContent = '正在检查环境配置...';
+            
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: 'env check'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `环境检查结果:\n\n${JSON.stringify(data, null, 2)}`;
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ 环境检查失败!\n\n错误: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

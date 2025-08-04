@@ -602,6 +602,102 @@
             100% { transform: rotate(360deg); }
         }
         
+        /* Error and Success States */
+        .result-error {
+            text-align: center;
+            padding: 40px 24px;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            color: #dc2626;
+        }
+        
+        .result-error i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            color: #f87171;
+        }
+        
+        .result-error h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #dc2626;
+        }
+        
+        .result-success {
+            text-align: center;
+            padding: 24px;
+        }
+        
+        .generated-image {
+            width: 100%;
+            max-width: 512px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            margin-bottom: 20px;
+        }
+        
+        .result-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .action-btn:hover {
+            background: #5b5bd6;
+            transform: translateY(-1px);
+        }
+        
+        .generation-info {
+            color: #64748b;
+            font-size: 14px;
+            margin: 8px 0;
+        }
+        
+        .generating-status {
+            text-align: center;
+            padding: 60px 24px;
+        }
+        
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #e2e8f0;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        
+        .generating-status h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #374151;
+        }
+        
+        .generating-status p {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
         /* Steps Section */
         .steps-section {
             background: white;
@@ -1531,8 +1627,13 @@
                     <span id="creditsAmount">20</span>
                 </div>
                 <!-- 管理员调试按钮 - 仅对特定账户显示 -->
-                <button id="debugRefreshBtn" onclick="reinitializeUser()" style="padding: 4px 8px; font-size: 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer; display: none;" title="重新加载用户状态 (管理员功能)">
-                    🔄 刷新
+                <button id="debugRefreshBtn" onclick="showDebugMenu()" style="padding: 4px 8px; font-size: 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer; display: none;" title="管理员调试菜单">
+                    🔧 调试
+                </button>
+                
+                <!-- 临时测试按钮 - 显示当前用户状态 -->
+                <button onclick="showCurrentUserStatus()" style="padding: 4px 8px; font-size: 12px; background: #10b981; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer;" title="显示当前用户状态">
+                    👤 用户状态
                 </button>
                 <div class="signin-btn">
                     <div class="google-icon"></div>
@@ -2869,16 +2970,27 @@
                     <span class="credits-cost">-${generationCost} Credits</span>
                 `;
                 
-                const loadingMessage = (currentUser && currentUser.email === 'sunwei7482@gmail.com') ? 
+                const isAdminUser = currentUser && currentUser.email === 'sunwei7482@gmail.com';
+                const loadingMessage = isAdminUser ? 
                     '🧪 管理员测试模式 - 模拟生成中' : 
-                    '';
+                    '🚀 正式API模式 - 真实生成中';
+                
+                // 显示用户状态调试信息
+                const userStatusInfo = `
+                    <div style="background: #f3f4f6; padding: 8px; border-radius: 4px; font-size: 12px; color: #6b7280; margin-top: 8px;">
+                        用户: ${currentUser?.email || '未登录'} | 
+                        模式: ${isAdminUser ? '测试模式' : '正式模式'} | 
+                        状态: ${currentUser ? '已登录' : '匿名用户'}
+                    </div>
+                `;
                 
                 resultArea.innerHTML = `
                     <div class="generating-status">
                         <div class="loading-spinner"></div>
                         <h3>Generating your image...</h3>
                         <p>Please wait patiently, usually takes 5-15 seconds</p>
-                        ${loadingMessage ? `<p style="color: #6366f1; font-size: 14px; margin-top: 12px;">${loadingMessage}</p>` : ''}
+                        <p style="color: #6366f1; font-size: 14px; margin-top: 12px;">${loadingMessage}</p>
+                        ${userStatusInfo}
                     </div>
                 `;
                 
@@ -2913,6 +3025,14 @@
                 // 根据用户类型选择生成方式
                 let imageUrl, generationTime;
                 
+                // 详细的用户状态调试信息
+                console.log('🔍 用户状态调试信息:', {
+                    currentUser: currentUser,
+                    userEmail: currentUser?.email,
+                    isAdmin: currentUser?.email === 'sunwei7482@gmail.com',
+                    adminEmail: 'sunwei7482@gmail.com'
+                });
+                
                 // 强制所有非管理员用户使用真实API
                 if (currentUser && currentUser.email === 'sunwei7482@gmail.com') {
                     console.log('🧪 管理员用户 - 使用模拟生成模式');
@@ -2929,6 +3049,15 @@
                     displayGenerationResult(imageUrl, generationTime, true, prompt, imageSize, steps);
                 } else {
                     console.log('🚀 所有其他用户(含未登录) - 强制使用真实API生成');
+                    
+                    // 显示API调用开始的详细信息
+                    console.log('📡 开始API调用:', {
+                        prompt: prompt,
+                        imageSize: imageSize,
+                        steps: steps,
+                        timestamp: new Date().toISOString()
+                    });
+                    
                     try {
                         const apiResult = await callImageGenerationAPI(prompt, imageSize, steps);
                         imageUrl = apiResult.imageUrl;
@@ -2936,17 +3065,55 @@
                         
                         console.log('✅ API生成完成:', { 
                             imageUrl: imageUrl.substring(0, 50) + '...', 
-                            generationTime 
+                            generationTime,
+                            timestamp: new Date().toISOString()
                         });
                         
                         // 显示API结果
                         displayGenerationResult(imageUrl, generationTime, false, prompt, imageSize, steps);
                     } catch (error) {
-                        console.error('❌ API生成失败，降级到模拟模式:', error);
-                        const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
-                        imageUrl = simulationResult.imageUrl;
-                        generationTime = simulationResult.generationTime;
-                        displayGenerationResult(imageUrl, generationTime, true, prompt, imageSize, steps);
+                        console.error('❌ API生成失败:', {
+                            error: error,
+                            message: error.message,
+                            stack: error.stack,
+                            timestamp: new Date().toISOString()
+                        });
+                        
+                        // 显示详细错误信息，不自动降级到模拟模式
+                        resultArea.innerHTML = `
+                            <div class="result-error">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>API生成失败</h3>
+                                <p style="color: #dc2626; margin: 10px 0; font-weight: 600;">${error.message}</p>
+                                <div style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; margin: 10px 0; text-align: left;">
+                                    <p style="color: #64748b; font-size: 13px; margin: 0;">
+                                        <strong>调试信息:</strong><br>
+                                        • 用户类型: ${currentUser?.email || '匿名用户'}<br>
+                                        • 生成模式: 正式API模式<br>
+                                        • API端点: /api/generate<br>
+                                        • 时间: ${new Date().toLocaleString()}<br>
+                                        • 提示词: ${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}
+                                    </p>
+                                </div>
+                                <p style="color: #64748b; font-size: 14px;">
+                                    这是正式的API调用失败，不是测试模式。请检查网络连接或稍后重试。
+                                </p>
+                                <div style="margin-top: 15px;">
+                                    <button onclick="generateImage()" style="padding: 8px 16px; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                                        重试生成
+                                    </button>
+                                    <button onclick="location.href='/test_api.html'" style="padding: 8px 16px; background: #64748b; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                                        API测试页面
+                                    </button>
+                                    <button onclick="testAPIFromHere()" style="padding: 8px 16px; background: #f59e0b; color: white; border: none; border-radius: 4px; cursor: pointer; margin-left: 10px;">
+                                        快速API测试
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                        
+                        // 不继续执行后续代码
+                        return;
                     }
                 }
                 
@@ -3060,8 +3227,8 @@
             const startTime = Date.now();
             
             try {
-                // 使用Replicate API或HuggingFace API
-                const response = await fetch('/api/generate-image', {
+                // 使用Replicate API
+                const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -3070,19 +3237,20 @@
                         prompt: prompt,
                         width: parseInt(imageSize.split('x')[0]),
                         height: parseInt(imageSize.split('x')[1]),
-                        num_inference_steps: steps
+                        steps: steps
                     })
                 });
                 
                 if (!response.ok) {
-                    throw new Error(`API调用失败: ${response.status} ${response.statusText}`);
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(`API调用失败: ${response.status} ${response.statusText} - ${errorData.error || 'Unknown error'}`);
                 }
                 
                 const data = await response.json();
                 const generationTime = Date.now() - startTime;
                 
                 return {
-                    imageUrl: data.image_url || data.url,
+                    imageUrl: data.image || data.image_url || data.url,
                     generationTime: generationTime
                 };
             } catch (error) {
@@ -3168,13 +3336,52 @@
             }
         });
         
-        // 设置用户积分为0（仅管理员可用）
-        async function setCreditsToZero() {
+        // 管理员调试菜单
+        function showDebugMenu() {
             if (!currentUser || currentUser.email !== 'sunwei7482@gmail.com') {
                 alert('此功能仅管理员可用');
                 return;
             }
             
+            const actions = [
+                '1. 重新初始化用户状态',
+                '2. 设置积分为0（测试余额不足）',
+                '3. 添加100积分',
+                '4. 测试API连接',
+                '5. 强制使用真实API生成（测试）',
+                '6. 查看当前用户状态'
+            ];
+            
+            const choice = prompt('管理员调试菜单:\n\n' + actions.join('\n') + '\n\n请输入选项数字 (1-6):');
+            
+            switch(choice) {
+                case '1':
+                    reinitializeUser();
+                    break;
+                case '2':
+                    setCreditsToZero();
+                    break;
+                case '3':
+                    addDebugCredits();
+                    break;
+                case '4':
+                    testAPIConnection();
+                    break;
+                case '5':
+                    testRealAPIGeneration();
+                    break;
+                case '6':
+                    showUserStatus();
+                    break;
+                default:
+                    if (choice !== null) {
+                        alert('无效选项');
+                    }
+            }
+        }
+        
+        // 设置用户积分为0（仅管理员可用）
+        async function setCreditsToZero() {
             try {
                 console.log('🔧 设置积分为0进行测试...');
                 
@@ -3195,6 +3402,223 @@
             } catch (error) {
                 console.error('设置积分失败:', error);
                 alert('设置积分失败：' + error.message);
+            }
+        }
+        
+        // 添加调试积分
+        async function addDebugCredits() {
+            try {
+                console.log('🔧 添加100积分...');
+                
+                // 更新数据库
+                if (!currentUser.is_local_mode) {
+                    await supabaseClient
+                        .from('users')
+                        .update({ 
+                            credits: (currentUser.credits || 0) + 100,
+                            total_credits_earned: (currentUser.total_credits_earned || 0) + 100
+                        })
+                        .eq('uuid', currentUser.uuid);
+                }
+                
+                // 更新本地状态
+                creditsManager.credits += 100;
+                creditsManager.updateCreditsDisplay();
+                
+                console.log('✅ 已添加100积分');
+                alert('已添加100积分');
+            } catch (error) {
+                console.error('添加积分失败:', error);
+                alert('添加积分失败：' + error.message);
+            }
+        }
+        
+        // 测试API连接
+        async function testAPIConnection() {
+            try {
+                console.log('🔧 测试API连接...');
+                alert('正在测试API连接，请稍候...');
+                
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        prompt: 'test connection',
+                        width: 512,
+                        height: 512,
+                        steps: 1
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    console.log('✅ API连接成功:', data);
+                    alert('API连接成功！\n\n响应数据:\n' + JSON.stringify(data, null, 2));
+                } else {
+                    console.error('❌ API连接失败:', data);
+                    alert('API连接失败！\n\n错误信息:\n' + JSON.stringify(data, null, 2));
+                }
+            } catch (error) {
+                console.error('❌ API测试失败:', error);
+                alert('API测试失败：' + error.message);
+            }
+        }
+        
+        // 测试真实API生成（管理员强制测试）
+        async function testRealAPIGeneration() {
+            const prompt = document.getElementById('prompt').value.trim() || 'a beautiful sunset over mountains';
+            
+            try {
+                console.log('🔧 管理员强制测试真实API生成...');
+                alert('正在使用真实API生成图片，请稍候...');
+                
+                const result = await callImageGenerationAPI(prompt, '512x512', 4);
+                
+                console.log('✅ 真实API生成成功:', result);
+                
+                // 显示结果
+                const resultArea = document.getElementById('resultArea');
+                resultArea.innerHTML = `
+                    <div class="result-success">
+                        <img src="${result.imageUrl}" alt="Generated Image" class="generated-image" />
+                        <div class="result-actions">
+                            <button onclick="downloadImage('${result.imageUrl}', 'test-api-${Date.now()}.png')" class="action-btn">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        </div>
+                        <p class="generation-info">API测试成功 - 生成时间: ${(result.generationTime / 1000).toFixed(1)}s</p>
+                        <p style="color: #10b981; font-size: 12px; margin-top: 8px;">
+                            🚀 真实API测试 - FLUX模型
+                        </p>
+                    </div>
+                `;
+                
+                alert('真实API生成成功！图片已显示在结果区域。');
+            } catch (error) {
+                console.error('❌ 真实API生成失败:', error);
+                alert('真实API生成失败：' + error.message);
+            }
+        }
+        
+        // 显示用户状态
+        function showUserStatus() {
+            const status = {
+                currentUser: currentUser,
+                credits: creditsManager.credits,
+                systemSettings: systemSettings,
+                isAdmin: isAdminUser()
+            };
+            
+            console.log('👤 当前用户状态:', status);
+            alert('用户状态信息已输出到控制台，请按F12查看详细信息。\n\n简要信息:\n' + 
+                  `邮箱: ${currentUser?.email || '未登录'}\n` +
+                  `积分: ${creditsManager.credits}\n` +
+                  `管理员: ${isAdminUser() ? '是' : '否'}`);
+        }
+        
+        // 重新初始化用户状态
+        async function reinitializeUser() {
+            try {
+                console.log('🔄 重新初始化用户状态...');
+                
+                // 重新加载系统设置
+                await loadSystemSettings();
+                
+                // 重新初始化用户管理器
+                userManager.isInitialized = false;
+                await userManager.initialize();
+                
+                // 重新初始化积分管理器
+                await creditsManager.initialize(currentUser);
+                
+                console.log('✅ 用户状态重新初始化完成');
+                alert('用户状态已重新初始化');
+            } catch (error) {
+                console.error('❌ 重新初始化失败:', error);
+                alert('重新初始化失败：' + error.message);
+            }
+        }
+        
+        // 显示当前用户状态（临时调试功能）
+        function showCurrentUserStatus() {
+            const isAdmin = currentUser && currentUser.email === 'sunwei7482@gmail.com';
+            const statusInfo = {
+                用户邮箱: currentUser?.email || '未登录',
+                是否管理员: isAdmin ? '是' : '否',
+                当前积分: creditsManager?.credits || 0,
+                用户UUID: currentUser?.uuid || '无',
+                登录状态: currentUser ? '已登录' : '匿名用户',
+                生成模式: isAdmin ? '测试模式（模拟生成）' : '正式模式（真实API）'
+            };
+            
+            console.log('👤 当前用户完整状态:', {
+                currentUser,
+                creditsManager,
+                systemSettings,
+                statusInfo
+            });
+            
+            const statusText = Object.entries(statusInfo)
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n');
+            
+            alert('当前用户状态:\n\n' + statusText + '\n\n详细信息已输出到控制台（按F12查看）');
+        }
+        
+        // 快速API测试功能
+        async function testAPIFromHere() {
+            const resultArea = document.getElementById('resultArea');
+            
+            try {
+                resultArea.innerHTML = `
+                    <div class="generating-status">
+                        <div class="loading-spinner"></div>
+                        <h3>正在测试API连接...</h3>
+                        <p>使用简单提示词测试API是否正常工作</p>
+                    </div>
+                `;
+                
+                console.log('🧪 开始快速API测试...');
+                
+                const testResult = await callImageGenerationAPI('a simple red apple', '512x512', 4);
+                
+                console.log('✅ API测试成功:', testResult);
+                
+                resultArea.innerHTML = `
+                    <div class="result-success">
+                        <img src="${testResult.imageUrl}" alt="API Test Image" class="generated-image" />
+                        <div class="result-actions">
+                            <button onclick="downloadImage('${testResult.imageUrl}', 'api-test-${Date.now()}.png')" class="action-btn">
+                                <i class="fas fa-download"></i> Download
+                            </button>
+                        </div>
+                        <p class="generation-info">✅ API测试成功 - 生成时间: ${(testResult.generationTime / 1000).toFixed(1)}s</p>
+                        <p style="color: #10b981; font-size: 12px; margin-top: 8px;">
+                            🚀 API连接正常 - 您可以正常使用生成功能
+                        </p>
+                    </div>
+                `;
+                
+                alert('API测试成功！您的API连接正常，可以正常使用生成功能。');
+                
+            } catch (error) {
+                console.error('❌ API测试失败:', error);
+                
+                resultArea.innerHTML = `
+                    <div class="result-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>API测试失败</h3>
+                        <p style="color: #dc2626; margin: 10px 0;">${error.message}</p>
+                        <p style="color: #64748b; font-size: 14px;">
+                            API连接存在问题，这可能是导致生成失败的原因。
+                        </p>
+                    </div>
+                `;
+                
+                alert('API测试失败：' + error.message);
             }
         }
         
