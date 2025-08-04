@@ -2909,11 +2909,13 @@
                 }
                 
                 // 根据用户类型选择生成方式
+                let imageUrl, generationTime;
+                
                 if (isAdminUser()) {
                     console.log('🧪 管理员用户 - 使用模拟生成模式');
                     const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
-                    const imageUrl = simulationResult.imageUrl;
-                    const generationTime = simulationResult.generationTime;
+                    imageUrl = simulationResult.imageUrl;
+                    generationTime = simulationResult.generationTime;
                     
                     console.log('✅ 模拟生成完成:', { 
                         imageUrl: imageUrl.substring(0, 50) + '...', 
@@ -2926,8 +2928,8 @@
                     console.log('🚀 正式用户 - 使用真实API生成');
                     try {
                         const apiResult = await callImageGenerationAPI(prompt, imageSize, steps);
-                        const imageUrl = apiResult.imageUrl;
-                        const generationTime = apiResult.generationTime;
+                        imageUrl = apiResult.imageUrl;
+                        generationTime = apiResult.generationTime;
                         
                         console.log('✅ API生成完成:', { 
                             imageUrl: imageUrl.substring(0, 50) + '...', 
@@ -2939,7 +2941,9 @@
                     } catch (error) {
                         console.error('❌ API生成失败，降级到模拟模式:', error);
                         const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
-                        displayGenerationResult(simulationResult.imageUrl, simulationResult.generationTime, true, prompt, imageSize, steps);
+                        imageUrl = simulationResult.imageUrl;
+                        generationTime = simulationResult.generationTime;
+                        displayGenerationResult(imageUrl, generationTime, true, prompt, imageSize, steps);
                     }
                 }
                 
