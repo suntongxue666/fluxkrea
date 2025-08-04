@@ -233,6 +233,9 @@
             border: 2px solid #e2e8f0;
             position: relative;
             transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
         }
         
         .pricing-card:hover {
@@ -334,6 +337,7 @@
         .features-list {
             list-style: none;
             margin-bottom: 40px;
+            flex-grow: 1;
         }
         
         .features-list li {
@@ -361,6 +365,7 @@
             text-decoration: none;
             display: inline-block;
             text-align: center;
+            margin-top: auto;
         }
         
         .plan-button.primary {
