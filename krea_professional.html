@@ -1607,7 +1607,7 @@
                                 Inference Steps
                                 <span class="slider-value" id="stepsValue">4</span>
                             </label>
-                            <input type="range" min="1" max="4" value="4" class="slider" id="stepsSlider">
+                            <input type="range" min="1" max="12" value="4" class="slider" id="stepsSlider">
                         </div>
                     </div>
                     
@@ -2478,11 +2478,7 @@
                 }
             }
             
-            // 检查是否为管理员用户
-        function isAdminUser() {
-            const adminEmails = ['sunwei7482@gmail.com'];
-            return currentUser && currentUser.email && adminEmails.includes(currentUser.email);
-        }
+            // 检查管理员权限并显示调试按钮
             checkAndShowDebugButton() {
                 const debugBtn = document.getElementById('debugRefreshBtn');
                 if (debugBtn && this.currentUser) {
@@ -2576,6 +2572,14 @@
                 }
             }
         }
+        
+        // 检查是否为管理员用户
+        function isAdminUser() {
+            const adminEmails = ['sunwei7482@gmail.com'];
+            return currentUser && currentUser.email && adminEmails.includes(currentUser.email);
+        }
+        
+        // 生成用户指纹
         function generateUserFingerprint() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -3135,8 +3139,6 @@
                 imageUrl: result.imageUrl,
                 generationTime: result.generationTime
             };
-            */
-        }
         
         // 辅助函数
         function downloadImage(imageUrl, filename) {
@@ -3163,28 +3165,14 @@
             }
         }
         
+        function scrollToGenerator() {
+            document.getElementById('generator').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Demo generation function
         function demoGenerate(demoPrompt) {
             document.getElementById('prompt').value = demoPrompt;
             document.getElementById('prompt').scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        function pastePrompt() {
-            navigator.clipboard.readText().then(text => {
-                document.getElementById('prompt').value = text;
-                document.getElementById('prompt').focus();
-                alert('文本已粘贴到输入框');
-            }).catch(err => {
-                console.error('无法读取剪切板:', err);
-                alert('无法访问剪切板，请确保浏览器支持该功能');
-            });
-        }
-        
-        function clearPrompt() {
-            document.getElementById('prompt').value = '';
-        }
-        
-        function scrollToGenerator() {
-            document.getElementById('generator').scrollIntoView({ behavior: 'smooth' });
         }
         
         // 滑块更新事件监听器
