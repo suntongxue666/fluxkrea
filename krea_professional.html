@@ -2869,7 +2869,7 @@
                     <span class="credits-cost">-${generationCost} Credits</span>
                 `;
                 
-                const loadingMessage = isAdminUser() ? 
+                const loadingMessage = (currentUser && currentUser.email === 'sunwei7482@gmail.com') ? 
                     '🧪 管理员测试模式 - 模拟生成中' : 
                     '🚀 正在调用真实AI生成服务';
                 
@@ -2915,7 +2915,8 @@
                 // 根据用户类型选择生成方式
                 let imageUrl, generationTime;
                 
-                if (isAdminUser()) {
+                // 强制所有非管理员用户使用真实API
+                if (currentUser && currentUser.email === 'sunwei7482@gmail.com') {
                     console.log('🧪 管理员用户 - 使用模拟生成模式');
                     const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
                     imageUrl = simulationResult.imageUrl;
@@ -2929,7 +2930,7 @@
                     // 显示模拟结果
                     displayGenerationResult(imageUrl, generationTime, true, prompt, imageSize, steps);
                 } else {
-                    console.log('🚀 正式用户 - 使用真实API生成');
+                    console.log('🚀 所有其他用户(含未登录) - 强制使用真实API生成');
                     try {
                         const apiResult = await callImageGenerationAPI(prompt, imageSize, steps);
                         imageUrl = apiResult.imageUrl;
