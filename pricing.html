@@ -259,6 +259,29 @@
             font-weight: 600;
         }
         
+        .pricing-card.discount::before {
+            content: "40% Discount";
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        
+        .pricing-card.discount {
+            border-color: #f59e0b;
+            transform: scale(1.05);
+        }
+        
+        .pricing-card.discount:hover {
+            transform: scale(1.05) translateY(-4px);
+        }
+        
         .pricing-card.popular:hover {
             transform: scale(1.05) translateY(-4px);
         }
@@ -614,8 +637,8 @@
     
     <!-- Hero Section -->
     <section class="hero">
-        <h1>Choose Your Perfect Plan</h1>
-        <p>Affordable pricing for everyone. Start creating amazing AI images today with our flexible credit packages.</p>
+        <h1>Simple, Affordable Pricing</h1>
+        <p>Choose and Start creating amazing AI images today with our flexible credit packages.</p>
     </section>
     
     <!-- Pricing Section -->
@@ -632,14 +655,15 @@
                         <span class="period">/month</span>
                     </div>
                     <p class="credits-info">20 free credits to start</p>
+                    <p class="credits-info" style="margin-top: -24px; margin-bottom: 32px;">Given to 30 Lucky Users per day.</p>
                     <ul class="features-list">
-                        <li><i class="fas fa-check"></i> 20 initial credits</li>
+                        <li><i class="fas fa-check"></i> 2 times creation</li>
                         <li><i class="fas fa-check"></i> Standard image quality</li>
                         <li><i class="fas fa-check"></i> Basic image sizes</li>
                         <li><i class="fas fa-check"></i> No signup required</li>
                         <li><i class="fas fa-check"></i> Commercial use allowed</li>
                     </ul>
-                    <a href="krea_professional.html" class="plan-button secondary">Get Started Free</a>
+                    <a href="krea_professional.html" class="plan-button secondary">You've got the luck</a>
                 </div>
                 
                 <!-- Pro Plan -->
@@ -648,64 +672,42 @@
                     <p class="plan-description">Best value for regular users</p>
                     <div class="plan-price">
                         <span class="currency">$</span>
-                        <span class="price">9</span>
+                        <span class="price">9.9</span>
                         <span class="period">/month</span>
                     </div>
-                    <p class="credits-info">500 credits per month</p>
+                    <p class="credits-info">1000 credits per month</p>
                     <ul class="features-list">
-                        <li><i class="fas fa-check"></i> 500 monthly credits</li>
+                        <li><i class="fas fa-check"></i> 1000 monthly credits</li>
                         <li><i class="fas fa-check"></i> HD image quality</li>
                         <li><i class="fas fa-check"></i> All image sizes</li>
                         <li><i class="fas fa-check"></i> Priority generation</li>
                         <li><i class="fas fa-check"></i> Commercial use allowed</li>
                         <li><i class="fas fa-check"></i> Email support</li>
+                        <li><i class="fas fa-check"></i> No Ads</li>
                     </ul>
                     <a href="#" class="plan-button primary" onclick="showComingSoon()">Choose Pro</a>
                 </div>
                 
-                <!-- Premium Plan -->
-                <div class="pricing-card">
-                    <h3 class="plan-name">Premium</h3>
+                <!-- Max Plan -->
+                <div class="pricing-card discount">
+                    <h3 class="plan-name">Max</h3>
                     <p class="plan-description">For power users and professionals</p>
                     <div class="plan-price">
                         <span class="currency">$</span>
-                        <span class="price">29</span>
+                        <span class="price">29.9</span>
                         <span class="period">/month</span>
                     </div>
-                    <p class="credits-info">2000 credits per month</p>
+                    <p class="credits-info">5000 credits per month</p>
                     <ul class="features-list">
-                        <li><i class="fas fa-check"></i> 2000 monthly credits</li>
+                        <li><i class="fas fa-check"></i> 5000 monthly credits</li>
                         <li><i class="fas fa-check"></i> Ultra-HD image quality</li>
                         <li><i class="fas fa-check"></i> All image sizes</li>
                         <li><i class="fas fa-check"></i> Fastest generation</li>
                         <li><i class="fas fa-check"></i> Commercial use allowed</li>
-                        <li><i class="fas fa-check"></i> Priority support</li>
-                        <li><i class="fas fa-check"></i> API access</li>
+                        <li><i class="fas fa-check"></i> Priority email support</li>
+                        <li><i class="fas fa-check"></i> No Ads</li>
                     </ul>
-                    <a href="#" class="plan-button secondary" onclick="showComingSoon()">Choose Premium</a>
-                </div>
-                
-                <!-- Enterprise Plan -->
-                <div class="pricing-card">
-                    <h3 class="plan-name">Enterprise</h3>
-                    <p class="plan-description">Custom solutions for teams</p>
-                    <div class="plan-price">
-                        <span class="currency">$</span>
-                        <span class="price">99</span>
-                        <span class="period">/month</span>
-                    </div>
-                    <p class="credits-info">Unlimited credits</p>
-                    <ul class="features-list">
-                        <li><i class="fas fa-check"></i> Unlimited credits</li>
-                        <li><i class="fas fa-check"></i> Ultra-HD image quality</li>
-                        <li><i class="fas fa-check"></i> All image sizes</li>
-                        <li><i class="fas fa-check"></i> Dedicated servers</li>
-                        <li><i class="fas fa-check"></i> Commercial use allowed</li>
-                        <li><i class="fas fa-check"></i> 24/7 support</li>
-                        <li><i class="fas fa-check"></i> Custom integrations</li>
-                        <li><i class="fas fa-check"></i> Team management</li>
-                    </ul>
-                    <a href="mailto:tiktreeapp@gmail.com" class="plan-button secondary">Contact Sales</a>
+                    <a href="#" class="plan-button secondary" onclick="showComingSoon()">Choose Max</a>
                 </div>
             </div>
         </div>
