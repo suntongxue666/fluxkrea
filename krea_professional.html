@@ -2871,16 +2871,14 @@
                 
                 const loadingMessage = (currentUser && currentUser.email === 'sunwei7482@gmail.com') ? 
                     '🧪 管理员测试模式 - 模拟生成中' : 
-                    '🚀 正在调用真实AI生成服务';
+                    '';
                 
                 resultArea.innerHTML = `
                     <div class="generating-status">
                         <div class="loading-spinner"></div>
                         <h3>Generating your image...</h3>
                         <p>Please wait patiently, usually takes 5-15 seconds</p>
-                        <p style="color: #6366f1; font-size: 14px; margin-top: 12px;">
-                            ${loadingMessage}
-                        </p>
+                        ${loadingMessage ? `<p style="color: #6366f1; font-size: 14px; margin-top: 12px;">${loadingMessage}</p>` : ''}
                     </div>
                 `;
                 
