@@ -2400,30 +2400,57 @@
                     // 设置匿名用户上下文
                     await supabaseClient.rpc('set_user_context', { user_uuid: uuid });
                     
-                    // 首先尝试通过多重标识查找现有用户（防止刷新重置积分）
-                    let { data: existingUsers, error: searchError } = await supabaseClient
-                        .from('users')
-                        .select('*')
-                        .or(`uuid.eq.${uuid},user_identifier.eq.${userIdentifier},fingerprint.eq.${fingerprint}`)
-                        .eq('is_signed_in', false);
+                    // 🔒 关键防刷逻辑：优先通过指纹查找现有用户
+                    console.log('🔍 开始用户查找 - 防刷检查:', {
+                        fingerprint: fingerprint.substring(0, 20) + '...',
+                        uuid: uuid,
+                        ip: ip
+                    });
                     
                     let user = null;
                     
-                    if (!searchError && existingUsers && existingUsers.length > 0) {
-                        // 找到匹配的用户，使用第一个匹配的用户
-                        user = existingUsers[0];
-                        console.log('🔍 找到现有匿名用户 - 防止积分重置:', { 
-                            uuid: user.uuid, 
+                    // 第一步：通过指纹查找（最重要的防刷手段）
+                    let { data: fingerprintUsers, error: fingerprintError } = await supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('fingerprint', fingerprint)
+                        .eq('is_signed_in', false);
+                    
+                    if (!fingerprintError && fingerprintUsers && fingerprintUsers.length > 0) {
+                        user = fingerprintUsers[0];
+                        console.log('🔒 通过指纹找到现有用户 - 防止积分重置:', {
+                            uuid: user.uuid,
+                            fingerprint: user.fingerprint.substring(0, 20) + '...',
                             credits: user.credits,
                             totalEarned: user.total_credits_earned,
-                            matchType: user.uuid === uuid ? 'UUID' : user.user_identifier === userIdentifier ? 'Identifier' : 'Fingerprint',
-                            createdAt: user.created_at
+                            createdAt: user.created_at,
+                            lastSeen: user.last_seen_at
                         });
                         
-                        // ⚠️ 关键：不重置积分，保持用户当前积分状态
-                        console.log('💰 保持用户积分状态:', user.credits, '不重新分配免费积分');
+                        console.log('💰 指纹匹配 - 保持积分状态:', user.credits, '(不重新分配20积分)');
                         
-                        // 更新用户的UUID和标识信息（保持最新），但不修改积分
+                    } else {
+                        // 第二步：如果指纹没找到，尝试UUID查找
+                        let { data: uuidUsers, error: uuidError } = await supabaseClient
+                            .from('users')
+                            .select('*')
+                            .eq('uuid', uuid)
+                            .eq('is_signed_in', false);
+                        
+                        if (!uuidError && uuidUsers && uuidUsers.length > 0) {
+                            user = uuidUsers[0];
+                            console.log('🆔 通过UUID找到现有用户:', {
+                                uuid: user.uuid,
+                                credits: user.credits,
+                                fingerprint: user.fingerprint?.substring(0, 20) + '...' || 'none'
+                            });
+                        }
+                    }
+                    
+                    if (user) {
+                        // 找到现有用户，更新信息但保持积分不变
+                        console.log('✅ 现有用户 - 更新信息但保持积分:', user.credits);
+                        
                         await supabaseClient
                             .from('users')
                             .update({
@@ -2432,11 +2459,11 @@
                                 fingerprint: fingerprint,
                                 ip_address: ip,
                                 last_seen_at: new Date().toISOString()
-                                // 注意：不更新credits字段，保持原有积分
+                                // 🔒 关键：不更新credits字段，保持原有积分状态
                             })
                             .eq('id', user.id);
                         
-                        // 更新本地UUID以保持一致性
+                        // 更新本地UUID
                         localStorage.setItem('user_uuid', user.uuid);
                         
                     } else {
@@ -3373,7 +3400,8 @@
                 '5. 强制使用真实API生成（测试）',
                 '6. 查看当前用户状态',
                 '7. 检查匿名用户防刷机制',
-                '8. 测试积分保持功能'
+                '8. 测试积分保持功能',
+                '9. 测试指纹查找功能'
             ];
             
             const choice = prompt('管理员调试菜单:\n\n' + actions.join('\n') + '\n\n请输入选项数字 (1-6):');
@@ -3402,6 +3430,9 @@
                     break;
                 case '8':
                     testCreditsPersistence();
+                    break;
+                case '9':
+                    testFingerprintLookup();
                     break;
                 default:
                     if (choice !== null) {
@@ -3670,6 +3701,52 @@ ${similarUsers.length > 0 ? '⚠️ 发现相似用户，防刷机制正常工�
                 
             } catch (error) {
                 console.error('❌ 积分保持测试失败:', error);
+                alert('测试失败：' + error.message);
+            }
+        }
+        
+        // 测试指纹查找功能（管理员专用）
+        async function testFingerprintLookup() {
+            if (!currentUser || currentUser.email !== 'sunwei7482@gmail.com') {
+                alert('此功能仅管理员可用');
+                return;
+            }
+            
+            try {
+                console.log('🔍 测试指纹查找功能...');
+                
+                const fingerprint = generateUserFingerprint();
+                console.log('当前指纹:', fingerprint);
+                
+                // 查找相同指纹的用户
+                const { data: users, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('fingerprint', fingerprint)
+                    .eq('is_signed_in', false);
+                
+                if (error) throw error;
+                
+                console.log('🔍 指纹查找结果:', users);
+                
+                const message = `指纹查找测试结果:
+                
+当前指纹: ${fingerprint.substring(0, 30)}...
+找到用户数量: ${users.length}
+${users.length > 0 ? `
+第一个用户:
+- UUID: ${users[0].uuid}
+- 积分: ${users[0].credits}
+- 创建时间: ${users[0].created_at}
+- 最后访问: ${users[0].last_seen_at}
+` : '未找到匹配用户'}
+
+${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用户，可能是新用户'}`;
+                
+                alert(message);
+                
+            } catch (error) {
+                console.error('❌ 指纹查找测试失败:', error);
                 alert('测试失败：' + error.message);
             }
         }
