@@ -199,7 +199,7 @@
         .google-icon {
             width: 18px;
             height: 18px;
-            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjY0IDkuMjA0NTVDMTcuNjQgOC41NjYzNiAxNy41ODM2IDcuOTUyNzMgMTcuNDggNy4zNjM2NEg5VjEwLjg0NTVIMTMuODQzNkMxMy42MzUgMTEuOTcgMTMuMDAwOSAxMi45MjMgMTIuMTEgMTMuNTYxNFYxNS44MTk1SDEzLjk1NjRDMTUuNjU3MyAxNC4yNTI3IDE2LjY0IDEyLjk0NTUgMTcuNjQgOS4yMDQ1NVoiIGZpbGw9IiM0Mjg1RjQiLz4KPHBhdGggZD0iTTkgMThDMTEuNDMgMTggMTMuNDY3MyAxNy4xOTQxIDE0Ljk1NjQgMTUuODE5NUwxMy4xMSAxMy41NjE0QzEyLjQyIDEzLjk5OTEgMTEuNTQgMTQuMjYxNCAxMC4wMzY0IDE0LjI2MTRDNy42NSAxNC4yNjE0IDUuNjcyNzMgMTMuNjA0MSA0LjM2NCA5LjI1SDE2LjI0NTVWNy4zNjM2NEgzLjI3VjE0LjI2MTRDMy4yNyAxNS4wODQxIDQuMDg2MzYgMTcuNjEzNiA5IDE4WiIgZmlsbD0iIzM0QTg1MyIvPgo8cGF0aCBkPSJNMy4zNjM2NCA5LjI3SDBWMTYuMjczNkMwIDExLjUyNzMgMy4zNjM2NCA4LjE2MzY0IDguMSA4LjE2MzY0VjEwLjM0MTRDNi4xNzQ1NSAxMC4zNDE0IDMuNzMwOTEgMTAuNjEzNiAzLjM2MzY0IDEwLjk5MDlWOS4yN1oiIGZpbGw9IiNGQkJDMDQiLz4KPHBhdGggZD0iTTkgNy4xNkM2LjM4MTgyIDcuMTYgNC4yIDkuMzQxODIgMy4zNjM2NCA3LjUwNDU1TDEuNTQwOTEgNS42M0M2LjAwOTA5IDEuMTU0NTUgMTEuNDMgMS4xNTQ1NSAxNi45IDYuNjM2MzZMMTUuMDc3MyA4LjQ1OTA5Qzg1IDcuMzk1NDUgOS40NzI3MyA3LjE2IDkgNy4xNloiIGZpbGw9IiNFQTQzMzUiLz4KPC9zdmc+Cg==') no-repeat center;
+            background: url('https://www.gstatic.com/marketing-cms/assets/images/76/76/c79495454250aaacab1867bdcda4/about-10things-g.png') no-repeat center;
             background-size: contain;
         }
         
@@ -959,9 +959,11 @@
                 display: none;
             }
             
-            /* 仅隐藏移动端顶部导航栏的signin按钮 */
+            /* 移动端登录按钮样式 */
             .signin-btn {
-                display: none !important;
+                display: flex !important;
+                padding: 6px 12px;
+                font-size: 12px;
             }
             
             /* 移动端显示积分显示 */
@@ -1309,9 +1311,113 @@
             background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjY0IDkuMjA0NTVDMTcuNjQgOC41NjYzNiAxNy41ODM2IDcuOTUyNzMgMTcuNDggNy4zNjM2NEg5VjEwLjg0NTVIMTMuODQzNkMxMy42MzUgMTEuOTcgMTMuMDAwOSAxMi45MjMgMTIuMTEgMTMuNTYxNFYxNS44MTk1SDEzLjk1NjRDMTUuNjU3MyAxNC4yNTI3IDE2LjY0IDEyLjk0NTUgMTcuNjQgOS4yMDQ1NVoiIGZpbGw9IiM0Mjg1RjQiLz4KPHBhdGggZD0iTTkgMThDMTEuNDMgMTggMTMuNDY3MyAxNy4xOTQxIDE0Ljk1NjQgMTUuODE5NUwxMy4xMSAxMy41NjE0QzEyLjQyIDEzLjk5OTEgMTEuNTQgMTQuMjYxNCAxMC4wMzY0IDE0LjI2MTRDNy42NSAxNC4yNjE0IDUuNjcyNzMgMTMuNjA0MSA0LjM2NCA5LjI1SDE2LjI0NTVWNy4zNjM2NEgzLjI3VjE0LjI2MTRDMy4yNyAxNS4wODQxIDQuMDg2MzYgMTcuNjEzNiA5IDE4WiIgZmlsbD0iIzM0QTg1MyIvPgo8cGF0aCBkPSJNMy4zNjM2NCA5LjI3SDBWMTYuMjczNkMwIDExLjUyNzMgMy4zNjM2NCA4LjE2MzY0IDguMSA4LjE2MzY0VjEwLjM0MTRDNi4xNzQ1NSAxMC4zNDE0IDMuNzMwOTEgMTAuNjEzNiAzLjM2MzY0IDEwLjk5MDlWOS4yN1oiIGZpbGw9IiNGQkJDMDQiLz4KPHBhdGggZD0iTTkgNy4xNkM2LjM4MTgyIDcuMTYgNC4yIDkuMzQxODIgMy4zNjM2NCA3LjUwNDU1TDEuNTQwOTEgNS42M0M2LjAwOTA5IDEuMTU0NTUgMTEuNDMgMS4xNTQ1NSAxNi45IDYuNjM2MzZMMTUuMDc3MyA4LjQ1OTA5Qzg1IDcuMzk1NDUgOS40NzI3MyA7LjE2IDkgNy4xNloiIGZpbGw9IiNFQTQzMzUiLz4KPC9zdmc+Cg==') no-repeat center;
             background-size: contain;
         }
+        
+        /* 退出登录确认弹窗 */
+        .signout-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1002;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .signout-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .signout-modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .signout-modal.active .signout-modal-content {
+            transform: scale(1);
+        }
+        
+        .signout-modal h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #1a202c;
+        }
+        
+        .signout-modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .signout-modal-btn {
+            padding: 10px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+        
+        .signout-modal-btn.cancel {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+        
+        .signout-modal-btn.cancel:hover {
+            background: #e2e8f0;
+        }
+        
+        .signout-modal-btn.confirm {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .signout-modal-btn.confirm:hover {
+            background: #b91c1c;
+        }
+        
+        /* 用户头像样式 */
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .user-avatar:hover {
+            transform: scale(1.05);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
     </style>
 </head>
 <body>
+    <!-- Signout Confirmation Modal -->
+    <div class="signout-modal" id="signoutModal">
+        <div class="signout-modal-content">
+            <h3>Are you sure sign out?</h3>
+            <div class="signout-modal-actions">
+                <button class="signout-modal-btn cancel" onclick="closeSignoutModal()">Cancel</button>
+                <button class="signout-modal-btn confirm" onclick="confirmSignout()">OK</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Insufficient Credits Modal -->
     <div class="credits-modal" id="creditsModal">
         <div class="credits-modal-content">
@@ -2269,12 +2375,14 @@
                 const signinBtn = document.querySelector('.signin-btn');
                 if (signinBtn && this.currentUser) {
                     signinBtn.innerHTML = `
-                        <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/24'}" 
-                             alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%;">
-                        <span>${this.currentUser.name || this.currentUser.email}</span>
-                        <i class="fas fa-chevron-down" style="margin-left: 4px; font-size: 12px;"></i>
+                        <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/32'}" 
+                             alt="User Avatar" class="user-avatar">
                     `;
                     signinBtn.onclick = () => this.showUserMenu();
+                    signinBtn.style.padding = '4px';
+                    signinBtn.style.border = 'none';
+                    signinBtn.style.boxShadow = 'none';
+                    signinBtn.style.background = 'transparent';
                 }
                 
                 // 检查是否为管理员账户，显示调试按钮
@@ -2320,11 +2428,7 @@
             
             // 显示用户菜单
             showUserMenu() {
-                // TODO: 实现用户菜单（退出登录、个人设置等）
-                const menu = confirm('是否退出登录？');
-                if (menu) {
-                    this.signOut();
-                }
+                showSignoutModal();
             }
             
             // Google登录
@@ -3006,7 +3110,29 @@
             }
         }
         
-        // 显示积分不足弹窗
+        // 显示退出登录确认弹窗
+        function showSignoutModal() {
+            const modal = document.getElementById('signoutModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 关闭退出登录确认弹窗
+        function closeSignoutModal() {
+            const modal = document.getElementById('signoutModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
+        // 确认退出登录
+        function confirmSignout() {
+            closeSignoutModal();
+            if (userManager) {
+                userManager.signOut();
+            }
+        }
+        
+        // 检查用户登录状态并显示积分不足弹窗
         function showCreditsModal(currentCredits, requiredCredits) {
             const modal = document.getElementById('creditsModal');
             const modalRequiredCredits = document.getElementById('modalRequiredCredits');
@@ -3016,10 +3142,91 @@
             modalTitle.textContent = `Credits current is ${currentCredits}`;
             modalRequiredCredits.textContent = requiredCredits;
             
-            // 显示弹窗
-            modal.classList.add('active');
+            // 检查用户是否已登录
+            if (currentUser && currentUser.is_signed_in) {
+                // 已登录用户，直接跳转到订阅页面或显示购买积分选项
+                console.log('用户已登录，跳转到订阅页面');
+                // TODO: 实现跳转到订阅页面的逻辑
+                alert('功能开发中：跳转到订阅页面购买积分');
+                return;
+            }
             
-            // 禁用body滚动
+            // 未登录用户，显示登录提示弹窗
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 每日预览弹窗显示限制
+        let dailyPreviewCount = parseInt(localStorage.getItem('dailyPreviewCount') || '0');
+        let lastPreviewDate = localStorage.getItem('lastPreviewDate') || '';
+        const today = new Date().toDateString();
+        
+        // 重置每日计数
+        if (lastPreviewDate !== today) {
+            dailyPreviewCount = 0;
+            localStorage.setItem('lastPreviewDate', today);
+        }
+        
+        // 显示预览弹窗（一天最多3次）
+        function showPreviewModal() {
+            if (dailyPreviewCount < 3) {
+                dailyPreviewCount++;
+                localStorage.setItem('dailyPreviewCount', dailyPreviewCount.toString());
+                
+                // 延迟显示预览弹窗
+                setTimeout(() => {
+                    openShowcase();
+                }, 1000);
+            }
+        }
+        
+        // 页面加载时显示预览弹窗
+        document.addEventListener('DOMContentLoaded', function() {
+            // 页面加载完成后显示预览弹窗
+            setTimeout(showPreviewModal, 2000);
+        });
+        
+        // 点击弹窗背景关闭弹窗
+        document.addEventListener('DOMContentLoaded', function() {
+            const signoutModal = document.getElementById('signoutModal');
+            if (signoutModal) {
+                signoutModal.addEventListener('click', function(e) {
+                    if (e.target === signoutModal) {
+                        closeSignoutModal();
+                    }
+                });
+            }
+            
+            const creditsModal = document.getElementById('creditsModal');
+            if (creditsModal) {
+                creditsModal.addEventListener('click', function(e) {
+                    if (e.target === creditsModal) {
+                        closeCreditsModal();
+                    }
+                });
+            }
+        });
+        
+        // 显示积分不足弹窗 - 重新定义以集成登录验证
+        function showCreditsModal(currentCredits, requiredCredits) {
+            const modal = document.getElementById('creditsModal');
+            const modalRequiredCredits = document.getElementById('modalRequiredCredits');
+            const modalTitle = modal.querySelector('h3');
+            
+            // 更新弹窗内容
+            modalTitle.textContent = `Credits current is ${currentCredits}`;
+            modalRequiredCredits.textContent = requiredCredits;
+            
+            // 检查用户是否已登录
+            if (currentUser && currentUser.is_signed_in) {
+                // 已登录用户，直接跳转到订阅页面
+                console.log('用户已登录，应跳转到订阅页面');
+                alert('功能开发中：跳转到订阅页面购买积分');
+                return;
+            }
+            
+            // 未登录用户，显示登录提示弹窗
+            modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
         
@@ -3027,35 +3234,18 @@
         function closeCreditsModal() {
             const modal = document.getElementById('creditsModal');
             modal.classList.remove('active');
-            
-            // 恢复body滚动
             document.body.style.overflow = '';
         }
         
         // 从弹窗登录Google
         function signInFromModal() {
-            // 关闭弹窗
             closeCreditsModal();
-            
-            // 触发Google登录
             if (userManager) {
                 userManager.signInWithGoogle();
             } else {
                 alert('User system not initialized. Please refresh the page.');
             }
         }
-        
-        // 点击弹窗背景关闭
-        document.addEventListener('DOMContentLoaded', function() {
-            const modal = document.getElementById('creditsModal');
-            if (modal) {
-                modal.addEventListener('click', function(e) {
-                    if (e.target === modal) {
-                        closeCreditsModal();
-                    }
-                });
-            }
-        });
         
         // 在控制台暴露调试函数
         window.debugFunctions = {
