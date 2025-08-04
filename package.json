@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'Static site ready for deployment'",
+    "build": "mkdir -p public && cp krea_professional.html public/index.html && cp test_api.html public/ && cp krea_professional.html public/ && echo 'Static site ready for deployment'",
     "start": "vercel dev",
     "test-api": "node test_local_api.js",
     "check-env": "node check_env.js"

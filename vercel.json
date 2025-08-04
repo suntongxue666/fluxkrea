@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/",
-      "destination": "/krea_professional.html"
+      "destination": "/index.html"
     }
   ]
 }
