@@ -168,11 +168,12 @@
         .mode-buttons {
             display: flex;
             gap: 10px;
-            margin-bottom: 25px;
+            margin: 0px 0px 16px;
         }
         
         .mode-btn {
-            flex: 1;
+            width: 316px;
+            height: 72px;
             padding: 12px 16px;
             border: 2px solid #e5e7eb;
             border-radius: 12px;
@@ -184,6 +185,7 @@
             justify-content: center;
             gap: 8px;
             font-weight: 600;
+            flex: none;
         }
         
         .mode-btn.active {
@@ -348,6 +350,33 @@
             box-shadow: 0 8px 20px rgba(245, 158, 11, 0.3);
         }
         
+        /* More Credites Button for Generation Mode (Mobile Only) */
+        .more-credites-btn {
+            display: none;
+            width: 100%;
+            padding: 12px 16px;
+            background: #10b981;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 15px;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .more-credites-btn:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+        
         /* Result Section */
         .result-placeholder {
             text-align: center;
@@ -478,6 +507,10 @@
             .more-credits-btn {
                 display: flex;
             }
+            
+            .more-credites-btn {
+                display: flex;
+            }
         }
     </style>
 </head>
@@ -581,6 +614,12 @@
                     <a href="pricing.html" class="more-credits-btn">
                         <i class="fas fa-coins"></i>
                         More Credits
+                    </a>
+                    
+                    <!-- More Credites Button for Generation Mode (Mobile Only) -->
+                    <a href="pricing.html" class="more-credites-btn">
+                        <i class="fas fa-coins"></i>
+                        More Credites
                     </a>
                 </div>
             </div>
