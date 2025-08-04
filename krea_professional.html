@@ -2400,16 +2400,45 @@
                     // 设置匿名用户上下文
                     await supabaseClient.rpc('set_user_context', { user_uuid: uuid });
                     
-                    // 查找现有匿名用户
-                    let { data: user, error } = await supabaseClient
+                    // 首先尝试通过多重标识查找现有用户（防止刷新重置积分）
+                    let { data: existingUsers, error: searchError } = await supabaseClient
                         .from('users')
                         .select('*')
-                        .eq('uuid', uuid)
-                        .single();
+                        .or(`uuid.eq.${uuid},user_identifier.eq.${userIdentifier},fingerprint.eq.${fingerprint}`)
+                        .eq('is_signed_in', false);
                     
-                    if (error && error.code === 'PGRST116') {
+                    let user = null;
+                    
+                    if (!searchError && existingUsers && existingUsers.length > 0) {
+                        // 找到匹配的用户，使用第一个匹配的用户
+                        user = existingUsers[0];
+                        console.log('找到现有匿名用户:', { 
+                            uuid: user.uuid, 
+                            credits: user.credits,
+                            matchType: user.uuid === uuid ? 'UUID' : user.user_identifier === userIdentifier ? 'Identifier' : 'Fingerprint'
+                        });
+                        
+                        // 更新用户的UUID和标识信息（保持最新）
+                        await supabaseClient
+                            .from('users')
+                            .update({
+                                uuid: uuid,
+                                user_identifier: userIdentifier,
+                                fingerprint: fingerprint,
+                                ip_address: ip,
+                                last_seen_at: new Date().toISOString()
+                            })
+                            .eq('id', user.id);
+                        
+                        // 更新本地UUID
+                        localStorage.setItem('user_uuid', user.uuid);
+                        
+                    } else {
+                        // 没有找到匹配用户，检查是否是真正的新用户
+                        console.log('未找到现有用户，检查是否为新用户...');
+                    
                         // 创建新的匿名用户记录
-                        console.log('用户记录不存在，创建新用户:', uuid);
+                        console.log('创建新匿名用户:', { uuid, fingerprint, ip });
                         const { data: newUser, error: createError } = await supabaseClient
                             .from('users')
                             .insert({
@@ -2423,44 +2452,29 @@
                                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                                 screen_resolution: `${screen.width}x${screen.height}`,
                                 credits: systemSettings.default_credits || 20,
-                                total_credits_earned: systemSettings.default_credits || 20
+                                total_credits_earned: systemSettings.default_credits || 20,
+                                is_signed_in: false
                             })
                             .select()
                             .single();
                         
-                        if (createError) throw createError;
+                        if (createError) {
+                            console.error('创建用户失败:', createError);
+                            throw createError;
+                        }
                         user = newUser;
                         
                         // 记录初始积分
                         await this.addCreditTransaction(user.id, uuid, 'EARN', systemSettings.default_credits || 20, 
-                            '新用户奖励', 'signup_bonus');
-                    } else if (error) {
-                        throw error;
-                    } else {
-                        console.log('找到现有用户记录:', { uuid: user.uuid, credits: user.credits });
-                        // 检查用户积分是否为0（可能记录被重置了）
-                        if (user.credits === 0) {
-                            console.log('用户积分为0，重新分配初始积分');
-                            const initialCredits = systemSettings.default_credits || 20;
-                            await supabaseClient
-                                .from('users')
-                                .update({ 
-                                    credits: initialCredits,
-                                    total_credits_earned: (user.total_credits_earned || 0) + initialCredits
-                                })
-                                .eq('uuid', uuid);
-                            user.credits = initialCredits;
-                            
-                            // 记录积分分配
-                            await this.addCreditTransaction(user.id, uuid, 'EARN', initialCredits, 
-                                '账户重置奖励', 'reset_bonus');
-                        }
-                        
+                            '新用户奖励', 'anonymous_bonus');
+                    }
+                    
+                    if (user) {
                         // 更新最后访问时间
                         await supabaseClient
                             .from('users')
                             .update({ last_seen_at: new Date().toISOString() })
-                            .eq('uuid', uuid);
+                            .eq('id', user.id);
                     }
                     
                     this.currentUser = user;
@@ -2680,7 +2694,7 @@
             return currentUser && currentUser.email && adminEmails.includes(currentUser.email);
         }
         
-        // 生成用户指纹
+        // 生成用户指纹（增强版，包含更多设备特征）
         function generateUserFingerprint() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -2691,13 +2705,38 @@
             const fingerprint = {
                 userAgent: navigator.userAgent,
                 language: navigator.language,
+                languages: navigator.languages ? navigator.languages.join(',') : '',
                 platform: navigator.platform,
                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                 screen: `${screen.width}x${screen.height}`,
-                canvas: canvas.toDataURL()
+                colorDepth: screen.colorDepth,
+                pixelDepth: screen.pixelDepth,
+                deviceMemory: navigator.deviceMemory || 'unknown',
+                hardwareConcurrency: navigator.hardwareConcurrency || 'unknown',
+                cookieEnabled: navigator.cookieEnabled,
+                doNotTrack: navigator.doNotTrack || 'unknown',
+                canvas: canvas.toDataURL(),
+                webgl: getWebGLFingerprint()
             };
             
             return btoa(JSON.stringify(fingerprint)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
+        }
+        
+        // 获取WebGL指纹
+        function getWebGLFingerprint() {
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (!gl) return 'no-webgl';
+                
+                const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                const vendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'unknown';
+                const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unknown';
+                
+                return `${vendor}_${renderer}`.substring(0, 50);
+            } catch (e) {
+                return 'webgl-error';
+            }
         }
         
         // 获取或创建用户 UUID
@@ -3349,7 +3388,8 @@
                 '3. 添加100积分',
                 '4. 测试API连接',
                 '5. 强制使用真实API生成（测试）',
-                '6. 查看当前用户状态'
+                '6. 查看当前用户状态',
+                '7. 检查匿名用户防刷机制'
             ];
             
             const choice = prompt('管理员调试菜单:\n\n' + actions.join('\n') + '\n\n请输入选项数字 (1-6):');
@@ -3372,6 +3412,9 @@
                     break;
                 case '6':
                     showUserStatus();
+                    break;
+                case '7':
+                    checkAnonymousUsers();
                     break;
                 default:
                     if (choice !== null) {
@@ -3542,23 +3585,91 @@
             }
         }
         
+        // 检查匿名用户防刷机制
+        async function checkAnonymousUsers() {
+            try {
+                console.log('🔍 检查匿名用户防刷机制...');
+                
+                const fingerprint = generateUserFingerprint();
+                const ip = await getUserIP();
+                const uuid = getUserUUID();
+                
+                // 查询相似的匿名用户
+                const { data: similarUsers, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('is_signed_in', false)
+                    .or(`fingerprint.eq.${fingerprint},ip_address.eq.${ip}`)
+                    .order('created_at', { ascending: false })
+                    .limit(10);
+                
+                if (error) throw error;
+                
+                console.log('🔍 相似匿名用户查询结果:', similarUsers);
+                
+                const report = {
+                    当前设备指纹: fingerprint,
+                    当前IP: ip,
+                    当前UUID: uuid,
+                    相似用户数量: similarUsers.length,
+                    相似用户详情: similarUsers.map(user => ({
+                        UUID: user.uuid,
+                        积分: user.credits,
+                        创建时间: user.created_at,
+                        匹配类型: user.fingerprint === fingerprint ? '指纹匹配' : 'IP匹配'
+                    }))
+                };
+                
+                console.log('📊 防刷机制检查报告:', report);
+                
+                const summary = `防刷机制检查报告:
+                
+当前设备指纹: ${fingerprint}
+当前IP: ${ip}
+相似用户数量: ${similarUsers.length}
+
+${similarUsers.length > 0 ? '⚠️ 发现相似用户，防刷机制正常工作' : '✅ 未发现相似用户'}
+
+详细信息已输出到控制台`;
+                
+                alert(summary);
+                
+            } catch (error) {
+                console.error('❌ 检查防刷机制失败:', error);
+                alert('检查失败：' + error.message);
+            }
+        }
+        
         // 显示当前用户状态（临时调试功能）
-        function showCurrentUserStatus() {
+        async function showCurrentUserStatus() {
             const isAdmin = currentUser && currentUser.email === 'sunwei7482@gmail.com';
+            const fingerprint = generateUserFingerprint();
+            const ip = await getUserIP();
+            
             const statusInfo = {
                 用户邮箱: currentUser?.email || '未登录',
                 是否管理员: isAdmin ? '是' : '否',
                 当前积分: creditsManager?.credits || 0,
                 用户UUID: currentUser?.uuid || '无',
+                用户指纹: fingerprint,
+                IP地址: ip,
                 登录状态: currentUser ? '已登录' : '匿名用户',
-                生成模式: isAdmin ? '测试模式（模拟生成）' : '正式模式（真实API）'
+                生成模式: isAdmin ? '测试模式（模拟生成）' : '正式模式（真实API）',
+                用户标识: currentUser?.user_identifier || '无'
             };
             
             console.log('👤 当前用户完整状态:', {
                 currentUser,
                 creditsManager,
                 systemSettings,
-                statusInfo
+                statusInfo,
+                deviceInfo: {
+                    userAgent: navigator.userAgent,
+                    platform: navigator.platform,
+                    language: navigator.language,
+                    screen: `${screen.width}x${screen.height}`,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+                }
             });
             
             const statusText = Object.entries(statusInfo)
