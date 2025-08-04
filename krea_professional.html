@@ -2412,13 +2412,18 @@
                     if (!searchError && existingUsers && existingUsers.length > 0) {
                         // 找到匹配的用户，使用第一个匹配的用户
                         user = existingUsers[0];
-                        console.log('找到现有匿名用户:', { 
+                        console.log('🔍 找到现有匿名用户 - 防止积分重置:', { 
                             uuid: user.uuid, 
                             credits: user.credits,
-                            matchType: user.uuid === uuid ? 'UUID' : user.user_identifier === userIdentifier ? 'Identifier' : 'Fingerprint'
+                            totalEarned: user.total_credits_earned,
+                            matchType: user.uuid === uuid ? 'UUID' : user.user_identifier === userIdentifier ? 'Identifier' : 'Fingerprint',
+                            createdAt: user.created_at
                         });
                         
-                        // 更新用户的UUID和标识信息（保持最新）
+                        // ⚠️ 关键：不重置积分，保持用户当前积分状态
+                        console.log('💰 保持用户积分状态:', user.credits, '不重新分配免费积分');
+                        
+                        // 更新用户的UUID和标识信息（保持最新），但不修改积分
                         await supabaseClient
                             .from('users')
                             .update({
@@ -2427,10 +2432,11 @@
                                 fingerprint: fingerprint,
                                 ip_address: ip,
                                 last_seen_at: new Date().toISOString()
+                                // 注意：不更新credits字段，保持原有积分
                             })
                             .eq('id', user.id);
                         
-                        // 更新本地UUID
+                        // 更新本地UUID以保持一致性
                         localStorage.setItem('user_uuid', user.uuid);
                         
                     } else {
@@ -3366,7 +3372,8 @@
                 '4. 测试API连接',
                 '5. 强制使用真实API生成（测试）',
                 '6. 查看当前用户状态',
-                '7. 检查匿名用户防刷机制'
+                '7. 检查匿名用户防刷机制',
+                '8. 测试积分保持功能'
             ];
             
             const choice = prompt('管理员调试菜单:\n\n' + actions.join('\n') + '\n\n请输入选项数字 (1-6):');
@@ -3392,6 +3399,9 @@
                     break;
                 case '7':
                     checkAnonymousUsers();
+                    break;
+                case '8':
+                    testCreditsPersistence();
                     break;
                 default:
                     if (choice !== null) {
@@ -3588,24 +3598,33 @@
                     当前设备指纹: fingerprint,
                     当前IP: ip,
                     当前UUID: uuid,
+                    当前用户积分: currentUser?.credits || 0,
                     相似用户数量: similarUsers.length,
                     相似用户详情: similarUsers.map(user => ({
                         UUID: user.uuid,
                         积分: user.credits,
+                        总获得积分: user.total_credits_earned,
                         创建时间: user.created_at,
+                        最后访问: user.last_seen_at,
                         匹配类型: user.fingerprint === fingerprint ? '指纹匹配' : 'IP匹配'
                     }))
                 };
                 
                 console.log('📊 防刷机制检查报告:', report);
                 
+                // 检查是否有积分异常（多个相似用户都有20积分）
+                const highCreditUsers = similarUsers.filter(user => user.credits >= 15);
+                const warningMessage = highCreditUsers.length > 1 ? 
+                    `\n⚠️ 警告：发现${highCreditUsers.length}个相似用户都有较高积分，可能存在刷积分行为！` : '';
+                
                 const summary = `防刷机制检查报告:
                 
-当前设备指纹: ${fingerprint}
+当前设备指纹: ${fingerprint.substring(0, 16)}...
 当前IP: ${ip}
+当前积分: ${currentUser?.credits || 0}
 相似用户数量: ${similarUsers.length}
 
-${similarUsers.length > 0 ? '⚠️ 发现相似用户，防刷机制正常工作' : '✅ 未发现相似用户'}
+${similarUsers.length > 0 ? '⚠️ 发现相似用户，防刷机制正常工作' : '✅ 未发现相似用户'}${warningMessage}
 
 详细信息已输出到控制台`;
                 
@@ -3614,6 +3633,44 @@ ${similarUsers.length > 0 ? '⚠️ 发现相似用户，防刷机制正常工�
             } catch (error) {
                 console.error('❌ 检查防刷机制失败:', error);
                 alert('检查失败：' + error.message);
+            }
+        }
+        
+        // 测试积分保持功能（管理员专用）
+        async function testCreditsPersistence() {
+            if (!currentUser || currentUser.email !== 'sunwei7482@gmail.com') {
+                alert('此功能仅管理员可用');
+                return;
+            }
+            
+            try {
+                console.log('🧪 测试积分保持功能...');
+                
+                const beforeCredits = creditsManager.credits;
+                console.log('测试前积分:', beforeCredits);
+                
+                // 模拟刷新页面的过程
+                console.log('模拟页面刷新...');
+                userManager.isInitialized = false;
+                await userManager.initialize();
+                await creditsManager.initialize(currentUser);
+                
+                const afterCredits = creditsManager.credits;
+                console.log('测试后积分:', afterCredits);
+                
+                const result = beforeCredits === afterCredits ? '✅ 通过' : '❌ 失败';
+                const message = `积分保持测试 ${result}
+                
+测试前积分: ${beforeCredits}
+测试后积分: ${afterCredits}
+积分是否保持: ${beforeCredits === afterCredits ? '是' : '否'}`;
+                
+                console.log('🧪 积分保持测试结果:', { beforeCredits, afterCredits, passed: beforeCredits === afterCredits });
+                alert(message);
+                
+            } catch (error) {
+                console.error('❌ 积分保持测试失败:', error);
+                alert('测试失败：' + error.message);
             }
         }
         
