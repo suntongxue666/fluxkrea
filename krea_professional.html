@@ -627,7 +627,7 @@
         
         .result-success {
             text-align: center;
-            padding: 24px;
+            padding: 0px;
         }
         
         .generated-image {
@@ -1273,7 +1273,7 @@
         /* Generated Image Result Styles */
         .result-success {
             text-align: center;
-            padding: 24px;
+            padding: 0px;
         }
         
         .generated-image {
@@ -1633,7 +1633,7 @@
                 
                 <!-- 临时测试按钮 - 显示当前用户状态 -->
                 <button onclick="showCurrentUserStatus()" style="padding: 4px 8px; font-size: 12px; background: #10b981; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer;" title="显示当前用户状态">
-                    👤 用户状态
+                    📝 Log
                 </button>
                 <div class="signin-btn">
                     <div class="google-icon"></div>
@@ -3009,27 +3009,11 @@
                     <span class="credits-cost">-${generationCost} Credits</span>
                 `;
                 
-                const isAdminUser = currentUser && currentUser.email === 'sunwei7482@gmail.com';
-                const loadingMessage = isAdminUser ? 
-                    '🧪 管理员测试模式 - 模拟生成中' : 
-                    '🚀 正式API模式 - 真实生成中';
-                
-                // 显示用户状态调试信息
-                const userStatusInfo = `
-                    <div style="background: #f3f4f6; padding: 8px; border-radius: 4px; font-size: 12px; color: #6b7280; margin-top: 8px;">
-                        用户: ${currentUser?.email || '未登录'} | 
-                        模式: ${isAdminUser ? '测试模式' : '正式模式'} | 
-                        状态: ${currentUser ? '已登录' : '匿名用户'}
-                    </div>
-                `;
-                
                 resultArea.innerHTML = `
                     <div class="generating-status">
                         <div class="loading-spinner"></div>
                         <h3>Generating your image...</h3>
                         <p>Please wait patiently, usually takes 5-15 seconds</p>
-                        <p style="color: #6366f1; font-size: 14px; margin-top: 12px;">${loadingMessage}</p>
-                        ${userStatusInfo}
                     </div>
                 `;
                 
@@ -3303,13 +3287,9 @@
             const resultArea = document.getElementById('resultArea');
             const simulationNotice = isSimulation ? `
                 <p class="simulation-notice" style="color: #f59e0b; font-size: 12px; margin-top: 8px;">
-                    🧪 管理员测试模式 - 模拟生成
+                    🧪 Admin test mode - Simulation
                 </p>
-            ` : `
-                <p class="api-notice" style="color: #10b981; font-size: 12px; margin-top: 8px;">
-                    🚀 真实AI生成 - FLUX模型
-                </p>
-            `;
+            ` : '';
             
             // 显示结果
             resultArea.innerHTML = `
@@ -3318,9 +3298,6 @@
                     <div class="result-actions">
                         <button onclick="downloadImage('${imageUrl}', 'flux-krea-${Date.now()}.png')" class="action-btn">
                             <i class="fas fa-download"></i> Download
-                        </button>
-                        <button onclick="shareImage('${imageUrl}')" class="action-btn">
-                            <i class="fas fa-share"></i> Share
                         </button>
                     </div>
                     <p class="generation-info">Generation time: ${(generationTime / 1000).toFixed(1)}s</p>
