@@ -607,15 +607,49 @@
             
             .pricing-grid {
                 grid-template-columns: 1fr;
-                gap: 24px;
+                gap: 32px;
+            }
+            
+            .pricing-card {
+                padding: 32px 24px;
+                line-height: 1.8;
             }
             
             .pricing-card.popular {
                 transform: none;
+                margin-bottom: 24px;
+            }
+            
+            .pricing-card.discount {
+                transform: none;
+                margin-bottom: 24px;
             }
             
             .pricing-card.popular:hover {
                 transform: translateY(-4px);
+            }
+            
+            .pricing-card.discount:hover {
+                transform: translateY(-4px);
+            }
+            
+            .plan-name {
+                margin-bottom: 16px;
+                line-height: 1.4;
+            }
+            
+            .plan-description {
+                margin-bottom: 20px;
+                line-height: 1.6;
+            }
+            
+            .features-list {
+                line-height: 1.8;
+                margin-bottom: 24px;
+            }
+            
+            .features-list li {
+                margin-bottom: 12px;
             }
             
             .section-header h2 {
