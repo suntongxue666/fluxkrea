@@ -169,11 +169,15 @@
             display: flex;
             gap: 10px;
             margin: 0px 0px 16px;
+            overflow-x: auto;
+            min-width: 642px;
         }
         
         .mode-btn {
-            width: 316px;
-            height: 72px;
+            width: 366px;
+            height: 57px;
+            min-width: 366px;
+            max-width: 366px;
             padding: 12px 16px;
             border: 2px solid #e5e7eb;
             border-radius: 12px;
@@ -186,6 +190,7 @@
             gap: 8px;
             font-weight: 600;
             flex: none;
+            box-sizing: border-box;
         }
         
         .mode-btn.active {
@@ -377,6 +382,34 @@
             box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
         }
         
+        /* H5 Pricing Entry Button */
+        .h5-pricing-btn {
+            display: none;
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            text-decoration: none;
+            margin-top: 20px;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.2);
+        }
+        
+        .h5-pricing-btn:hover {
+            background: linear-gradient(135deg, #5856eb, #7c3aed);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.4);
+        }
+        
         /* Result Section */
         .result-placeholder {
             text-align: center;
@@ -505,11 +538,14 @@
             }
             
             .mode-btn {
-                width: 100%;
-                max-width: 316px;
-                height: 72px;
-                font-size: 14px;
+                width: 316px;
+                height: 57px;
+                font-size: 13px;
                 white-space: nowrap;
+                padding: 6px 8px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                gap: 6px;
             }
             
             .more-credits-btn {
@@ -517,6 +553,10 @@
             }
             
             .more-credites-btn {
+                display: flex;
+            }
+            
+            .h5-pricing-btn {
                 display: flex;
             }
         }
@@ -618,16 +658,10 @@
                         生成图像
                     </button>
                     
-                    <!-- More Credits Button (Mobile Only) -->
-                    <a href="pricing.html" class="more-credits-btn">
-                        <i class="fas fa-coins"></i>
-                        More Credits
-                    </a>
-                    
-                    <!-- More Credites Button for Generation Mode (Mobile Only) -->
-                    <a href="pricing.html" class="more-credites-btn">
-                        <i class="fas fa-coins"></i>
-                        More Credites
+                    <!-- H5 Pricing Entry Button -->
+                    <a href="pricing.html" class="h5-pricing-btn">
+                        <i class="fas fa-credit-card"></i>
+                        查看套餐价格
                     </a>
                 </div>
             </div>
