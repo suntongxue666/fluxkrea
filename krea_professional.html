@@ -1429,7 +1429,7 @@
             <div class="credits-modal-actions">
                 <button class="credits-modal-btn primary" onclick="signInFromModal()">
                     <div class="google-icon-modal"></div>
-                    <span>Sign in with Google</span>
+                    <span>Sign in</span>
                 </button>
                 <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
                     <span>Close</span>
@@ -1477,7 +1477,7 @@
                     🔄 刷新
                 </button>
                 <div class="signin-btn">
-                    <i class="fab fa-google"></i>
+                    <div class="google-icon"></div>
                     <span>Sign in</span>
                 </div>
             </div>
@@ -2395,7 +2395,7 @@
                 if (signinBtn) {
                     signinBtn.innerHTML = `
                         <div class="google-icon"></div>
-                        <span>Sign in with Google</span>
+                        <span>Sign in</span>
                     `;
                     signinBtn.onclick = () => this.signInWithGoogle();
                 }
