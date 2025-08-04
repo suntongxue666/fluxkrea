@@ -178,7 +178,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            padding: 8px 16px;
+            padding: 6px 12px;
             background: #ffffff;
             border: 1px solid #dadce0;
             border-radius: 8px;
@@ -317,7 +317,7 @@
         }
         
         .mode-btn {
-            flex: 1;
+            width: 50%;
             padding: 16px 20px;
             border: 2px solid #e2e8f0;
             border-radius: 12px;
@@ -962,7 +962,7 @@
             /* 移动端登录按钮样式 */
             .signin-btn {
                 display: flex !important;
-                padding: 6px 12px;
+                padding: 4px 6px;
                 font-size: 12px;
             }
             
@@ -1425,11 +1425,15 @@
                 <i class="fas fa-coins"></i>
             </div>
             <h3>Credits current is 0</h3>
-            <p>Generate an image needs <span id="modalRequiredCredits">10</span> credits. Please sign in for more credits.</p>
+            <p>Generate an image needs <span id="modalRequiredCredits">10</span> credits. Please sign in for more credits or view our pricing plans.</p>
             <div class="credits-modal-actions">
                 <button class="credits-modal-btn primary" onclick="signInFromModal()">
                     <div class="google-icon-modal"></div>
                     <span>Sign in</span>
+                </button>
+                <button class="credits-modal-btn secondary" onclick="window.location.href='pricing.html'">
+                    <i class="fas fa-credit-card"></i>
+                    <span>View Plans</span>
                 </button>
                 <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
                     <span>Close</span>
@@ -1465,6 +1469,7 @@
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
                 <li><a href="#showcase" class="active" onclick="openShowcase(); return false;">Showcase</a></li>
+                <li><a href="pricing.html">Pricing</a></li>
                 <li><a href="#faq">FAQ</a></li>
             </ul>
             <div class="nav-actions">
@@ -1839,6 +1844,7 @@
                     <ul class="footer-links">
                         <li><a href="#features">Features</a></li>
                         <li><a href="#showcase" onclick="openShowcase(); return false;">Showcase</a></li>
+                        <li><a href="pricing.html">Pricing</a></li>
                         <li><a href="#faq">FAQ</a></li>
                     </ul>
                 </div>
@@ -1846,7 +1852,7 @@
                 <div class="footer-section">
                     <h4>Contact</h4>
                     <ul class="footer-links">
-                        <li><a href="mailto:tiktree@gmail.com">tiktree@gmail.com</a></li>
+                        <li><a href="mailto:tiktreeapp@gmail.com">tiktreeapp@gmail.com</a></li>
                     </ul>
                 </div>
                 
@@ -3144,10 +3150,11 @@
             
             // 检查用户是否已登录
             if (currentUser && currentUser.is_signed_in) {
-                // 已登录用户，直接跳转到订阅页面或显示购买积分选项
-                console.log('用户已登录，跳转到订阅页面');
-                // TODO: 实现跳转到订阅页面的逻辑
-                alert('功能开发中：跳转到订阅页面购买积分');
+                // 已登录用户，自动跳转到订阅页面
+                console.log('用户已登录，自动跳转到订阅页面');
+                setTimeout(() => {
+                    window.location.href = 'pricing.html';
+                }, 1000);
                 return;
             }
             
@@ -3208,7 +3215,7 @@
         });
         
         // 显示积分不足弹窗 - 重新定义以集成登录验证
-        function showCreditsModal(currentCredits, requiredCredits) {
+        function showCreditsModalDuplicate(currentCredits, requiredCredits) {
             const modal = document.getElementById('creditsModal');
             const modalRequiredCredits = document.getElementById('modalRequiredCredits');
             const modalTitle = modal.querySelector('h3');
@@ -3219,9 +3226,11 @@
             
             // 检查用户是否已登录
             if (currentUser && currentUser.is_signed_in) {
-                // 已登录用户，直接跳转到订阅页面
-                console.log('用户已登录，应跳转到订阅页面');
-                alert('功能开发中：跳转到订阅页面购买积分');
+                // 已登录用户，自动跳转到订阅页面
+                console.log('用户已登录，自动跳转到订阅页面');
+                setTimeout(() => {
+                    window.location.href = 'pricing.html';
+                }, 1000);
                 return;
             }
             
