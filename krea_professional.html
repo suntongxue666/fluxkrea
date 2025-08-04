@@ -1196,9 +1196,142 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 24px;
         }
+        
+        /* Insufficient Credits Modal */
+        .credits-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .credits-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .credits-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .credits-modal.active .credits-modal-content {
+            transform: scale(1);
+        }
+        
+        .credits-modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: white;
+            font-size: 36px;
+        }
+        
+        .credits-modal h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #1a202c;
+        }
+        
+        .credits-modal p {
+            color: #64748b;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 32px;
+        }
+        
+        .credits-modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+        
+        .credits-modal-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .credits-modal-btn.primary {
+            background: #ffffff;
+            border: 1px solid #dadce0;
+            color: #3c4043;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .credits-modal-btn.primary:hover {
+            background: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        
+        .credits-modal-btn.secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .credits-modal-btn.secondary:hover {
+            background: #e2e8f0;
+        }
+        
+        .google-icon-modal {
+            width: 18px;
+            height: 18px;
+            background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjY0IDkuMjA0NTVDMTcuNjQgOC41NjYzNiAxNy41ODM2IDcuOTUyNzMgMTcuNDggNy4zNjM2NEg5VjEwLjg0NTVIMTMuODQzNkMxMy42MzUgMTEuOTcgMTMuMDAwOSAxMi45MjMgMTIuMTEgMTMuNTYxNFYxNS44MTk1SDEzLjk1NjRDMTUuNjU3MyAxNC4yNTI3IDE2LjY0IDEyLjk0NTUgMTcuNjQgOS4yMDQ1NVoiIGZpbGw9IiM0Mjg1RjQiLz4KPHBhdGggZD0iTTkgMThDMTEuNDMgMTggMTMuNDY3MyAxNy4xOTQxIDE0Ljk1NjQgMTUuODE5NUwxMy4xMSAxMy41NjE0QzEyLjQyIDEzLjk5OTEgMTEuNTQgMTQuMjYxNCAxMC4wMzY0IDE0LjI2MTRDNy42NSAxNC4yNjE0IDUuNjcyNzMgMTMuNjA0MSA0LjM2NCA5LjI1SDE2LjI0NTVWNy4zNjM2NEgzLjI3VjE0LjI2MTRDMy4yNyAxNS4wODQxIDQuMDg2MzYgMTcuNjEzNiA5IDE4WiIgZmlsbD0iIzM0QTg1MyIvPgo8cGF0aCBkPSJNMy4zNjM2NCA5LjI3SDBWMTYuMjczNkMwIDExLjUyNzMgMy4zNjM2NCA4LjE2MzY0IDguMSA4LjE2MzY0VjEwLjM0MTRDNi4xNzQ1NSAxMC4zNDE0IDMuNzMwOTEgMTAuNjEzNiAzLjM2MzY0IDEwLjk5MDlWOS4yN1oiIGZpbGw9IiNGQkJDMDQiLz4KPHBhdGggZD0iTTkgNy4xNkM2LjM4MTgyIDcuMTYgNC4yIDkuMzQxODIgMy4zNjM2NCA3LjUwNDU1TDEuNTQwOTEgNS42M0M2LjAwOTA5IDEuMTU0NTUgMTEuNDMgMS4xNTQ1NSAxNi45IDYuNjM2MzZMMTUuMDc3MyA4LjQ1OTA5Qzg1IDcuMzk1NDUgOS40NzI3MyA7LjE2IDkgNy4xNloiIGZpbGw9IiNFQTQzMzUiLz4KPC9zdmc+Cg==') no-repeat center;
+            background-size: contain;
+        }
     </style>
 </head>
 <body>
+    <!-- Insufficient Credits Modal -->
+    <div class="credits-modal" id="creditsModal">
+        <div class="credits-modal-content">
+            <div class="credits-modal-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <h3>Credits current is 0</h3>
+            <p>Generate an image needs <span id="modalRequiredCredits">10</span> credits. Please sign in for more credits.</p>
+            <div class="credits-modal-actions">
+                <button class="credits-modal-btn primary" onclick="signInFromModal()">
+                    <div class="google-icon-modal"></div>
+                    <span>Sign in with Google</span>
+                </button>
+                <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
+                    <span>Close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Showcase Modal -->
     <div class="showcase-modal" id="showcaseModal">
         <div class="showcase-content">
@@ -1233,8 +1366,8 @@
                     <i class="fas fa-coins"></i>
                     <span id="creditsAmount">20</span>
                 </div>
-                <!-- 临时调试按钮 -->
-                <button onclick="reinitializeUser()" style="padding: 4px 8px; font-size: 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer;" title="重新加载用户状态">
+                <!-- 管理员调试按钮 - 仅对特定账户显示 -->
+                <button id="debugRefreshBtn" onclick="reinitializeUser()" style="padding: 4px 8px; font-size: 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer; display: none;" title="重新加载用户状态 (管理员功能)">
                     🔄 刷新
                 </button>
                 <div class="signin-btn">
@@ -2143,6 +2276,9 @@
                     `;
                     signinBtn.onclick = () => this.showUserMenu();
                 }
+                
+                // 检查是否为管理员账户，显示调试按钮
+                this.checkAndShowDebugButton();
             }
             
             // 更新匿名用户界面
@@ -2154,6 +2290,31 @@
                         <span>Sign in with Google</span>
                     `;
                     signinBtn.onclick = () => this.signInWithGoogle();
+                }
+                
+                // 隐藏调试按钮（匿名用户）
+                const debugBtn = document.getElementById('debugRefreshBtn');
+                if (debugBtn) {
+                    debugBtn.style.display = 'none';
+                }
+            }
+            
+            // 检查管理员权限并显示调试按钮
+            checkAndShowDebugButton() {
+                const debugBtn = document.getElementById('debugRefreshBtn');
+                if (debugBtn && this.currentUser) {
+                    // 仅对特定邮箱显示调试按钮
+                    const adminEmails = ['sunwei7482@gmail.com'];
+                    const userEmail = this.currentUser.email;
+                    
+                    if (adminEmails.includes(userEmail)) {
+                        debugBtn.style.display = 'inline-block';
+                        console.log('🔧 管理员调试模式已启用:', userEmail);
+                    } else {
+                        debugBtn.style.display = 'none';
+                    }
+                } else if (debugBtn) {
+                    debugBtn.style.display = 'none';
                 }
             }
             
@@ -2484,7 +2645,7 @@
                     current: creditsManager.credits,
                     required: generationCost
                 });
-                alert(`Insufficient credits! You need at least ${generationCost} credits to generate an image. Current: ${creditsManager.credits}. Please sign in for more credits.`);
+                showCreditsModal(creditsManager.credits, generationCost);
                 return;
             }
             
@@ -2790,6 +2951,36 @@
             }
         });
         
+        // 设置用户积分为0（仅管理员可用）
+        async function setCreditsToZero() {
+            if (!currentUser || currentUser.email !== 'sunwei7482@gmail.com') {
+                alert('此功能仅管理员可用');
+                return;
+            }
+            
+            try {
+                console.log('🔧 设置积分为0进行测试...');
+                
+                // 更新数据库
+                if (!currentUser.is_local_mode) {
+                    await supabaseClient
+                        .from('users')
+                        .update({ credits: 0 })
+                        .eq('uuid', currentUser.uuid);
+                }
+                
+                // 更新本地状态
+                creditsManager.credits = 0;
+                creditsManager.updateCreditsDisplay();
+                
+                console.log('✅ 积分已设置为0');
+                alert('积分已设置为0，可以测试余额不足的情况');
+            } catch (error) {
+                console.error('设置积分失败:', error);
+                alert('设置积分失败：' + error.message);
+            }
+        }
+        
         // 重新初始化用户状态（调试用）
         async function reinitializeUser() {
             console.log('=== 重新初始化用户状态 ===');
@@ -2815,9 +3006,63 @@
             }
         }
         
+        // 显示积分不足弹窗
+        function showCreditsModal(currentCredits, requiredCredits) {
+            const modal = document.getElementById('creditsModal');
+            const modalRequiredCredits = document.getElementById('modalRequiredCredits');
+            const modalTitle = modal.querySelector('h3');
+            
+            // 更新弹窗内容
+            modalTitle.textContent = `Credits current is ${currentCredits}`;
+            modalRequiredCredits.textContent = requiredCredits;
+            
+            // 显示弹窗
+            modal.classList.add('active');
+            
+            // 禁用body滚动
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 关闭积分不足弹窗
+        function closeCreditsModal() {
+            const modal = document.getElementById('creditsModal');
+            modal.classList.remove('active');
+            
+            // 恢复body滚动
+            document.body.style.overflow = '';
+        }
+        
+        // 从弹窗登录Google
+        function signInFromModal() {
+            // 关闭弹窗
+            closeCreditsModal();
+            
+            // 触发Google登录
+            if (userManager) {
+                userManager.signInWithGoogle();
+            } else {
+                alert('User system not initialized. Please refresh the page.');
+            }
+        }
+        
+        // 点击弹窗背景关闭
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('creditsModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeCreditsModal();
+                    }
+                });
+            }
+        });
+        
         // 在控制台暴露调试函数
         window.debugFunctions = {
             reinitializeUser,
+            setCreditsToZero,
+            showCreditsModal: (current = 0, required = 10) => showCreditsModal(current, required), // 测试弹窗
+            closeCreditsModal,
             getCurrentUser: () => currentUser,
             getCreditsManager: () => creditsManager,
             getSystemSettings: () => systemSettings
