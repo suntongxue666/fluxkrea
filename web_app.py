@@ -28,7 +28,7 @@ import uuid
 app = Flask(__name__)
 
 # 配置
-REPLICATE_API_TOKEN = "YOUR_REPLICATE_API_TOKEN"  # 替换为你的 token
+REPLICATE_API_TOKEN = api_token  # 使用从环境变量读取的 token
 UPLOAD_FOLDER = "generated_images"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
