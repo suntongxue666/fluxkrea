@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订阅成功 - Flux Krea AI</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="订阅成功！感谢您选择 Flux Krea AI，开始创造惊艳的AI图像吧！">
+    <meta name="robots" content="noindex, nofollow">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png">
+    
+    <!-- External Resources -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #333;
+        }
+        
+        .success-container {
+            background: white;
+            border-radius: 20px;
+            padding: 60px 40px;
+            max-width: 600px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .success-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+        }
+        
+        .success-icon {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            animation: bounce 0.6s ease-out;
+        }
+        
+        .success-icon i {
+            font-size: 48px;
+            color: white;
+        }
+        
+        @keyframes bounce {
+            0% { transform: scale(0.3); }
+            50% { transform: scale(1.05); }
+            70% { transform: scale(0.9); }
+            100% { transform: scale(1); }
+        }
+        
+        h1 {
+            font-size: 36px;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 16px;
+        }
+        
+        .subtitle {
+            font-size: 18px;
+            color: #64748b;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .subscription-details {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 40px;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .plan-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .plan-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+        }
+        
+        .plan-price {
+            font-size: 24px;
+            font-weight: 800;
+            color: #6366f1;
+        }
+        
+        .subscription-id {
+            font-size: 14px;
+            color: #64748b;
+            font-family: 'Monaco', 'Courier New', monospace;
+            background: #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+        
+        .benefits-list {
+            text-align: left;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .benefits-list h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .benefits-list ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .benefits-list li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #374151;
+        }
+        
+        .benefits-list i {
+            color: #10b981;
+            margin-right: 12px;
+            font-size: 16px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f8fafc;
+            color: #374151;
+            border: 2px solid #e2e8f0;
+        }
+        
+        .btn-secondary:hover {
+            background: #e2e8f0;
+            border-color: #6366f1;
+            color: #6366f1;
+        }
+        
+        .footer-note {
+            margin-top: 40px;
+            padding-top: 24px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 14px;
+            color: #64748b;
+            line-height: 1.5;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .success-container {
+                padding: 40px 24px;
+                margin: 20px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .plan-info {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="success-container">
+        <div class="success-icon">
+            <i class="fas fa-check"></i>
+        </div>
+        
+        <h1>订阅成功！</h1>
+        <p class="subtitle">
+            恭喜您！您的订阅已成功激活。现在可以开始使用 Flux Krea AI 创造精美的图像了。
+        </p>
+        
+        <div class="subscription-details">
+            <div class="plan-info">
+                <div class="plan-name" id="planName">Pro 计划</div>
+                <div class="plan-price" id="planPrice">$9.9/月</div>
+            </div>
+            
+            <div class="subscription-id" id="subscriptionId">
+                订阅ID: 加载中...
+            </div>
+            
+            <div class="benefits-list">
+                <h3>您的专属权益</h3>
+                <ul id="benefitsList">
+                    <li><i class="fas fa-check"></i> 每月 1000 积分</li>
+                    <li><i class="fas fa-check"></i> 高清图像质量</li>
+                    <li><i class="fas fa-check"></i> 所有图像尺寸</li>
+                    <li><i class="fas fa-check"></i> 优先生成</li>
+                    <li><i class="fas fa-check"></i> 邮件支持</li>
+                    <li><i class="fas fa-check"></i> 无广告体验</li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <a href="krea_professional.html" class="btn btn-primary">
+                <i class="fas fa-paint-brush"></i>
+                开始创作
+            </a>
+            <a href="pricing.html" class="btn btn-secondary">
+                <i class="fas fa-cog"></i>
+                管理订阅
+            </a>
+        </div>
+        
+        <div class="footer-note">
+            <p><strong>重要提醒：</strong></p>
+            <p>• 您的积分将在每个计费周期开始时重置</p>
+            <p>• 可随时在设置中取消或修改订阅</p>
+            <p>• 如有任何问题，请联系客服：tiktreeapp@gmail.com</p>
+        </div>
+    </div>
+    
+    <script>
+        // 从URL获取订阅信息
+        function getSubscriptionInfoFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const subscriptionId = urlParams.get('subscription_id');
+            const planType = urlParams.get('plan') || 'pro';
+            
+            return { subscriptionId, planType };
+        }
+        
+        // 更新页面内容
+        function updatePageContent(subscriptionId, planType) {
+            // 更新订阅ID
+            if (subscriptionId) {
+                document.getElementById('subscriptionId').textContent = `订阅ID: ${subscriptionId}`;
+            }
+            
+            // 根据计划类型更新内容
+            if (planType === 'max') {
+                document.getElementById('planName').textContent = 'Max 计划';
+                document.getElementById('planPrice').textContent = '$29.9/月';
+                
+                // 更新Max计划的权益列表
+                const benefitsList = document.getElementById('benefitsList');
+                benefitsList.innerHTML = `
+                    <li><i class="fas fa-check"></i> 每月 5000 积分</li>
+                    <li><i class="fas fa-check"></i> 超高清图像质量</li>
+                    <li><i class="fas fa-check"></i> 所有图像尺寸</li>
+                    <li><i class="fas fa-check"></i> 最快生成速度</li>
+                    <li><i class="fas fa-check"></i> 优先邮件支持</li>
+                    <li><i class="fas fa-check"></i> 无广告体验</li>
+                `;
+            }
+        }
+        
+        // 页面加载时执行
+        window.addEventListener('load', function() {
+            const { subscriptionId, planType } = getSubscriptionInfoFromURL();
+            updatePageContent(subscriptionId, planType);
+            
+            // 5秒后自动重定向到主页
+            setTimeout(function() {
+                const autoRedirect = confirm('5秒后将自动跳转到主页，立即跳转吗？');
+                if (autoRedirect) {
+                    window.location.href = 'krea_professional.html';
+                }
+            }, 5000);
+        });
+        
+        // 防止页面被缓存
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>

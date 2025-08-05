@@ -24,6 +24,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 import uuid
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -186,6 +187,152 @@ def generate():
 @app.route('/image/<filename>')
 def serve_image(filename):
     return send_file(os.path.join(UPLOAD_FOLDER, filename))
+
+# Subscription Management API Endpoints
+
+@app.route('/api/save-subscription', methods=['POST'])
+def save_subscription():
+    """Save subscription information"""
+    try:
+        data = request.json
+        subscription_id = data.get('subscriptionId')
+        plan_type = data.get('planType')
+        user_id = data.get('userId')
+        user_email = data.get('userEmail')
+        
+        if not all([subscription_id, plan_type, user_id]):
+            return jsonify({'error': 'Missing required fields'}), 400
+        
+        # TODO: Save to database
+        # For now, just log the subscription info
+        subscription_data = {
+            'subscription_id': subscription_id,
+            'plan_type': plan_type,
+            'user_id': user_id,
+            'user_email': user_email,
+            'status': 'pending',
+            'created_at': datetime.now().isoformat(),
+            'credits': 1000 if plan_type == 'pro' else 5000
+        }
+        
+        print(f"Saving subscription: {subscription_data}")
+        
+        # TODO: Implement actual database save
+        # Example with SQLite/PostgreSQL:
+        # cursor.execute("""
+        #     INSERT INTO subscriptions (subscription_id, plan_type, user_id, user_email, status, created_at, credits)
+        #     VALUES (?, ?, ?, ?, ?, ?, ?)
+        # """, (subscription_id, plan_type, user_id, user_email, 'pending', datetime.now(), subscription_data['credits']))
+        
+        return jsonify({
+            'success': True,
+            'subscription': subscription_data
+        })
+        
+    except Exception as e:
+        print(f"Error saving subscription: {e}")
+        return jsonify({'error': 'Failed to save subscription'}), 500
+
+@app.route('/api/subscription-status/<user_id>', methods=['GET'])
+def get_subscription_status(user_id):
+    """Get user's subscription status"""
+    try:
+        # TODO: Query from database
+        # For now, return mock data
+        subscription = {
+            'user_id': user_id,
+            'plan_type': 'pro',
+            'status': 'active',
+            'credits_remaining': 850,
+            'credits_total': 1000,
+            'next_billing_date': '2025-02-05',
+            'subscription_id': 'I-BW452GLLEP1G'
+        }
+        
+        return jsonify(subscription)
+        
+    except Exception as e:
+        print(f"Error getting subscription status: {e}")
+        return jsonify({'error': 'Failed to get subscription status'}), 500
+
+@app.route('/api/update-subscription-status', methods=['POST'])
+def update_subscription_status():
+    """Update subscription status (called by webhook)"""
+    try:
+        data = request.json
+        subscription_id = data.get('subscription_id')
+        status = data.get('status')
+        
+        if not subscription_id or not status:
+            return jsonify({'error': 'Missing subscription_id or status'}), 400
+        
+        # TODO: Update database
+        print(f"Updating subscription {subscription_id} to status: {status}")
+        
+        # TODO: Implement actual database update
+        # cursor.execute("""
+        #     UPDATE subscriptions 
+        #     SET status = ?, updated_at = ? 
+        #     WHERE subscription_id = ?
+        # """, (status, datetime.now(), subscription_id))
+        
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        print(f"Error updating subscription status: {e}")
+        return jsonify({'error': 'Failed to update subscription status'}), 500
+
+@app.route('/api/user-credits/<user_id>', methods=['GET'])
+def get_user_credits(user_id):
+    """Get user's credit balance"""
+    try:
+        # TODO: Query from database
+        # For now, return mock data based on subscription
+        credits = {
+            'user_id': user_id,
+            'credits_remaining': 850,
+            'credits_total': 1000,
+            'plan_type': 'pro',
+            'last_reset': '2025-01-05'
+        }
+        
+        return jsonify(credits)
+        
+    except Exception as e:
+        print(f"Error getting user credits: {e}")
+        return jsonify({'error': 'Failed to get user credits'}), 500
+
+@app.route('/api/deduct-credits', methods=['POST'])
+def deduct_credits():
+    """Deduct credits for image generation"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        credits_to_deduct = data.get('credits', 10)  # Default 10 credits per generation
+        
+        if not user_id:
+            return jsonify({'error': 'Missing user_id'}), 400
+        
+        # TODO: Check user's credit balance and deduct
+        # For now, just log the deduction
+        print(f"Deducting {credits_to_deduct} credits from user {user_id}")
+        
+        # TODO: Implement actual credit deduction
+        # cursor.execute("""
+        #     UPDATE user_credits 
+        #     SET credits_remaining = credits_remaining - ? 
+        #     WHERE user_id = ? AND credits_remaining >= ?
+        # """, (credits_to_deduct, user_id, credits_to_deduct))
+        
+        return jsonify({
+            'success': True,
+            'credits_deducted': credits_to_deduct,
+            'credits_remaining': 840  # Mock remaining credits
+        })
+        
+    except Exception as e:
+        print(f"Error deducting credits: {e}")
+        return jsonify({'error': 'Failed to deduct credits'}), 500
 
 if __name__ == '__main__':
     if REPLICATE_API_TOKEN == "YOUR_REPLICATE_API_TOKEN":

@@ -43,6 +43,9 @@
     <!-- Supabase Client -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     
+    <!-- PayPal SDK -->
+    <script src="https://www.paypal.com/sdk/js?client-id=AeiqNbUf4z7-oudEQf2oSL3-rf_xP_dHmED4pvoei4B2eH8TdPK2ajLWXiQSy78Uh3ekjxx14wZEsX-8&vault=true&intent=subscription"></script>
+    
     <!-- External Resources -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
@@ -595,8 +598,182 @@
             color: #94a3b8;
         }
         
+        /* Subscription Modal */
+        .subscription-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+        }
+
+        .subscription-modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #64748b;
+            padding: 5px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: #f1f5f9;
+            color: #1a202c;
+        }
+
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .modal-header h2 {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 12px;
+        }
+
+        .modal-header p {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .plan-summary {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .plan-summary.pro {
+            border-color: #6366f1;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
+        }
+
+        .plan-summary.max {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(249, 115, 22, 0.05));
+        }
+
+        .plan-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .plan-price-summary {
+            font-size: 32px;
+            font-weight: 800;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+
+        .plan-credits-summary {
+            color: #10b981;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .plan-features-summary {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        #paypal-button-container {
+            margin-top: 20px;
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            display: none;
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
+        .success-message {
+            display: none;
+            background: #d1fae5;
+            border: 1px solid #a7f3d0;
+            color: #059669;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            text-align: center;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
+            .modal-content {
+                padding: 24px;
+                margin: 20px;
+            }
+            
+            .modal-header h2 {
+                font-size: 24px;
+            }
+            
+            .plan-price-summary {
+                font-size: 28px;
+            }
+
             .nav-links {
                 display: none;
             }
@@ -741,7 +918,7 @@
                         <li><i class="fas fa-check"></i> Email support</li>
                         <li><i class="fas fa-check"></i> No Ads</li>
                     </ul>
-                    <a href="#" class="plan-button primary" onclick="showComingSoon()">Choose Pro</a>
+                    <a href="#" class="plan-button primary" onclick="createSubscription('pro')">Choose Pro</a>
                 </div>
                 
                 <!-- Max Plan -->
@@ -763,7 +940,7 @@
                         <li><i class="fas fa-check"></i> Priority email support</li>
                         <li><i class="fas fa-check"></i> No Ads</li>
                     </ul>
-                    <a href="#" class="plan-button orange" onclick="showComingSoon()">Choose Max</a>
+                    <a href="#" class="plan-button orange" onclick="createSubscription('max')">Choose Max</a>
                 </div>
             </div>
         </div>
@@ -904,7 +1081,313 @@
         </div>
     </footer>
     
+    <!-- Subscription Modal -->
+    <div id="subscriptionModal" class="subscription-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeSubscriptionModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="modal-header">
+                <h2>Complete Your Subscription</h2>
+                <p>Choose your payment method to activate your plan</p>
+            </div>
+            
+            <div id="planSummary" class="plan-summary">
+                <!-- Plan details will be dynamically inserted here -->
+            </div>
+            
+            <div class="loading-spinner" id="loadingSpinner">
+                <div class="spinner"></div>
+                <p>Loading payment options...</p>
+            </div>
+            
+            <div id="paypal-button-container"></div>
+            
+            <div class="error-message" id="errorMessage">
+                <p>Something went wrong. Please try again.</p>
+            </div>
+            
+            <div class="success-message" id="successMessage">
+                <p>Subscription created successfully! Redirecting...</p>
+            </div>
+        </div>
+    </div>
+    
     <script>
+        // PayPal configuration
+        const PAYPAL_PLANS = {
+            pro: 'P-YOUR_PRO_PLAN_ID', // Replace with actual PayPal plan ID
+            max: 'P-YOUR_MAX_PLAN_ID'  // Replace with actual PayPal plan ID
+        };
+
+        // Plan details for modal display
+        const PLAN_DETAILS = {
+            pro: {
+                name: 'Pro Plan',
+                price: '$9.9',
+                period: '/month',
+                credits: '1000 credits per month',
+                features: 'HD quality, All sizes, Priority generation, Email support, No Ads'
+            },
+            max: {
+                name: 'Max Plan',
+                price: '$29.9',
+                period: '/month',
+                credits: '5000 credits per month',
+                features: 'Ultra-HD quality, All sizes, Fastest generation, Priority support, No Ads'
+            }
+        };
+
+        let currentPlan = null;
+        let paypalButtonRendered = false;
+
+        // Open subscription modal
+        function openSubscriptionModal(planType) {
+            if (!checkUserAuthentication()) {
+                alert('Please sign in first to choose a subscription plan');
+                return;
+            }
+
+            currentPlan = planType;
+            const modal = document.getElementById('subscriptionModal');
+            const planSummary = document.getElementById('planSummary');
+            const details = PLAN_DETAILS[planType];
+
+            if (!details) {
+                showError('Invalid plan selected');
+                return;
+            }
+
+            // Update plan summary
+            planSummary.className = `plan-summary ${planType}`;
+            planSummary.innerHTML = `
+                <div class="plan-title">${details.name}</div>
+                <div class="plan-price-summary">${details.price}<span style="font-size: 18px; font-weight: 500;">${details.period}</span></div>
+                <div class="plan-credits-summary">${details.credits}</div>
+                <div class="plan-features-summary">${details.features}</div>
+            `;
+
+            // Show modal
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+
+            // Load PayPal buttons
+            loadPayPalButtons(planType);
+        }
+
+        // Close subscription modal
+        function closeSubscriptionModal() {
+            const modal = document.getElementById('subscriptionModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            
+            // Clear PayPal button container
+            const container = document.getElementById('paypal-button-container');
+            container.innerHTML = '';
+            paypalButtonRendered = false;
+            
+            // Hide messages
+            hideMessages();
+        }
+
+        // Load PayPal subscription buttons
+        function loadPayPalButtons(planType) {
+            const container = document.getElementById('paypal-button-container');
+            const loadingSpinner = document.getElementById('loadingSpinner');
+            
+            if (paypalButtonRendered) {
+                container.innerHTML = '';
+            }
+
+            loadingSpinner.style.display = 'block';
+            hideMessages();
+
+            const planId = PAYPAL_PLANS[planType];
+            if (!planId || planId.includes('YOUR_')) {
+                showError('PayPal subscription plans not configured. Please contact support.');
+                loadingSpinner.style.display = 'none';
+                return;
+            }
+
+            // 检查PayPal SDK是否加载
+            if (typeof paypal === 'undefined') {
+                showError('PayPal SDK not loaded. Please refresh the page and try again.');
+                loadingSpinner.style.display = 'none';
+                return;
+            }
+
+            try {
+                paypal.Buttons({
+                    style: {
+                        shape: 'rect',
+                        color: 'blue',
+                        layout: 'vertical',
+                        label: 'subscribe',
+                        height: 50
+                    },
+                    createSubscription: function(data, actions) {
+                        return actions.subscription.create({
+                            'plan_id': planId,
+                            'custom_id': getUserId(),
+                            'application_context': {
+                                'brand_name': 'Flux Krea AI',
+                                'locale': 'en-US',
+                                'shipping_preference': 'NO_SHIPPING',
+                                'user_action': 'SUBSCRIBE_NOW',
+                                'return_url': window.location.origin + '/subscription-success.html',
+                                'cancel_url': window.location.origin + '/pricing.html?cancelled=true'
+                            }
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        console.log('Subscription approved:', data.subscriptionID);
+                        
+                        showSuccess('Subscription created successfully!');
+                        
+                        // Save subscription info
+                        saveSubscriptionInfo(data.subscriptionID, planType)
+                            .then(() => {
+                                // Redirect after delay
+                                setTimeout(() => {
+                                    window.location.href = '/subscription-success.html?subscription_id=' + data.subscriptionID;
+                                }, 2000);
+                            })
+                            .catch(error => {
+                                console.error('Error saving subscription:', error);
+                                showError('Subscription created but failed to save. Please contact support with ID: ' + data.subscriptionID);
+                            });
+                    },
+                    onError: function(err) {
+                        console.error('PayPal subscription error:', err);
+                        showError('Failed to create subscription. Please try again or contact support.');
+                    },
+                    onCancel: function(data) {
+                        console.log('Subscription cancelled:', data);
+                        showError('Subscription was cancelled. You can try again anytime.');
+                    }
+                }).render('#paypal-button-container').then(() => {
+                    loadingSpinner.style.display = 'none';
+                    paypalButtonRendered = true;
+                }).catch(error => {
+                    console.error('PayPal button render error:', error);
+                    showError('Failed to load payment options. Please refresh and try again.');
+                    loadingSpinner.style.display = 'none';
+                });
+
+            } catch (error) {
+                console.error('PayPal initialization error:', error);
+                showError('Payment system initialization failed. Please refresh and try again.');
+                loadingSpinner.style.display = 'none';
+            }
+        }
+
+        // Updated create subscription function to use modal
+        async function createSubscription(planType) {
+            openSubscriptionModal(planType);
+        }
+
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.querySelector('p').textContent = message;
+            errorDiv.style.display = 'block';
+            
+            // Hide success message
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Show success message
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.querySelector('p').textContent = message;
+            successDiv.style.display = 'block';
+            
+            // Hide error message
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        // Hide all messages
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+
+        // Check user authentication
+        function checkUserAuthentication() {
+            // TODO: Implement actual user authentication check
+            // For now, return true for testing
+            return true;
+        }
+
+        // Get user ID
+        function getUserId() {
+            // TODO: Return actual user ID from authentication system
+            // For now, generate a test ID
+            return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        // Save subscription information
+        async function saveSubscriptionInfo(subscriptionId, planType) {
+            try {
+                console.log('Saving subscription:', { subscriptionId, planType });
+                
+                // 临时模拟保存成功，实际使用时替换为真实API调用
+                // const response = await fetch('/api/save-subscription', {
+                //     method: 'POST',
+                //     headers: {
+                //         'Content-Type': 'application/json',
+                //         'Authorization': 'Bearer ' + getAuthToken()
+                //     },
+                //     body: JSON.stringify({
+                //         subscriptionId: subscriptionId,
+                //         planType: planType,
+                //         userId: getUserId(),
+                //         timestamp: new Date().toISOString()
+                //     })
+                // });
+
+                // if (!response.ok) {
+                //     throw new Error('Failed to save subscription: ' + response.statusText);
+                // }
+
+                // const result = await response.json();
+                // console.log('Subscription saved successfully:', result);
+                // return result;
+                
+                // 临时返回成功结果
+                return { success: true, subscriptionId, planType };
+
+            } catch (error) {
+                console.error('Error saving subscription:', error);
+                throw error;
+            }
+        }
+
+        // Get authentication token
+        function getAuthToken() {
+            // TODO: Return actual auth token
+            return 'test_token_' + Date.now();
+        }
+
+        // Close modal when clicking outside
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('subscriptionModal');
+            if (event.target === modal) {
+                closeSubscriptionModal();
+            }
+        });
+
+        // Close modal with escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('subscriptionModal');
+                if (modal.classList.contains('active')) {
+                    closeSubscriptionModal();
+                }
+            }
+        });
+
         // FAQ toggle function
         function toggleFAQ(element) {
             const faqItem = element.parentElement;
@@ -921,7 +1404,7 @@
             }
         }
         
-        // Show coming soon alert
+        // Show coming soon alert (保留备用)
         function showComingSoon() {
             alert('Subscription plans coming soon! For now, enjoy free credits and contact us for enterprise needs.');
         }
@@ -937,6 +1420,14 @@
                     });
                 }
             });
+        });
+
+        // 检查URL参数显示取消信息
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('cancelled') === 'true') {
+                alert('订阅已取消，您可以稍后再试');
+            }
         });
     </script>
 </body>

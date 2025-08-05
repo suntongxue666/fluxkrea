@@ -1,0 +1,19 @@
+{
+  "pro_plan": {
+    "product_id": "PROD-7522488360648323A",
+    "name": "Pro Plan",
+    "description": "1000 credits per month and creating AI images service.",
+    "credits": 1000,
+    "price": 9.99
+  },
+  "max_plan": {
+    "product_id": "PROD-26M203332H396061W",
+    "name": "Max Plan",
+    "description": "5000 credits per month and creating AI images service.",
+    "credits": 5000,
+    "price": 29.99
+  },
+  "created_at": "2025-08-05T14:15:25Z",
+  "environment": "sandbox",
+  "status": "created_successfully"
+}
