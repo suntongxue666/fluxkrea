@@ -1205,6 +1205,12 @@
     </div>
     
     <script>
+        // Supabase配置
+        const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         // PayPal configuration
         const PAYPAL_PLANS = {
             pro: 'P-5S785818YS7424947NCJBKQA', // Pro Plan ID
@@ -1242,20 +1248,46 @@
             document.body.style.overflow = 'auto';
         }
 
-        function redirectToLogin() {
-            // 保存用户想要订阅的计划，登录后可以直接跳转
-            const returnUrl = window.location.pathname + '?plan=' + (currentPlan || 'pro');
-            
-            // 跳转到登录页面
-            window.location.href = '/login.html?return=' + encodeURIComponent(returnUrl);
+        // 复用首页的Google登录逻辑
+        async function redirectToLogin() {
+            try {
+                console.log('开始Google登录...');
+
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: `${window.location.origin}/pricing.html?plan=${currentPlan || 'pro'}`,
+                        queryParams: {
+                            access_type: 'offline',
+                            prompt: 'consent',
+                        },
+                    }
+                });
+
+                if (error) {
+                    console.error('Google登录错误:', error);
+                    
+                    if (error.message && error.message.includes('provider is not enabled')) {
+                        alert('请检查Supabase中的Google OAuth配置：\n1. Authentication > Providers > Google\n2. 确保"Enable sign in with Google"已开启\n3. 检查Client ID和Client Secret是否正确填入');
+                    } else {
+                        alert('登录失败，请稍后重试：' + (error.message || error));
+                    }
+                }
+            } catch (error) {
+                console.error('登录过程中发生错误:', error);
+                alert('登录失败，请稍后重试');
+            }
         }
 
         let currentPlan = null;
         let paypalButtonRendered = false;
 
         // Open subscription modal
-        function openSubscriptionModal(planType) {
-            if (!checkUserAuthentication()) {
+        async function openSubscriptionModal(planType) {
+            // 异步检查用户认证状态
+            const isAuthenticated = await checkSupabaseSession();
+            
+            if (!isAuthenticated) {
                 // 显示更友好的登录提示
                 showLoginRequiredModal();
                 return;
@@ -1352,23 +1384,29 @@
                             }
                         });
                     },
-                    onApprove: function(data, actions) {
+                    onApprove: async function(data, actions) {
                         console.log('Subscription approved:', data.subscriptionID);
                         
-                        showSuccess('Subscription created successfully!');
+                        showSuccess('Processing your subscription...');
                         
-                        // Save subscription info
-                        saveSubscriptionInfo(data.subscriptionID, planType)
-                            .then(() => {
-                                // Redirect after delay
-                                setTimeout(() => {
-                                    window.location.href = '/subscription-success.html?subscription_id=' + data.subscriptionID;
-                                }, 2000);
-                            })
-                            .catch(error => {
-                                console.error('Error saving subscription:', error);
-                                showError('Subscription created but failed to save. Please contact support with ID: ' + data.subscriptionID);
-                            });
+                        try {
+                            // 1. 保存订阅信息到数据库
+                            await saveSubscriptionInfo(data.subscriptionID, planType);
+                            
+                            // 2. 立即为用户增加积分
+                            await addSubscriptionCredits(planType);
+                            
+                            showSuccess('Subscription activated! Credits added to your account.');
+                            
+                            // 3. 延迟跳转到成功页面
+                            setTimeout(() => {
+                                window.location.href = '/subscription-success.html?subscription_id=' + data.subscriptionID;
+                            }, 2000);
+                            
+                        } catch (error) {
+                            console.error('Error processing subscription:', error);
+                            showError('Subscription created but processing failed. Please contact support with ID: ' + data.subscriptionID);
+                        }
                     },
                     onError: function(err) {
                         console.error('PayPal subscription error:', err);
@@ -1400,13 +1438,36 @@
             openSubscriptionModal(planType);
         }
 
-        // 页面加载时检查URL参数
-        document.addEventListener('DOMContentLoaded', function() {
+        // 页面加载时检查URL参数和用户状态
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 初始化Supabase认证状态监听
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                console.log('认证状态变化:', event, session);
+                
+                if (event === 'SIGNED_IN' && session) {
+                    // 更新全局用户状态
+                    currentUser = {
+                        uuid: session.user.id,
+                        email: session.user.email,
+                        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
+                        avatar_url: session.user.user_metadata?.avatar_url || '',
+                        ...session.user.user_metadata
+                    };
+                    console.log('用户已登录:', currentUser);
+                } else if (event === 'SIGNED_OUT') {
+                    currentUser = null;
+                    console.log('用户已登出');
+                }
+            });
+
+            // 检查初始认证状态
+            await checkSupabaseSession();
+
             const urlParams = new URLSearchParams(window.location.search);
             const planParam = urlParams.get('plan');
             
             // 如果URL中有plan参数且用户已登录，自动打开订阅模态框
-            if (planParam && checkUserAuthentication()) {
+            if (planParam && currentUser) {
                 setTimeout(() => {
                     createSubscription(planParam);
                 }, 500); // 延迟一点确保页面完全加载
@@ -1446,90 +1507,182 @@
             document.getElementById('successMessage').style.display = 'none';
         }
 
-        // Check user authentication
+        // 全局用户状态变量（与首页保持一致）
+        let currentUser = null;
+
+        // 检查用户认证状态（复用首页逻辑）
         function checkUserAuthentication() {
-            // 检查用户是否已登录Google账号
-            const userUuid = localStorage.getItem('userUuid');
-            const userEmail = localStorage.getItem('userEmail');
-            
-            // 必须有UUID和邮箱才算已登录
-            if (!userUuid || !userEmail) {
-                return false;
+            // 首先检查全局currentUser变量
+            if (currentUser && currentUser.email) {
+                return true;
             }
-            
-            // 检查UUID格式是否正确
-            if (!userUuid.startsWith('user_') || userUuid.length < 20) {
-                return false;
+
+            // 检查Supabase会话
+            return checkSupabaseSession();
+        }
+
+        // 检查Supabase会话
+        async function checkSupabaseSession() {
+            try {
+                const { data, error } = await supabaseClient.auth.getSession();
+                if (error) {
+                    console.error('获取会话失败:', error);
+                    return false;
+                }
+
+                if (data.session && data.session.user) {
+                    // 更新全局用户状态
+                    currentUser = {
+                        uuid: data.session.user.id,
+                        email: data.session.user.email,
+                        name: data.session.user.user_metadata?.full_name || data.session.user.user_metadata?.name || '',
+                        avatar_url: data.session.user.user_metadata?.avatar_url || '',
+                        ...data.session.user.user_metadata
+                    };
+                    return true;
+                }
+            } catch (error) {
+                console.error('检查会话时发生错误:', error);
             }
-            
-            // 检查邮箱格式
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(userEmail)) {
-                return false;
-            }
-            
-            return true;
+            return false;
         }
 
         // Get user ID
         function getUserId() {
-            const userUuid = localStorage.getItem('userUuid');
-            if (!userUuid) {
+            if (!currentUser || !currentUser.uuid) {
                 throw new Error('User not authenticated');
             }
-            return userUuid;
+            return currentUser.uuid;
         }
 
         // Get user email
         function getUserEmail() {
-            const userEmail = localStorage.getItem('userEmail');
-            if (!userEmail) {
+            if (!currentUser || !currentUser.email) {
                 throw new Error('User email not found');
             }
-            return userEmail;
+            return currentUser.email;
         }
 
         // Save subscription information
         async function saveSubscriptionInfo(subscriptionId, planType) {
+            console.log('Saving subscription:', subscriptionId, planType);
+            
             try {
-                console.log('Saving subscription:', { subscriptionId, planType });
+                const planDetails = PLAN_DETAILS[planType];
+                const userId = getUserId();
+                const userEmail = getUserEmail();
                 
-                // 临时模拟保存成功，实际使用时替换为真实API调用
-                // const response = await fetch('/api/save-subscription', {
-                //     method: 'POST',
-                //     headers: {
-                //         'Content-Type': 'application/json',
-                //         'Authorization': 'Bearer ' + getAuthToken()
-                //     },
-                //     body: JSON.stringify({
-                //         subscriptionId: subscriptionId,
-                //         planType: planType,
-                //         userId: getUserId(),
-                //         timestamp: new Date().toISOString()
-                //     })
-                // });
+                // 保存订阅记录到Supabase
+                const { data: subscription, error: subError } = await supabaseClient
+                    .from('subscriptions')
+                    .insert({
+                        user_uuid: userId,
+                        paypal_subscription_id: subscriptionId,
+                        paypal_plan_id: PAYPAL_PLANS[planType],
+                        plan_name: planDetails.name,
+                        status: 'ACTIVE',
+                        credits_per_month: planDetails.credits,
+                        price: planDetails.price,
+                        currency: 'USD',
+                        billing_cycle: 'monthly',
+                        start_date: new Date().toISOString(),
+                        next_billing_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                    })
+                    .select()
+                    .single();
 
-                // if (!response.ok) {
-                //     throw new Error('Failed to save subscription: ' + response.statusText);
-                // }
+                if (subError) throw subError;
 
-                // const result = await response.json();
-                // console.log('Subscription saved successfully:', result);
-                // return result;
+                // 保存支付记录
+                const { data: payment, error: payError } = await supabaseClient
+                    .from('payments')
+                    .insert({
+                        subscription_id: subscription.id,
+                        user_uuid: userId,
+                        paypal_payment_id: subscriptionId, // 临时使用订阅ID
+                        amount: planDetails.price,
+                        currency: 'USD',
+                        status: 'COMPLETED',
+                        credits_awarded: planDetails.credits,
+                        paid_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+
+                if (payError) throw payError;
+
+                console.log('Subscription saved successfully:', subscription);
+                return { subscription, payment };
                 
-                // 临时返回成功结果
-                return { success: true, subscriptionId, planType };
-
             } catch (error) {
                 console.error('Error saving subscription:', error);
                 throw error;
             }
         }
 
-        // Get authentication token
-        function getAuthToken() {
-            // TODO: Return actual auth token
-            return 'test_token_' + Date.now();
+        // 为用户增加订阅积分
+        async function addSubscriptionCredits(planType) {
+            console.log('Adding subscription credits for plan:', planType);
+            
+            try {
+                const planDetails = PLAN_DETAILS[planType];
+                const userId = getUserId();
+                const creditsToAdd = planDetails.credits;
+                
+                // 获取当前用户积分
+                const { data: user, error: getUserError } = await supabaseClient
+                    .from('users')
+                    .select('credits')
+                    .eq('uuid', userId)
+                    .single();
+
+                if (getUserError) throw getUserError;
+
+                const currentCredits = user.credits || 0;
+                const newCredits = currentCredits + creditsToAdd;
+
+                // 更新用户积分
+                const { error: updateError } = await supabaseClient
+                    .from('users')
+                    .update({
+                        credits: newCredits,
+                        subscription_status: 'ACTIVE',
+                        subscription_credits_remaining: creditsToAdd,
+                        subscription_renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('uuid', userId);
+
+                if (updateError) throw updateError;
+
+                // 记录积分交易
+                const { error: transError } = await supabaseClient
+                    .from('credit_transactions')
+                    .insert({
+                        user_uuid: userId,
+                        transaction_type: 'SUBSCRIPTION_PURCHASE',
+                        amount: creditsToAdd,
+                        balance_after: newCredits,
+                        description: `${planDetails.name}订阅激活 - 获得${creditsToAdd}积分`,
+                        source: 'paypal_subscription',
+                        created_at: new Date().toISOString()
+                    });
+
+                if (transError) throw transError;
+
+                // 更新全局用户状态
+                if (currentUser) {
+                    currentUser.credits = newCredits;
+                    currentUser.subscription_status = 'ACTIVE';
+                }
+
+                console.log(`Successfully added ${creditsToAdd} credits. New balance: ${newCredits}`);
+                return { creditsAdded: creditsToAdd, newBalance: newCredits };
+                
+            } catch (error) {
+                console.error('Error adding subscription credits:', error);
+                throw error;
+            }
         }
 
         // Close modal when clicking outside
