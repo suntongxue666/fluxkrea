@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - Flux Krea AI</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 20px;
+            padding: 48px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 32px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+        }
+
+        .login-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .login-subtitle {
+            color: #64748b;
+            margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .google-login-btn {
+            width: 100%;
+            background: #4285f4;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 16px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .google-login-btn:hover {
+            background: #3367d6;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(66, 133, 244, 0.3);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 24px 0;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #e2e8f0;
+        }
+
+        .divider span {
+            padding: 0 16px;
+        }
+
+        .benefits {
+            text-align: left;
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .benefits h3 {
+            color: #1e293b;
+            font-size: 16px;
+            margin-bottom: 12px;
+        }
+
+        .benefits ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .benefits li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        .benefits li i {
+            color: #10b981;
+            margin-right: 8px;
+            width: 16px;
+        }
+
+        .back-link {
+            color: #6366f1;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.3s ease;
+        }
+
+        .back-link:hover {
+            color: #4f46e5;
+        }
+
+        .loading {
+            display: none;
+            color: #64748b;
+            margin-top: 16px;
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 32px 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo">FLUX Krea</div>
+        <h1 class="login-title">Welcome Back</h1>
+        <p class="login-subtitle">Sign in to access your AI image generation credits and manage your subscription</p>
+
+        <button class="google-login-btn" onclick="signInWithGoogle()">
+            <i class="fab fa-google"></i>
+            Continue with Google
+        </button>
+
+        <div class="divider">
+            <span>Why sign in?</span>
+        </div>
+
+        <div class="benefits">
+            <h3>Your Account Benefits:</h3>
+            <ul>
+                <li><i class="fas fa-cloud"></i> Sync credits across devices</li>
+                <li><i class="fas fa-shield-alt"></i> Secure subscription management</li>
+                <li><i class="fas fa-history"></i> Access generation history</li>
+                <li><i class="fas fa-credit-card"></i> Manage billing & payments</li>
+                <li><i class="fas fa-headset"></i> Priority customer support</li>
+            </ul>
+        </div>
+
+        <a href="/" class="back-link">
+            <i class="fas fa-arrow-left"></i>
+            Back to Home
+        </a>
+
+        <div class="loading" id="loadingMessage">
+            <i class="fas fa-spinner fa-spin"></i> Signing you in...
+        </div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    
+    <script>
+        // Supabase配置
+        const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 获取返回URL参数
+        const urlParams = new URLSearchParams(window.location.search);
+        const returnUrl = urlParams.get('return') || '/';
+
+        // Google登录函数
+        async function signInWithGoogle() {
+            const loadingMessage = document.getElementById('loadingMessage');
+            loadingMessage.style.display = 'block';
+
+            try {
+                console.log('开始Google登录...');
+                
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.origin + '/login.html?return=' + encodeURIComponent(returnUrl),
+                        queryParams: {
+                            access_type: 'offline',
+                            prompt: 'consent',
+                        }
+                    }
+                });
+
+                if (error) {
+                    console.error('Google登录错误:', error);
+                    loadingMessage.style.display = 'none';
+                    
+                    if (error.message && error.message.includes('provider is not enabled')) {
+                        alert('请检查Supabase中的Google OAuth配置：\n1. Authentication > Providers > Google\n2. 确保"Enable sign in with Google"已开启\n3. 检查Client ID和Client Secret是否正确填入');
+                    } else {
+                        alert('登录失败，请稍后重试：' + (error.message || error));
+                    }
+                }
+            } catch (error) {
+                console.error('登录过程中发生错误:', error);
+                loadingMessage.style.display = 'none';
+                alert('登录失败，请稍后重试');
+            }
+        }
+
+        // 处理OAuth回调
+        async function handleAuthCallback() {
+            const { data, error } = await supabaseClient.auth.getSession();
+            
+            if (error) {
+                console.error('获取会话失败:', error);
+                return;
+            }
+
+            if (data.session) {
+                const user = data.session.user;
+                console.log('用户登录成功:', user);
+
+                // 生成用户UUID（如果没有的话）
+                let userUuid = localStorage.getItem('userUuid');
+                if (!userUuid) {
+                    userUuid = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                }
+
+                // 保存用户信息到localStorage
+                localStorage.setItem('userUuid', userUuid);
+                localStorage.setItem('userEmail', user.email || '');
+                localStorage.setItem('userName', user.user_metadata?.full_name || user.user_metadata?.name || '');
+                localStorage.setItem('userAvatar', user.user_metadata?.avatar_url || '');
+                localStorage.setItem('loginTime', new Date().toISOString());
+                localStorage.setItem('supabaseSession', JSON.stringify(data.session));
+
+                // 重定向到返回URL
+                window.location.href = returnUrl;
+            }
+        }
+
+        // 检查是否已经登录
+        document.addEventListener('DOMContentLoaded', async function() {
+            // 首先检查localStorage中的登录状态
+            const userUuid = localStorage.getItem('userUuid');
+            const userEmail = localStorage.getItem('userEmail');
+
+            if (userUuid && userEmail) {
+                // 已经登录，直接重定向
+                window.location.href = returnUrl;
+                return;
+            }
+
+            // 检查是否是OAuth回调
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            if (hashParams.get('access_token') || window.location.hash.includes('access_token')) {
+                await handleAuthCallback();
+                return;
+            }
+
+            // 检查Supabase会话
+            const { data, error } = await supabaseClient.auth.getSession();
+            if (data.session) {
+                await handleAuthCallback();
+            }
+        });
+
+        // 监听认证状态变化
+        supabaseClient.auth.onAuthStateChange((event, session) => {
+            console.log('认证状态变化:', event, session);
+            
+            if (event === 'SIGNED_IN' && session) {
+                handleAuthCallback();
+            }
+        });
+    </script>
+</body>
+</html>

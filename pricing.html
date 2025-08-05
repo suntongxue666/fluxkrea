@@ -598,6 +598,62 @@
             color: #94a3b8;
         }
         
+        /* Login Required Modal Styles */
+        .login-benefits {
+            margin: 30px 0;
+            text-align: left;
+        }
+        
+        .login-benefits h3 {
+            color: #1e293b;
+            margin-bottom: 16px;
+            font-size: 18px;
+        }
+        
+        .login-benefits ul {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .login-benefits li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #475569;
+            font-size: 14px;
+        }
+        
+        .login-benefits li i {
+            color: #10b981;
+            margin-right: 12px;
+            width: 16px;
+        }
+        
+        .login-actions {
+            display: flex;
+            gap: 16px;
+            margin-top: 30px;
+        }
+        
+        .login-actions .plan-button {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .login-actions .secondary {
+            background: #f1f5f9;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .login-actions .secondary:hover {
+            background: #e2e8f0;
+            color: #475569;
+        }
+
         /* Subscription Modal */
         .subscription-modal {
             display: none;
@@ -1081,6 +1137,40 @@
         </div>
     </footer>
     
+    <!-- Login Required Modal -->
+    <div id="loginRequiredModal" class="subscription-modal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeLoginRequiredModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="modal-header">
+                <h2>🔐 Login Required</h2>
+                <p>You need to sign in with Google to purchase a subscription plan</p>
+            </div>
+            
+            <div class="login-benefits">
+                <h3>Why login is required:</h3>
+                <ul>
+                    <li><i class="fas fa-shield-alt"></i> Secure subscription management</li>
+                    <li><i class="fas fa-sync-alt"></i> Access your credits across devices</li>
+                    <li><i class="fas fa-history"></i> View payment history and invoices</li>
+                    <li><i class="fas fa-cog"></i> Manage subscription settings</li>
+                    <li><i class="fas fa-headset"></i> Customer support assistance</li>
+                </ul>
+            </div>
+            
+            <div class="login-actions">
+                <button class="plan-button primary" onclick="redirectToLogin()">
+                    <i class="fab fa-google"></i> Sign in with Google
+                </button>
+                <button class="plan-button secondary" onclick="closeLoginRequiredModal()">
+                    Maybe Later
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Subscription Modal -->
     <div id="subscriptionModal" class="subscription-modal">
         <div class="modal-content">
@@ -1139,13 +1229,35 @@
             }
         };
 
+        // Login Required Modal Functions
+        function showLoginRequiredModal() {
+            const modal = document.getElementById('loginRequiredModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeLoginRequiredModal() {
+            const modal = document.getElementById('loginRequiredModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function redirectToLogin() {
+            // 保存用户想要订阅的计划，登录后可以直接跳转
+            const returnUrl = window.location.pathname + '?plan=' + (currentPlan || 'pro');
+            
+            // 跳转到登录页面
+            window.location.href = '/login.html?return=' + encodeURIComponent(returnUrl);
+        }
+
         let currentPlan = null;
         let paypalButtonRendered = false;
 
         // Open subscription modal
         function openSubscriptionModal(planType) {
             if (!checkUserAuthentication()) {
-                alert('Please sign in first to choose a subscription plan');
+                // 显示更友好的登录提示
+                showLoginRequiredModal();
                 return;
             }
 
@@ -1284,8 +1396,29 @@
 
         // Updated create subscription function to use modal
         async function createSubscription(planType) {
+            currentPlan = planType; // 设置当前计划，用于登录重定向
             openSubscriptionModal(planType);
         }
+
+        // 页面加载时检查URL参数
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const planParam = urlParams.get('plan');
+            
+            // 如果URL中有plan参数且用户已登录，自动打开订阅模态框
+            if (planParam && checkUserAuthentication()) {
+                setTimeout(() => {
+                    createSubscription(planParam);
+                }, 500); // 延迟一点确保页面完全加载
+            }
+            
+            // 如果有cancelled参数，显示取消提示
+            if (urlParams.get('cancelled') === 'true') {
+                setTimeout(() => {
+                    alert('订阅已取消。如有疑问，请联系客服。');
+                }, 500);
+            }
+        });
 
         // Show error message
         function showError(message) {
@@ -1315,16 +1448,45 @@
 
         // Check user authentication
         function checkUserAuthentication() {
-            // TODO: Implement actual user authentication check
-            // For now, return true for testing
+            // 检查用户是否已登录Google账号
+            const userUuid = localStorage.getItem('userUuid');
+            const userEmail = localStorage.getItem('userEmail');
+            
+            // 必须有UUID和邮箱才算已登录
+            if (!userUuid || !userEmail) {
+                return false;
+            }
+            
+            // 检查UUID格式是否正确
+            if (!userUuid.startsWith('user_') || userUuid.length < 20) {
+                return false;
+            }
+            
+            // 检查邮箱格式
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(userEmail)) {
+                return false;
+            }
+            
             return true;
         }
 
         // Get user ID
         function getUserId() {
-            // TODO: Return actual user ID from authentication system
-            // For now, generate a test ID
-            return 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            const userUuid = localStorage.getItem('userUuid');
+            if (!userUuid) {
+                throw new Error('User not authenticated');
+            }
+            return userUuid;
+        }
+
+        // Get user email
+        function getUserEmail() {
+            const userEmail = localStorage.getItem('userEmail');
+            if (!userEmail) {
+                throw new Error('User email not found');
+            }
+            return userEmail;
         }
 
         // Save subscription information
