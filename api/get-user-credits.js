@@ -1,10 +1,10 @@
-// 获取用户积分的API
+// 获取用户积分的API - 支持跨页面同步
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = 'https://ciwjjfcuhubjydajazkk.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNpd2pqZmN1aHVianlkYWphemtrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ0MzE4NzQsImV4cCI6MjA1MDAwNzg3NH0.Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8Ej8';
+const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI';
 
-const supabase = createClient(supabaseUrl, supabaseKey);
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 module.exports = async (req, res) => {
     // 设置CORS头
@@ -23,32 +23,68 @@ module.exports = async (req, res) => {
     try {
         const { userIdentifier } = req.body;
         
-        if (!userIdentifier) {
-            return res.status(400).json({ error: 'User identifier required' });
+        if (!userIdentifier || userIdentifier === 'anonymous') {
+            return res.status(200).json({ 
+                success: true, 
+                credits: 0,
+                user_type: 'anonymous'
+            });
         }
         
-        // 查询用户积分
-        const { data, error } = await supabase
-            .from('user_credits')
-            .select('credits')
-            .eq('user_id', userIdentifier)
+        console.log('🔍 查询用户积分:', userIdentifier);
+        
+        // 支持多种查找方式：UUID或邮箱
+        let user = null;
+        
+        // 1. 先尝试通过UUID查找
+        const { data: uuidUser, error: uuidError } = await supabase
+            .from('users')
+            .select('uuid, email, credits, subscription_status')
+            .eq('uuid', userIdentifier)
             .single();
         
-        if (error && error.code !== 'PGRST116') {
-            console.error('查询积分失败:', error);
-            return res.status(500).json({ error: 'Database query failed' });
+        if (!uuidError && uuidUser) {
+            user = uuidUser;
+            console.log(`✅ 通过UUID找到用户: ${user.email}, 积分: ${user.credits}`);
+        } else {
+            // 2. 如果UUID查找失败，尝试通过邮箱查找
+            const { data: emailUser, error: emailError } = await supabase
+                .from('users')
+                .select('uuid, email, credits, subscription_status')
+                .eq('email', userIdentifier)
+                .single();
+            
+            if (!emailError && emailUser) {
+                user = emailUser;
+                console.log(`✅ 通过邮箱找到用户: ${user.email}, 积分: ${user.credits}`);
+            } else {
+                console.log('❌ 未找到用户:', userIdentifier);
+                return res.status(200).json({ 
+                    success: true, 
+                    credits: 0,
+                    user_type: 'not_found'
+                });
+            }
         }
         
-        const credits = data ? data.credits : 0;
-        
+        // 返回用户积分信息
         res.status(200).json({
             success: true,
-            credits: credits,
-            userIdentifier: userIdentifier
+            credits: user.credits || 0,
+            user_type: 'registered',
+            user_info: {
+                uuid: user.uuid,
+                email: user.email,
+                subscription_status: user.subscription_status
+            }
         });
         
     } catch (error) {
-        console.error('获取用户积分失败:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        console.error('❌ 获取用户积分失败:', error);
+        res.status(500).json({ 
+            success: false, 
+            error: 'Internal server error',
+            credits: 0
+        });
     }
 };

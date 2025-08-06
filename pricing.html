@@ -52,6 +52,9 @@
     <!-- 统一积分同步系统 -->
     <script src="credits_sync.js"></script>
     
+    <!-- 用户状态同步系统 -->
+    <script src="user_state_sync.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -1392,9 +1395,17 @@
                         height: 50
                     },
                     createSubscription: function(data, actions) {
+                        const userInfo = {
+                            user_id: getUserId(),
+                            email: getUserEmail(),
+                            plan_type: planType
+                        };
+                        
+                        console.log('🔄 创建订阅，用户信息:', userInfo);
+                        
                         return actions.subscription.create({
                             'plan_id': planId,
-                            'custom_id': getUserId(),
+                            'custom_id': JSON.stringify(userInfo), // 保存完整用户信息
                             'application_context': {
                                 'brand_name': 'Flux Krea AI',
                                 'locale': 'en-US',
@@ -1411,10 +1422,27 @@
                         showSuccess('Subscription created successfully! Processing your order...');
                         
                         try {
-                            // 立即尝试激活订阅（不等待Webhook）
+                            // 1. 立即保存用户订阅关联
+                            console.log('🔗 保存用户订阅关联...');
+                            
+                            const userInfo = {
+                                googleUserId: getUserId(),
+                                googleUserEmail: getUserEmail(),
+                                paypalSubscriptionId: data.subscriptionID,
+                                planId: planId,
+                                planType: planType
+                            };
+                            
+                            await saveUserSubscriptionAssociation(userInfo);
+                            
+                            // 2. 保存订阅记录到数据库
+                            console.log('💾 保存订阅记录到数据库...');
+                            await saveSubscriptionRecord(data.subscriptionID, userInfo, planId);
+                            
+                            // 3. 立即激活订阅（不等待Webhook）
                             console.log('🚀 立即激活订阅...');
                             
-                            const userIdentifier = getUserId(); // 现在返回邮箱或UUID
+                            const userIdentifier = getUserId();
                             const planId = PAYPAL_PLANS[planType];
                             
                             console.log('激活参数:', {
@@ -1698,20 +1726,20 @@
             }
         }
 
-        // Get user ID - 使用邮箱作为更可靠的标识
+        // Get user ID - 修复版本，确保与数据库一致
         function getUserId() {
             if (!currentUser) {
                 throw new Error('User not authenticated');
             }
             
-            // 优先使用邮箱，因为邮箱是唯一且稳定的标识
-            if (currentUser.email) {
-                return currentUser.email;
-            }
-            
-            // 如果没有邮箱，使用UUID
+            // 优先使用UUID，确保与数据库users表的uuid字段一致
             if (currentUser.uuid) {
                 return currentUser.uuid;
+            }
+            
+            // 如果没有UUID，使用邮箱作为备选
+            if (currentUser.email) {
+                return currentUser.email;
             }
             
             throw new Error('User ID not available');
@@ -1911,6 +1939,80 @@
             }
         }
 
+        // 保存用户订阅关联
+        async function saveUserSubscriptionAssociation(userInfo) {
+            try {
+                console.log('🔗 调用订阅关联API:', userInfo);
+                
+                const response = await fetch('/api/handle-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userInfo)
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('✅ 用户订阅关联保存成功:', result);
+                
+            } catch (error) {
+                console.error('❌ 保存用户订阅关联失败:', error);
+                // 不抛出错误，继续执行其他逻辑
+            }
+        }
+        
+        // 保存订阅记录到数据库
+        async function saveSubscriptionRecord(subscriptionId, userInfo, planId) {
+            try {
+                console.log('💾 保存订阅记录:', { subscriptionId, userInfo, planId });
+                
+                // 保存到subscriptions表
+                const { error: subError } = await supabaseClient
+                    .from('subscriptions')
+                    .insert({
+                        id: subscriptionId,
+                        user_uuid: userInfo.user_id,
+                        user_email: userInfo.email,
+                        plan_id: planId,
+                        plan_type: userInfo.plan_type,
+                        status: 'PENDING',
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    });
+                
+                if (subError) {
+                    console.error('❌ 保存订阅记录失败:', subError);
+                    // 不抛出错误，继续执行
+                }
+                
+                // 保存到paypal_orders表（用于追踪）
+                const { error: orderError } = await supabaseClient
+                    .from('paypal_orders')
+                    .insert({
+                        subscription_id: subscriptionId,
+                        user_uuid: userInfo.user_id,
+                        user_email: userInfo.email,
+                        plan_id: planId,
+                        plan_type: userInfo.plan_type,
+                        status: 'APPROVED',
+                        created_at: new Date().toISOString()
+                    });
+                
+                if (orderError) {
+                    console.log('⚠️ 保存PayPal订单记录失败 (表可能不存在):', orderError.message);
+                }
+                
+                console.log('✅ 订阅记录已保存');
+                
+            } catch (error) {
+                console.error('❌ 保存订阅记录异常:', error);
+            }
+        }
+        
         // 为用户增加订阅积分
         async function addSubscriptionCredits(planType) {
             console.log('Adding subscription credits for plan:', planType);
@@ -1988,6 +2090,16 @@
                     window.creditsSync.setCredits(newCredits);
                     console.log('积分已同步到统一系统:', newCredits);
                 }
+                
+                // 立即更新localStorage中的用户数据
+                if (currentUser) {
+                    localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+                }
+                
+                // 触发跨页面状态同步事件
+                window.dispatchEvent(new CustomEvent('userStateUpdated', {
+                    detail: { user: currentUser, credits: newCredits }
+                }));
 
                 console.log(`Successfully added ${creditsToAdd} credits. New balance: ${newCredits}`);
                 return { creditsAdded: creditsToAdd, newBalance: newCredits };
@@ -2065,9 +2177,14 @@
             }
         });
 
-        // 初始化统一积分同步系统
-        document.addEventListener('DOMContentLoaded', function() {
-            // 确保积分同步系统已加载
+        // 初始化统一积分同步系统和用户状态同步
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🚀 Pricing页面初始化...');
+            
+            // 1. 首先检查用户登录状态
+            await initializeUserState();
+            
+            // 2. 初始化积分同步系统
             if (window.creditsSync) {
                 // 立即更新显示
                 window.creditsSync.updateDisplay();
@@ -2079,7 +2196,108 @@
             } else {
                 console.warn('积分同步系统未加载，使用默认显示');
             }
+            
+            // 3. 更新导航栏显示
+            updateNavigationDisplay();
         });
+        
+        // 初始化用户状态
+        async function initializeUserState() {
+            try {
+                console.log('🔍 检查用户登录状态...');
+                
+                // 检查Supabase会话
+                const isLoggedIn = await checkSupabaseSession();
+                
+                if (isLoggedIn && currentUser) {
+                    console.log('✅ 用户已登录:', currentUser.email);
+                    
+                    // 同步用户数据到localStorage
+                    localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+                    
+                    // 从数据库获取最新积分
+                    await syncUserCreditsFromDatabase();
+                } else {
+                    console.log('❌ 用户未登录');
+                    currentUser = null;
+                    localStorage.removeItem('flux_krea_user');
+                }
+            } catch (error) {
+                console.error('❌ 初始化用户状态失败:', error);
+            }
+        }
+        
+        // 从数据库同步用户积分
+        async function syncUserCreditsFromDatabase() {
+            if (!currentUser || !currentUser.uuid) return;
+            
+            try {
+                console.log('🔄 从数据库同步积分...');
+                
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('credits, subscription_status')
+                    .eq('uuid', currentUser.uuid)
+                    .single();
+                
+                if (error) {
+                    console.error('❌ 同步积分失败:', error);
+                    return;
+                }
+                
+                if (data) {
+                    const newCredits = data.credits || 0;
+                    console.log(`💰 积分同步: ${currentUser.credits || 0} → ${newCredits}`);
+                    
+                    // 更新全局用户状态
+                    currentUser.credits = newCredits;
+                    currentUser.subscription_status = data.subscription_status;
+                    
+                    // 更新localStorage
+                    localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+                    
+                    // 使用统一积分同步系统
+                    if (window.creditsSync) {
+                        window.creditsSync.setCredits(newCredits);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ 同步积分异常:', error);
+            }
+        }
+        
+        // 更新导航栏显示
+        function updateNavigationDisplay() {
+            const creditsDisplay = document.getElementById('creditsDisplay');
+            const signinBtn = document.querySelector('.signin-btn');
+            
+            if (currentUser && currentUser.email) {
+                // 已登录状态
+                if (creditsDisplay) {
+                    creditsDisplay.style.display = 'flex';
+                }
+                
+                if (signinBtn) {
+                    signinBtn.innerHTML = `
+                        <img src="${currentUser.avatar_url || 'https://via.placeholder.com/18'}" 
+                             style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
+                        <span>${currentUser.email.split('@')[0]}</span>
+                    `;
+                }
+            } else {
+                // 未登录状态
+                if (creditsDisplay) {
+                    creditsDisplay.style.display = 'flex';
+                }
+                
+                if (signinBtn) {
+                    signinBtn.innerHTML = `
+                        <div class="google-icon"></div>
+                        <span>Sign in</span>
+                    `;
+                }
+            }
+        }
     </script>
 </body>
 </html>

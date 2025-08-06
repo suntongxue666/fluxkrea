@@ -169,3 +169,4 @@ wandb
 trace
 tmp*
 logsgenerated_images/
+.vercel

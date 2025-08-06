@@ -18,14 +18,42 @@ class CreditsSync {
         });
     }
     
-    // 获取当前用户标识
+    // 获取当前用户标识 - 修复版本，确保一致性
     getCurrentUserIdentifier() {
         try {
+            // 1. 优先从全局currentUser获取
+            if (window.currentUser) {
+                // 使用UUID作为主要标识符，确保与数据库一致
+                if (window.currentUser.uuid) {
+                    return window.currentUser.uuid;
+                }
+                // 如果没有UUID，使用邮箱
+                if (window.currentUser.email) {
+                    return window.currentUser.email;
+                }
+            }
+            
+            // 2. 从localStorage获取
             const userData = localStorage.getItem(this.userKey);
             if (userData) {
                 const user = JSON.parse(userData);
-                return user.email || user.id || 'anonymous';
+                // 优先使用UUID
+                if (user.uuid) {
+                    return user.uuid;
+                }
+                // 其次使用邮箱
+                if (user.email) {
+                    return user.email;
+                }
+                return user.id || 'anonymous';
             }
+            
+            // 3. 检查是否有UUID（匿名用户）
+            const uuid = localStorage.getItem('user_uuid');
+            if (uuid) {
+                return uuid;
+            }
+            
             return 'anonymous';
         } catch (error) {
             console.error('获取用户标识失败:', error);
