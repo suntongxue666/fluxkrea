@@ -159,6 +159,382 @@ async function handleSubscriptionActivated(eventData) {
 }
 
 /**
+ * 处理订阅创建事件 - 只记录，不发放积分
+ */
+async function handleSubscriptionCreated(eventData) {
+  const subscription = eventData.resource;
+  console.log('Processing subscription creation:', subscription.id);
+  
+  try {
+    const planId = subscription.plan_id;
+    const planDetails = PLAN_DETAILS[planId];
+    const userId = subscription.custom_id;
+    
+    if (!planDetails) {
+      throw new Error(`Unknown plan ID: ${planId}`);
+    }
+    
+    // 只保存订阅记录，状态为PENDING
+    const { data: subscriptionRecord, error: subError } = await supabase
+      .from('subscriptions')
+      .insert({
+        user_uuid: userId,
+        paypal_subscription_id: subscription.id,
+        paypal_plan_id: planId,
+        plan_name: planDetails.name,
+        status: 'PENDING', // 重要：创建时状态为PENDING
+        credits_per_month: planDetails.credits,
+        price: planDetails.price,
+        currency: 'USD',
+        billing_cycle: 'monthly',
+        start_date: new Date().toISOString()
+      })
+      .select()
+      .single();
+    
+    if (subError) {
+      console.error('Error saving subscription:', subError);
+      throw subError;
+    }
+    
+    console.log('✅ Subscription created and saved with PENDING status');
+    
+    return {
+      status: 'success',
+      message: 'Subscription created, waiting for payment',
+      subscription_id: subscription.id,
+      user_id: userId
+    };
+    
+  } catch (error) {
+    console.error('Error processing subscription creation:', error);
+    return {
+      status: 'error',
+      message: error.message,
+      subscription_id: subscription.id
+    };
+  }
+}
+
+/**
+ * 处理支付订单创建事件
+ */
+async function handlePaymentOrderCreated(eventData) {
+  const order = eventData.resource;
+  console.log('Processing payment order creation:', order.id);
+  
+  // 记录支付订单，但不发放积分
+  return {
+    status: 'acknowledged',
+    message: 'Payment order created, waiting for completion',
+    order_id: order.id
+  };
+}
+
+/**
+ * 处理支付完成事件
+ */
+async function handlePaymentSaleCompleted(eventData) {
+  const payment = eventData.resource;
+  console.log('Processing payment completion:', payment.id);
+  
+  try {
+    // 保存支付记录
+    const { error: paymentError } = await supabase
+      .from('payments')
+      .insert({
+        paypal_payment_id: payment.id,
+        amount: parseFloat(payment.amount.total),
+        currency: payment.amount.currency,
+        status: 'COMPLETED',
+        paid_at: new Date().toISOString()
+      });
+    
+    if (paymentError) {
+      console.error('Error saving payment record:', paymentError);
+    }
+    
+    console.log('✅ Payment completed and recorded');
+    
+    return {
+      status: 'success',
+      message: 'Payment completed and recorded',
+      payment_id: payment.id
+    };
+    
+  } catch (error) {
+    console.error('Error processing payment completion:', error);
+    return {
+      status: 'error',
+      message: error.message,
+      payment_id: payment.id
+    };
+  }
+}
+
+/**
+ * 处理订阅取消事件
+ */
+async function handleSubscriptionCancelled(eventData) {
+  const subscription = eventData.resource;
+  console.log('Processing subscription cancellation:', subscription.id);
+  
+  try {
+    // 更新订阅状态为CANCELLED
+    const { error: updateError } = await supabase
+      .from('subscriptions')
+      .update({
+        status: 'CANCELLED',
+        updated_at: new Date().toISOString()
+      })
+      .eq('paypal_subscription_id', subscription.id);
+    
+    if (updateError) {
+      console.error('Error updating subscription status:', updateError);
+      throw updateError;
+    }
+    
+    // 更新用户订阅状态
+    const userId = subscription.custom_id;
+    if (userId) {
+      const { error: userUpdateError } = await supabase
+        .from('users')
+        .update({
+          subscription_status: 'CANCELLED',
+          updated_at: new Date().toISOString()
+        })
+        .eq('uuid', userId);
+      
+      if (userUpdateError) {
+        console.error('Error updating user subscription status:', userUpdateError);
+      }
+    }
+    
+    console.log('✅ Subscription cancelled successfully');
+    
+    return {
+      status: 'success',
+      message: 'Subscription cancelled',
+      subscription_id: subscription.id
+    };
+    
+  } catch (error) {
+    console.error('Error processing subscription cancellation:', error);
+    return {
+      status: 'error',
+      message: error.message,
+      subscription_id: subscription.id
+    };
+  }
+}
+
+/**
+ * 处理支付退款事件
+ */
+async function handlePaymentSaleRefund(eventData) {
+  const refund = eventData.resource;
+  console.log('Processing payment refund:', refund.id);
+  
+  try {
+    const refundAmount = parseFloat(refund.amount.total);
+    const parentPaymentId = refund.parent_payment;
+    
+    // 1. 记录退款
+    const { error: refundError } = await supabase
+      .from('payments')
+      .insert({
+        paypal_payment_id: refund.id,
+        parent_payment_id: parentPaymentId,
+        amount: -refundAmount, // 负数表示退款
+        currency: refund.amount.currency,
+        status: 'REFUNDED',
+        paid_at: new Date().toISOString()
+      });
+    
+    if (refundError) {
+      console.error('Error recording refund:', refundError);
+    }
+    
+    // 2. 查找相关订阅和用户
+    const { data: originalPayment } = await supabase
+      .from('payments')
+      .select('user_uuid, credits_awarded, subscription_id')
+      .eq('paypal_payment_id', parentPaymentId)
+      .single();
+    
+    if (originalPayment && originalPayment.user_uuid) {
+      // 3. 扣除相应积分
+      const creditsToDeduct = originalPayment.credits_awarded || 0;
+      
+      const { data: user } = await supabase
+        .from('users')
+        .select('credits')
+        .eq('uuid', originalPayment.user_uuid)
+        .single();
+      
+      if (user) {
+        const newCredits = Math.max(0, user.credits - creditsToDeduct); // 不能为负数
+        
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            credits: newCredits,
+            subscription_status: 'REFUNDED',
+            updated_at: new Date().toISOString()
+          })
+          .eq('uuid', originalPayment.user_uuid);
+        
+        if (!updateError) {
+          // 4. 记录积分扣除交易
+          await supabase
+            .from('credit_transactions')
+            .insert({
+              user_uuid: originalPayment.user_uuid,
+              transaction_type: 'REFUND',
+              amount: -creditsToDeduct,
+              balance_after: newCredits,
+              description: `支付退款 - 扣除${creditsToDeduct}积分`,
+              source: 'paypal_refund',
+              reference_id: refund.id
+            });
+        }
+      }
+      
+      // 5. 更新订阅状态
+      if (originalPayment.subscription_id) {
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: 'REFUNDED',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', originalPayment.subscription_id);
+      }
+    }
+    
+    console.log('✅ Payment refund processed successfully');
+    
+    return {
+      status: 'success',
+      message: 'Payment refunded and credits adjusted',
+      refund_id: refund.id,
+      parent_payment_id: parentPaymentId
+    };
+    
+  } catch (error) {
+    console.error('Error processing payment refund:', error);
+    return {
+      status: 'error',
+      message: error.message,
+      refund_id: refund.id
+    };
+  }
+}
+
+/**
+ * 处理支付撤销事件
+ */
+async function handlePaymentSaleReversed(eventData) {
+  const reversal = eventData.resource;
+  console.log('Processing payment reversal:', reversal.id);
+  
+  try {
+    const reversalAmount = parseFloat(reversal.amount.total);
+    const parentPaymentId = reversal.parent_payment;
+    
+    // 1. 记录撤销
+    const { error: reversalError } = await supabase
+      .from('payments')
+      .insert({
+        paypal_payment_id: reversal.id,
+        parent_payment_id: parentPaymentId,
+        amount: -reversalAmount, // 负数表示撤销
+        currency: reversal.amount.currency,
+        status: 'REVERSED',
+        paid_at: new Date().toISOString()
+      });
+    
+    if (reversalError) {
+      console.error('Error recording reversal:', reversalError);
+    }
+    
+    // 2. 查找相关订阅和用户
+    const { data: originalPayment } = await supabase
+      .from('payments')
+      .select('user_uuid, credits_awarded, subscription_id')
+      .eq('paypal_payment_id', parentPaymentId)
+      .single();
+    
+    if (originalPayment && originalPayment.user_uuid) {
+      // 3. 扣除相应积分
+      const creditsToDeduct = originalPayment.credits_awarded || 0;
+      
+      const { data: user } = await supabase
+        .from('users')
+        .select('credits')
+        .eq('uuid', originalPayment.user_uuid)
+        .single();
+      
+      if (user) {
+        const newCredits = Math.max(0, user.credits - creditsToDeduct); // 不能为负数
+        
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            credits: newCredits,
+            subscription_status: 'REVERSED',
+            updated_at: new Date().toISOString()
+          })
+          .eq('uuid', originalPayment.user_uuid);
+        
+        if (!updateError) {
+          // 4. 记录积分扣除交易
+          await supabase
+            .from('credit_transactions')
+            .insert({
+              user_uuid: originalPayment.user_uuid,
+              transaction_type: 'REVERSAL',
+              amount: -creditsToDeduct,
+              balance_after: newCredits,
+              description: `支付撤销 - 扣除${creditsToDeduct}积分`,
+              source: 'paypal_reversal',
+              reference_id: reversal.id
+            });
+        }
+      }
+      
+      // 5. 更新订阅状态
+      if (originalPayment.subscription_id) {
+        await supabase
+          .from('subscriptions')
+          .update({
+            status: 'REVERSED',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', originalPayment.subscription_id);
+      }
+    }
+    
+    console.log('✅ Payment reversal processed successfully');
+    
+    return {
+      status: 'success',
+      message: 'Payment reversed and credits adjusted',
+      reversal_id: reversal.id,
+      parent_payment_id: parentPaymentId
+    };
+    
+  } catch (error) {
+    console.error('Error processing payment reversal:', error);
+    return {
+      status: 'error',
+      message: error.message,
+      reversal_id: reversal.id
+    };
+  }
+}
+
+/**
  * 主要的Webhook处理函数
  */
 export default async function handler(req, res) {
@@ -173,13 +549,39 @@ export default async function handler(req, res) {
     let result;
 
     switch (body.event_type) {
+      // 订阅生命周期事件
+      case 'BILLING.SUBSCRIPTION.CREATED':
+        result = await handleSubscriptionCreated(body);
+        break;
+        
       case 'BILLING.SUBSCRIPTION.ACTIVATED':
         result = await handleSubscriptionActivated(body);
         break;
         
-      case 'BILLING.SUBSCRIPTION.CREATED':
-        console.log('Subscription created:', body.resource.id);
-        result = { status: 'acknowledged', message: 'Subscription created, waiting for activation' };
+      case 'BILLING.SUBSCRIPTION.CANCELLED':
+        result = await handleSubscriptionCancelled(body);
+        break;
+      
+      // 支付相关事件
+      case 'PAYMENT.ORDER.CREATED':
+        result = await handlePaymentOrderCreated(body);
+        break;
+        
+      case 'PAYMENT.SALE.COMPLETED':
+        result = await handlePaymentSaleCompleted(body);
+        break;
+        
+      case 'PAYMENT.ORDER.CANCELLED':
+        console.log('Payment order cancelled:', body.resource.id);
+        result = { status: 'acknowledged', message: 'Payment order cancelled' };
+        break;
+        
+      case 'PAYMENT.SALE.REFUND':
+        result = await handlePaymentSaleRefund(body);
+        break;
+        
+      case 'PAYMENT.SALE.REVERSED':
+        result = await handlePaymentSaleReversed(body);
         break;
         
       default:
@@ -190,6 +592,7 @@ export default async function handler(req, res) {
     res.status(200).json({
       received: true,
       event_type: body.event_type,
+      timestamp: new Date().toISOString(),
       ...result
     });
 
