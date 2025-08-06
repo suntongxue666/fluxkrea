@@ -1402,21 +1402,53 @@
                             }
                         });
                     },
-                    onApprove: function(data, actions) {
+                    onApprove: async function(data, actions) {
                         console.log('Subscription approved:', data.subscriptionID);
                         
-                        // 根据PayPal官方文档，onApprove只用于用户体验，不处理业务逻辑
                         showSuccess('Subscription created successfully! Processing your order...');
                         
-                        // 保存订阅ID到localStorage，供成功页面使用
+                        try {
+                            // 立即尝试激活订阅（不等待Webhook）
+                            console.log('🚀 立即激活订阅...');
+                            
+                            const userIdentifier = getUserId(); // 现在返回邮箱或UUID
+                            const planId = PAYPAL_PLANS[planType];
+                            
+                            console.log('激活参数:', {
+                                subscriptionId: data.subscriptionID,
+                                planId: planId,
+                                userIdentifier: userIdentifier,
+                                planType: planType
+                            });
+                            
+                            // 调用自动激活逻辑
+                            const activationResult = await activateSubscriptionImmediately(
+                                data.subscriptionID, 
+                                planId, 
+                                userIdentifier
+                            );
+                            
+                            if (activationResult.success) {
+                                showSuccess('Subscription activated! Credits added to your account.');
+                                console.log('✅ 订阅激活成功:', activationResult);
+                            } else {
+                                console.warn('⚠️  立即激活失败，将通过Webhook处理:', activationResult.message);
+                                showSuccess('Subscription created! Credits will be added shortly.');
+                            }
+                            
+                        } catch (error) {
+                            console.error('❌ 立即激活过程中发生错误:', error);
+                            showSuccess('Subscription created! Credits will be processed shortly.');
+                        }
+                        
+                        // 保存订阅信息
                         localStorage.setItem('pendingSubscriptionId', data.subscriptionID);
                         localStorage.setItem('pendingSubscriptionPlan', planType);
                         
-                        // 立即跳转到成功页面
-                        // 实际的积分发放将通过PayPal Webhook在后台处理
+                        // 跳转到成功页面
                         setTimeout(() => {
                             window.location.href = '/subscription-success.html?subscription_id=' + data.subscriptionID + '&plan=' + planType;
-                        }, 1500);
+                        }, 2000);
                     },
                     onError: function(err) {
                         console.error('PayPal subscription error:', err);
@@ -1663,12 +1695,23 @@
             }
         }
 
-        // Get user ID
+        // Get user ID - 使用邮箱作为更可靠的标识
         function getUserId() {
-            if (!currentUser || !currentUser.uuid) {
+            if (!currentUser) {
                 throw new Error('User not authenticated');
             }
-            return currentUser.uuid;
+            
+            // 优先使用邮箱，因为邮箱是唯一且稳定的标识
+            if (currentUser.email) {
+                return currentUser.email;
+            }
+            
+            // 如果没有邮箱，使用UUID
+            if (currentUser.uuid) {
+                return currentUser.uuid;
+            }
+            
+            throw new Error('User ID not available');
         }
 
         // Get user email
@@ -1738,6 +1781,130 @@
             } catch (error) {
                 console.error('Error saving subscription:', error);
                 throw error;
+            }
+        }
+
+        // 立即激活订阅（不等待Webhook）
+        async function activateSubscriptionImmediately(subscriptionId, planId, userIdentifier) {
+            console.log('🚀 立即激活订阅:', { subscriptionId, planId, userIdentifier });
+            
+            try {
+                // 计划详情映射
+                const PLAN_DETAILS = {
+                    'P-5ML4271244454362WXNWU5NI': { name: 'Pro Plan', credits: 1000, price: 9.99 },
+                    'P-3NJ78684DS796242VNCJBKQQ': { name: 'Max Plan', credits: 5000, price: 19.99 }
+                };
+                
+                const planDetails = PLAN_DETAILS[planId];
+                if (!planDetails) {
+                    throw new Error(`未知的计划ID: ${planId}`);
+                }
+                
+                // 查找用户记录
+                let user = null;
+                
+                if (userIdentifier.includes('@')) {
+                    // 基于邮箱查找
+                    const { data: emailUsers, error } = await supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('email', userIdentifier)
+                        .order('last_seen_at', { ascending: false, nullsFirst: false })
+                        .limit(1);
+                        
+                    if (!error && emailUsers.length > 0) {
+                        user = emailUsers[0];
+                    }
+                } else {
+                    // 基于UUID查找
+                    const { data: uuidUsers, error } = await supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('uuid', userIdentifier)
+                        .single();
+                        
+                    if (!error) {
+                        user = uuidUsers;
+                    }
+                }
+                
+                if (!user) {
+                    throw new Error(`未找到用户: ${userIdentifier}`);
+                }
+                
+                // 检查是否已激活
+                const { data: existingSubs } = await supabaseClient
+                    .from('subscriptions')
+                    .select('*')
+                    .eq('paypal_subscription_id', subscriptionId);
+                    
+                if (existingSubs && existingSubs.length > 0) {
+                    return { success: true, message: '订阅已存在' };
+                }
+                
+                // 更新用户积分
+                const currentCredits = user.credits || 0;
+                const newCredits = currentCredits + planDetails.credits;
+                
+                const { error: updateError } = await supabaseClient
+                    .from('users')
+                    .update({
+                        credits: newCredits,
+                        subscription_status: 'ACTIVE',
+                        subscription_credits_remaining: planDetails.credits,
+                        subscription_renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('uuid', user.uuid);
+                    
+                if (updateError) {
+                    throw updateError;
+                }
+                
+                // 记录积分交易
+                await supabaseClient
+                    .from('credit_transactions')
+                    .insert({
+                        user_uuid: user.uuid,
+                        transaction_type: 'SUBSCRIPTION_PURCHASE',
+                        amount: planDetails.credits,
+                        balance_after: newCredits,
+                        description: `${planDetails.name}订阅激活 - 获得${planDetails.credits}积分`,
+                        source: 'paypal_subscription'
+                    });
+                
+                // 保存订阅记录
+                await supabaseClient
+                    .from('subscriptions')
+                    .insert({
+                        user_uuid: user.uuid,
+                        paypal_subscription_id: subscriptionId,
+                        paypal_plan_id: planId,
+                        plan_name: planDetails.name,
+                        status: 'ACTIVE',
+                        credits_per_month: planDetails.credits,
+                        price: planDetails.price,
+                        currency: 'USD',
+                        billing_cycle: 'monthly',
+                        start_date: new Date().toISOString(),
+                        next_billing_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+                    });
+                
+                return {
+                    success: true,
+                    message: '订阅激活成功',
+                    user_id: user.uuid,
+                    credits_added: planDetails.credits,
+                    new_balance: newCredits
+                };
+                
+            } catch (error) {
+                console.error('立即激活失败:', error);
+                return {
+                    success: false,
+                    message: error.message,
+                    subscription_id: subscriptionId
+                };
             }
         }
 
