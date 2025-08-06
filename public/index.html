@@ -2417,7 +2417,7 @@
                         .eq('uuid', uuid)
                         .single();
                     
-                    if (error && error.code === 'PGRST116') {
+                    if (!user) {
                         // 创建新的匿名用户记录
                         console.log('用户记录不存在，创建新用户:', uuid);
                         const { data: newUser, error: createError } = await supabaseClient
