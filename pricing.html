@@ -1608,47 +1608,52 @@
                 const userId = getUserId();
                 const userEmail = getUserEmail();
                 
-                // 保存订阅记录到Supabase
+                console.log('Plan details:', planDetails);
+                console.log('User ID:', userId);
+                console.log('User email:', userEmail);
+                
+                // 先测试数据库连接
+                console.log('Testing database connection...');
+                const { data: testData, error: testError } = await supabaseClient
+                    .from('users')
+                    .select('uuid, credits')
+                    .eq('uuid', userId)
+                    .single();
+                
+                if (testError) {
+                    console.error('Database connection test failed:', testError);
+                    throw new Error('Database connection failed: ' + testError.message);
+                }
+                
+                console.log('Database connection successful, user data:', testData);
+                
+                // 简化的订阅记录保存（只保存必要字段）
+                const subscriptionData = {
+                    user_uuid: userId,
+                    paypal_subscription_id: subscriptionId,
+                    plan_name: planDetails.name,
+                    status: 'ACTIVE',
+                    credits_per_month: planDetails.credits,
+                    price: planDetails.price
+                };
+                
+                console.log('Inserting subscription data:', subscriptionData);
+                
                 const { data: subscription, error: subError } = await supabaseClient
                     .from('subscriptions')
-                    .insert({
-                        user_uuid: userId,
-                        paypal_subscription_id: subscriptionId,
-                        paypal_plan_id: PAYPAL_PLANS[planType],
-                        plan_name: planDetails.name,
-                        status: 'ACTIVE',
-                        credits_per_month: planDetails.credits,
-                        price: planDetails.price,
-                        currency: 'USD',
-                        billing_cycle: 'monthly',
-                        start_date: new Date().toISOString(),
-                        next_billing_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-                    })
+                    .insert(subscriptionData)
                     .select()
                     .single();
 
-                if (subError) throw subError;
-
-                // 保存支付记录
-                const { data: payment, error: payError } = await supabaseClient
-                    .from('payments')
-                    .insert({
-                        subscription_id: subscription.id,
-                        user_uuid: userId,
-                        paypal_payment_id: subscriptionId, // 临时使用订阅ID
-                        amount: planDetails.price,
-                        currency: 'USD',
-                        status: 'COMPLETED',
-                        credits_awarded: planDetails.credits,
-                        paid_at: new Date().toISOString()
-                    })
-                    .select()
-                    .single();
-
-                if (payError) throw payError;
+                if (subError) {
+                    console.error('Subscription insert error:', subError);
+                    throw new Error('Failed to save subscription: ' + subError.message);
+                }
 
                 console.log('Subscription saved successfully:', subscription);
-                return { subscription, payment };
+                
+                // 暂时跳过支付记录，先确保订阅记录能保存成功
+                return { subscription };
                 
             } catch (error) {
                 console.error('Error saving subscription:', error);
@@ -1665,33 +1670,46 @@
                 const userId = getUserId();
                 const creditsToAdd = planDetails.credits;
                 
+                console.log('Credits to add:', creditsToAdd);
+                console.log('User ID:', userId);
+                
                 // 获取当前用户积分
+                console.log('Fetching current user credits...');
                 const { data: user, error: getUserError } = await supabaseClient
                     .from('users')
                     .select('credits')
                     .eq('uuid', userId)
                     .single();
 
-                if (getUserError) throw getUserError;
+                if (getUserError) {
+                    console.error('Error fetching user:', getUserError);
+                    throw new Error('Failed to fetch user data: ' + getUserError.message);
+                }
 
                 const currentCredits = user.credits || 0;
                 const newCredits = currentCredits + creditsToAdd;
+                
+                console.log('Current credits:', currentCredits);
+                console.log('New credits:', newCredits);
 
                 // 更新用户积分
+                console.log('Updating user credits...');
                 const { error: updateError } = await supabaseClient
                     .from('users')
                     .update({
                         credits: newCredits,
                         subscription_status: 'ACTIVE',
-                        subscription_credits_remaining: creditsToAdd,
-                        subscription_renewal_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
                         updated_at: new Date().toISOString()
                     })
                     .eq('uuid', userId);
 
-                if (updateError) throw updateError;
+                if (updateError) {
+                    console.error('Error updating user credits:', updateError);
+                    throw new Error('Failed to update user credits: ' + updateError.message);
+                }
 
-                // 记录积分交易
+                // 简化的积分交易记录
+                console.log('Recording credit transaction...');
                 const { error: transError } = await supabaseClient
                     .from('credit_transactions')
                     .insert({
@@ -1700,11 +1718,14 @@
                         amount: creditsToAdd,
                         balance_after: newCredits,
                         description: `${planDetails.name}订阅激活 - 获得${creditsToAdd}积分`,
-                        source: 'paypal_subscription',
-                        created_at: new Date().toISOString()
+                        source: 'paypal_subscription'
                     });
 
-                if (transError) throw transError;
+                if (transError) {
+                    console.error('Error recording transaction:', transError);
+                    // 不抛出错误，因为积分已经更新成功
+                    console.warn('Transaction recording failed, but credits were updated successfully');
+                }
 
                 // 更新全局用户状态
                 if (currentUser) {
