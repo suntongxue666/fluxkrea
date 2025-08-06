@@ -1478,6 +1478,11 @@
 
             // 检查初始认证状态
             await checkSupabaseSession();
+            
+            // 如果用户已登录，显示用户状态和余额
+            if (currentUser) {
+                await updateUserStatusDisplay();
+            }
 
             const urlParams = new URLSearchParams(window.location.search);
             const planParam = urlParams.get('plan');
@@ -1496,6 +1501,89 @@
                 }, 500);
             }
         });
+
+        // 更新用户状态显示
+        async function updateUserStatusDisplay() {
+            if (!currentUser || !currentUser.uuid) return;
+            
+            try {
+                console.log('刷新用户状态和余额...');
+                
+                // 从数据库获取最新的用户信息
+                const { data: userData, error } = await supabaseClient
+                    .from('users')
+                    .select('credits, subscription_status, subscription_credits_remaining')
+                    .eq('uuid', currentUser.uuid)
+                    .single();
+                
+                if (error) {
+                    console.error('获取用户数据失败:', error);
+                    return;
+                }
+                
+                // 更新全局用户状态
+                currentUser.credits = userData.credits || 0;
+                currentUser.subscription_status = userData.subscription_status || 'FREE';
+                currentUser.subscription_credits_remaining = userData.subscription_credits_remaining || 0;
+                
+                console.log('用户状态已更新:', {
+                    email: currentUser.email,
+                    credits: currentUser.credits,
+                    subscription_status: currentUser.subscription_status
+                });
+                
+                // 在页面上显示用户状态
+                displayUserStatus();
+                
+            } catch (error) {
+                console.error('更新用户状态失败:', error);
+            }
+        }
+
+        // 在页面上显示用户状态
+        function displayUserStatus() {
+            // 创建或更新用户状态显示区域
+            let statusDiv = document.getElementById('userStatusDisplay');
+            if (!statusDiv) {
+                statusDiv = document.createElement('div');
+                statusDiv.id = 'userStatusDisplay';
+                statusDiv.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: white;
+                    padding: 16px;
+                    border-radius: 12px;
+                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                    border: 1px solid #e2e8f0;
+                    z-index: 1000;
+                    font-family: Inter, sans-serif;
+                    font-size: 14px;
+                    min-width: 200px;
+                `;
+                document.body.appendChild(statusDiv);
+            }
+            
+            const subscriptionBadge = currentUser.subscription_status === 'ACTIVE' 
+                ? '<span style="background: #10b981; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">ACTIVE</span>'
+                : '<span style="background: #6b7280; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">FREE</span>';
+            
+            statusDiv.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                    <img src="${currentUser.avatar_url || 'https://via.placeholder.com/24'}" 
+                         style="width: 24px; height: 24px; border-radius: 50%;" alt="Avatar">
+                    <div style="font-weight: 600; color: #1e293b;">${currentUser.email}</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <span style="color: #64748b;">Credits:</span>
+                    <span style="font-weight: 600; color: #1e293b;">${currentUser.credits || 0}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: #64748b;">Status:</span>
+                    ${subscriptionBadge}
+                </div>
+            `;
+        }
 
         // Show error message
         function showError(message) {

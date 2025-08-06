@@ -2383,6 +2383,16 @@
                     
                     console.log('用户认证升级成功:', this.currentUser);
                     
+                    
+                    // 检查是否需要登录后重定向
+                    const postLoginRedirect = localStorage.getItem("postLoginRedirect");
+                    if (postLoginRedirect) {
+                        localStorage.removeItem("postLoginRedirect");
+                        console.log("登录成功，重定向到:", postLoginRedirect);
+                        setTimeout(() => {
+                            window.location.href = postLoginRedirect;
+                        }, 1000);
+                    }
                 } catch (error) {
                     console.error('处理认证用户失败:', error);
                     await this.handleAnonymousUser();
@@ -3780,6 +3790,8 @@
         // 从弹窗登录Google
         function signInFromModal() {
             closeCreditsModal();
+            // 保存登录后要跳转的页面
+            localStorage.setItem("postLoginRedirect", "pricing.html");
             if (userManager) {
                 userManager.signInWithGoogle();
             } else {
