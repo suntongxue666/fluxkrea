@@ -11,8 +11,9 @@
     "check-env": "node check_env.js"
   },
   "dependencies": {
-    "node-fetch": "^3.3.2",
-    "dotenv": "^16.3.1"
+    "@supabase/supabase-js": "^2.53.0",
+    "dotenv": "^16.3.1",
+    "node-fetch": "^3.3.2"
   },
   "engines": {
     "node": ">=18.0.0"

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分同步测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .credits-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .test-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 积分同步系统测试</h1>
+        
+        <div class="status" id="syncStatus">
+            <span>🔄 正在初始化积分同步系统...</span>
+        </div>
+        
+        <div class="credits-display">
+            <i class="fas fa-coins"></i>
+            当前积分: <span id="creditsAmount">0</span>
+        </div>
+        
+        <div class="test-buttons">
+            <button class="btn btn-success" onclick="addCredits(10)">➕ 添加 10 积分</button>
+            <button class="btn btn-warning" onclick="deductCredits(5)">➖ 扣除 5 积分</button>
+            <button class="btn btn-primary" onclick="setCredits(100)">🎯 设置为 100 积分</button>
+            <button class="btn btn-danger" onclick="resetCredits()">🔄 重置积分</button>
+            <button class="btn btn-primary" onclick="syncFromServer()">☁️ 从服务器同步</button>
+            <button class="btn btn-warning" onclick="clearStorage()">🗑️ 清空本地存储</button>
+        </div>
+        
+        <div>
+            <h3>📊 测试结果</h3>
+            <div class="log" id="testLog"></div>
+        </div>
+        
+        <div>
+            <h3>🔍 存储状态</h3>
+            <div class="log" id="storageStatus"></div>
+        </div>
+    </div>
+
+    <!-- 加载积分同步系统 -->
+    <script src="credits_sync.js"></script>
+    
+    <script>
+        let testLog = [];
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            testLog.push(logEntry);
+            
+            const logElement = document.getElementById('testLog');
+            logElement.innerHTML = testLog.slice(-20).join('\n');
+            logElement.scrollTop = logElement.scrollHeight;
+            
+            console.log(logEntry);
+        }
+        
+        function updateStorageStatus() {
+            const storageElement = document.getElementById('storageStatus');
+            const creditsData = localStorage.getItem('flux_krea_credits');
+            const userData = localStorage.getItem('flux_krea_user');
+            const lastSync = localStorage.getItem('flux_krea_last_sync');
+            
+            storageElement.innerHTML = `
+LocalStorage 积分数据: ${creditsData || '无'}
+LocalStorage 用户数据: ${userData || '无'}
+最后同步时间: ${lastSync ? new Date(parseInt(lastSync)).toLocaleString() : '无'}
+当前用户标识: ${window.creditsSync ? window.creditsSync.getCurrentUserIdentifier() : '未知'}
+            `.trim();
+        }
+        
+        function updateCreditsDisplay() {
+            if (window.creditsSync) {
+                const credits = window.creditsSync.getCredits();
+                document.getElementById('creditsAmount').textContent = credits;
+                log(`积分显示已更新: ${credits}`);
+            }
+            updateStorageStatus();
+        }
+        
+        function addCredits(amount) {
+            if (window.creditsSync) {
+                const oldCredits = window.creditsSync.getCredits();
+                const success = window.creditsSync.addCredits(amount);
+                const newCredits = window.creditsSync.getCredits();
+                
+                if (success) {
+                    log(`✅ 成功添加 ${amount} 积分: ${oldCredits} → ${newCredits}`, 'success');
+                } else {
+                    log(`❌ 添加积分失败`, 'error');
+                }
+            } else {
+                log(`❌ 积分同步系统未初始化`, 'error');
+            }
+            updateCreditsDisplay();
+        }
+        
+        function deductCredits(amount) {
+            if (window.creditsSync) {
+                const oldCredits = window.creditsSync.getCredits();
+                const success = window.creditsSync.deductCredits(amount);
+                const newCredits = window.creditsSync.getCredits();
+                
+                if (success) {
+                    log(`✅ 成功扣除 ${amount} 积分: ${oldCredits} → ${newCredits}`, 'success');
+                } else {
+                    log(`❌ 扣除积分失败 (积分不足或系统错误)`, 'error');
+                }
+            } else {
+                log(`❌ 积分同步系统未初始化`, 'error');
+            }
+            updateCreditsDisplay();
+        }
+        
+        function setCredits(amount) {
+            if (window.creditsSync) {
+                const oldCredits = window.creditsSync.getCredits();
+                const success = window.creditsSync.setCredits(amount);
+                const newCredits = window.creditsSync.getCredits();
+                
+                if (success) {
+                    log(`✅ 成功设置积分: ${oldCredits} → ${newCredits}`, 'success');
+                } else {
+                    log(`❌ 设置积分失败`, 'error');
+                }
+            } else {
+                log(`❌ 积分同步系统未初始化`, 'error');
+            }
+            updateCreditsDisplay();
+        }
+        
+        function resetCredits() {
+            setCredits(20); // 重置为默认的20积分
+        }
+        
+        async function syncFromServer() {
+            if (window.creditsSync) {
+                log(`🔄 开始从服务器同步积分...`);
+                try {
+                    const credits = await window.creditsSync.syncFromServer();
+                    log(`✅ 服务器同步完成，当前积分: ${credits}`, 'success');
+                } catch (error) {
+                    log(`❌ 服务器同步失败: ${error.message}`, 'error');
+                }
+            } else {
+                log(`❌ 积分同步系统未初始化`, 'error');
+            }
+            updateCreditsDisplay();
+        }
+        
+        function clearStorage() {
+            localStorage.removeItem('flux_krea_credits');
+            localStorage.removeItem('flux_krea_user');
+            localStorage.removeItem('flux_krea_last_sync');
+            log(`🗑️ 本地存储已清空`, 'success');
+            updateCreditsDisplay();
+        }
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            const statusElement = document.getElementById('syncStatus');
+            
+            if (window.creditsSync) {
+                statusElement.className = 'status success';
+                statusElement.innerHTML = '<span>✅ 积分同步系统已成功初始化</span>';
+                
+                // 添加积分变化监听器
+                window.creditsSync.addListener((credits) => {
+                    log(`🔔 积分变化通知: ${credits}`);
+                    updateCreditsDisplay();
+                });
+                
+                log(`🚀 积分同步系统初始化完成`);
+                updateCreditsDisplay();
+            } else {
+                statusElement.className = 'status error';
+                statusElement.innerHTML = '<span>❌ 积分同步系统初始化失败</span>';
+                log(`❌ 积分同步系统未找到`, 'error');
+            }
+        });
+        
+        // 定期更新存储状态
+        setInterval(updateStorageStatus, 2000);
+    </script>
+</body>
+</html>

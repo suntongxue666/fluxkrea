@@ -49,6 +49,9 @@
     <!-- External Resources -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
+    <!-- 统一积分同步系统 -->
+    <script src="credits_sync.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -1980,6 +1983,12 @@
                     currentUser.subscription_status = 'ACTIVE';
                 }
 
+                // 使用统一同步系统更新积分
+                if (window.creditsSync) {
+                    window.creditsSync.setCredits(newCredits);
+                    console.log('积分已同步到统一系统:', newCredits);
+                }
+
                 console.log(`Successfully added ${creditsToAdd} credits. New balance: ${newCredits}`);
                 return { creditsAdded: creditsToAdd, newBalance: newCredits };
                 
@@ -2053,6 +2062,22 @@
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('cancelled') === 'true') {
                 alert('订阅已取消，您可以稍后再试');
+            }
+        });
+
+        // 初始化统一积分同步系统
+        document.addEventListener('DOMContentLoaded', function() {
+            // 确保积分同步系统已加载
+            if (window.creditsSync) {
+                // 立即更新显示
+                window.creditsSync.updateDisplay();
+                
+                // 监听积分变化
+                window.addEventListener('creditsUpdated', function(event) {
+                    console.log('积分已更新:', event.detail.credits);
+                });
+            } else {
+                console.warn('积分同步系统未加载，使用默认显示');
             }
         });
     </script>
