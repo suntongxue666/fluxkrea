@@ -1402,29 +1402,21 @@
                             }
                         });
                     },
-                    onApprove: async function(data, actions) {
+                    onApprove: function(data, actions) {
                         console.log('Subscription approved:', data.subscriptionID);
                         
-                        showSuccess('Processing your subscription...');
+                        // 根据PayPal官方文档，onApprove只用于用户体验，不处理业务逻辑
+                        showSuccess('Subscription created successfully! Processing your order...');
                         
-                        try {
-                            // 1. 保存订阅信息到数据库
-                            await saveSubscriptionInfo(data.subscriptionID, planType);
-                            
-                            // 2. 立即为用户增加积分
-                            await addSubscriptionCredits(planType);
-                            
-                            showSuccess('Subscription activated! Credits added to your account.');
-                            
-                            // 3. 延迟跳转到成功页面
-                            setTimeout(() => {
-                                window.location.href = '/subscription-success.html?subscription_id=' + data.subscriptionID;
-                            }, 2000);
-                            
-                        } catch (error) {
-                            console.error('Error processing subscription:', error);
-                            showError('Subscription created but processing failed. Please contact support with ID: ' + data.subscriptionID);
-                        }
+                        // 保存订阅ID到localStorage，供成功页面使用
+                        localStorage.setItem('pendingSubscriptionId', data.subscriptionID);
+                        localStorage.setItem('pendingSubscriptionPlan', planType);
+                        
+                        // 立即跳转到成功页面
+                        // 实际的积分发放将通过PayPal Webhook在后台处理
+                        setTimeout(() => {
+                            window.location.href = '/subscription-success.html?subscription_id=' + data.subscriptionID + '&plan=' + planType;
+                        }, 1500);
                     },
                     onError: function(err) {
                         console.error('PayPal subscription error:', err);
