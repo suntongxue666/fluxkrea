@@ -1348,6 +1348,52 @@
             margin: 0 auto 24px;
         }
         
+        /* Loading Modal */
+        .loading-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .loading-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .loading-modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 32px;
+            text-align: center;
+            max-width: 320px;
+            width: 90%;
+        }
+        
+        .loading-modal .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid #f3f4f6;
+            border-top: 3px solid #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
         /* Insufficient Credits Modal */
         .credits-modal {
             position: fixed;
@@ -1574,20 +1620,24 @@
                 <i class="fas fa-coins"></i>
             </div>
             <h3>Credits current is 0</h3>
-            <p>Generate an image needs <span id="modalRequiredCredits">10</span> credits. Please sign in for more credits or view our pricing plans.</p>
+            <p>Generate an image needs <span id="modalRequiredCredits">10</span> credits. Please sign in for more credits.</p>
             <div class="credits-modal-actions">
                 <button class="credits-modal-btn primary" onclick="signInFromModal()">
                     <div class="google-icon-modal"></div>
                     <span>Sign in</span>
                 </button>
-                <button class="credits-modal-btn secondary" onclick="window.location.href='pricing.html'">
-                    <i class="fas fa-credit-card"></i>
-                    <span>View Plans</span>
-                </button>
-                <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
+                <button class="credits-modal-btn primary" onclick="closeCreditsModal()">
                     <span>Close</span>
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="loading-modal" id="loadingModal">
+        <div class="loading-modal-content">
+            <div class="loading-spinner"></div>
+            <p id="loadingMessage">正在处理...</p>
         </div>
     </div>
 
@@ -1631,10 +1681,6 @@
                     🔧 调试
                 </button>
                 
-                <!-- 临时测试按钮 - 显示当前用户状态 -->
-                <button onclick="showCurrentUserStatus()" style="padding: 4px 8px; font-size: 12px; background: #10b981; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer;" title="显示当前用户状态">
-                    📝 Log
-                </button>
                 <div class="signin-btn">
                     <div class="google-icon"></div>
                     <span>Sign in</span>
@@ -2813,14 +2859,41 @@
             // 初始化积分管理器
             async initialize(user) {
                 this.currentUser = user;
-                if (user && !user.is_local_mode) {
-                    this.credits = user.credits || 0;
+                
+                if (user && !user.is_local_mode && user.uuid) {
+                    // 从数据库强制同步最新积分
+                    try {
+                        console.log('🔄 从数据库同步最新积分...');
+                        const { data: userData, error } = await supabaseClient
+                            .from('users')
+                            .select('credits')
+                            .eq('uuid', user.uuid)
+                            .single();
+                        
+                        if (!error && userData) {
+                            this.credits = userData.credits || 0;
+                            console.log('✅ 数据库同步积分成功:', { uuid: user.uuid, credits: this.credits });
+                            
+                            // 同时更新全局用户对象
+                            if (window.currentUser) {
+                                window.currentUser.credits = this.credits;
+                            }
+                        } else {
+                            console.warn('⚠️ 数据库同步积分失败，使用用户对象积分:', error);
+                            this.credits = user.credits || 0;
+                        }
+                    } catch (error) {
+                        console.error('❌ 积分同步异常:', error);
+                        this.credits = user.credits || 0;
+                    }
+                    
                     console.log('积分管理器初始化 - 数据库模式:', { uuid: user.uuid, credits: this.credits });
                 } else {
-                    // 本地存储模式
+                    // 本地存储模式或匿名用户
                     this.credits = parseInt(localStorage.getItem('user_credits')) || systemSettings.default_credits || 20;
                     console.log('积分管理器初始化 - 本地模式:', { credits: this.credits });
                 }
+                
                 this.updateCreditsDisplay();
                 this.isInitialized = true;
             }
@@ -2957,6 +3030,18 @@
                     if (event === 'SIGNED_IN' && session) {
                         await userManager.handleAuthenticatedUser(session.user);
                         await creditsManager.initialize(currentUser);
+                        
+                        // 检查是否需要跳转到pricing页面
+                        const redirectTarget = localStorage.getItem('redirect_after_signin');
+                        if (redirectTarget === 'pricing') {
+                            localStorage.removeItem('redirect_after_signin');
+                            
+                            // 显示加载提示，然后跳转
+                            showLoadingModal('正在跳转到定价页面...');
+                            setTimeout(() => {
+                                window.location.href = 'pricing.html';
+                            }, 1000);
+                        }
                     } else if (event === 'SIGNED_OUT') {
                         await userManager.handleAnonymousUser();
                         await creditsManager.initialize(currentUser);
@@ -2978,6 +3063,19 @@
         // 图像生成功能 - 完全使用模拟模式
         async function generateImage() {
             console.log('=== 🎯 开始图像生成 (完全模拟模式) ===');
+            
+            // 立即更新按钮状态为生成中
+            const generateBtn = document.getElementById('generateBtn');
+            const originalContent = generateBtn.innerHTML;
+            
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = `
+                <span class="btn-content">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    Generating...
+                </span>
+            `;
+            
             console.log('当前用户:', currentUser);
             console.log('积分管理器状态:', { 
                 credits: creditsManager.credits, 
@@ -2987,6 +3085,8 @@
             
             // 检查维护模式
             if (systemSettings.maintenance_mode) {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalContent;
                 alert('System is under maintenance, please try again later.');
                 return;
             }
@@ -2997,6 +3097,8 @@
             console.log('积分检查结果:', creditsManager.hasEnoughCredits(generationCost));
             
             if (!creditsManager.hasEnoughCredits(generationCost)) {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalContent;
                 console.error('积分不足!', {
                     current: creditsManager.credits,
                     required: generationCost
@@ -3007,12 +3109,16 @@
             
             // 检查每日生成限制
             if (currentUser && currentUser.daily_generation_count >= (systemSettings.max_daily_generations || 10)) {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalContent;
                 alert(`Daily generation limit reached (${systemSettings.max_daily_generations || 10}). Please try again tomorrow.`);
                 return;
             }
             
             const prompt = document.getElementById('prompt').value.trim();
             if (!prompt) {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalContent;
                 alert('Please enter a description for the image you want to generate');
                 return;
             }
@@ -3023,17 +3129,17 @@
             // 先扣除积分
             const deductSuccess = await creditsManager.deductCredits(generationCost);
             if (!deductSuccess) {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalContent;
                 alert('Failed to deduct credits, please try again.');
                 return;
             }
             
-            const generateBtn = document.getElementById('generateBtn');
             const resultArea = document.getElementById('resultArea');
             let generationRecord = null;
             
             try {
-                // 更新UI状态
-                generateBtn.disabled = true;
+                // 更新结果区域显示生成状态
                 generateBtn.innerHTML = `
                     <span class="btn-content">
                         <i class="fas fa-spinner fa-spin"></i>
@@ -3999,9 +4105,29 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
             document.body.style.overflow = '';
         }
         
+        // 显示加载弹窗
+        function showLoadingModal(message = '正在处理...') {
+            const modal = document.getElementById('loadingModal');
+            const messageEl = document.getElementById('loadingMessage');
+            messageEl.textContent = message;
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 隐藏加载弹窗
+        function hideLoadingModal() {
+            const modal = document.getElementById('loadingModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+        
         // 从弹窗登录Google
         function signInFromModal() {
             closeCreditsModal();
+            
+            // 设置登录后跳转到pricing页面
+            localStorage.setItem('redirect_after_signin', 'pricing');
+            
             if (userManager) {
                 userManager.signInWithGoogle();
             } else {
