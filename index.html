@@ -1916,16 +1916,6 @@
         }
         
         // Generate image function
-        // Demo generation function
-        function demoGenerate(prompt) {
-            document.getElementById('prompt').value = prompt;
-            generateImage();
-            
-            // Scroll to generator
-            document.getElementById('generator').scrollIntoView({ 
-                behavior: 'smooth' 
-            });
-        }
         
         // Scroll to generator function
         function scrollToGenerator() {
@@ -3234,7 +3224,15 @@
         // Demo generation function
         function demoGenerate(demoPrompt) {
             document.getElementById('prompt').value = demoPrompt;
-            document.getElementById('prompt').scrollIntoView({ behavior: 'smooth' });
+            
+            // 跳转到生成器区域，确保标题可见
+            const heroSection = document.querySelector('.hero');
+            if (heroSection) {
+                heroSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            } else {
+                // 如果没有找到hero section，则跳转到generator
+                document.getElementById('generator').scrollIntoView({ behavior: 'smooth' });
+            }
         }
         
         // 滑块更新事件监听器

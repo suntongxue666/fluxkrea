@@ -1623,6 +1623,8 @@
                     font-family: Inter, sans-serif;
                     font-size: 14px;
                     min-width: 200px;
+                    opacity: 1;
+                    transition: opacity 0.3s ease-out;
                 `;
                 document.body.appendChild(statusDiv);
             }
@@ -1646,6 +1648,22 @@
                     ${subscriptionBadge}
                 </div>
             `;
+            
+            // 显示状态卡片
+            statusDiv.style.opacity = '1';
+            
+            // 3秒后自动消失
+            setTimeout(() => {
+                if (statusDiv && statusDiv.parentNode) {
+                    statusDiv.style.opacity = '0';
+                    // 等待动画完成后移除元素
+                    setTimeout(() => {
+                        if (statusDiv && statusDiv.parentNode) {
+                            statusDiv.parentNode.removeChild(statusDiv);
+                        }
+                    }, 300);
+                }
+            }, 3000);
         }
 
         // Show error message
