@@ -899,7 +899,45 @@
                 font-size: 28px;
             }
         }
-    </style>
+    
+        /* 积分显示动画 */
+        #creditsAmount, .credits-amount {
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+        
+        #creditsAmount.updating, .credits-amount.updating {
+            color: #10b981 !important;
+            transform: scale(1.1);
+        }
+        
+        .credits-display {
+            position: relative;
+        }
+        
+        .credits-display::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            right: -2px;
+            width: 6px;
+            height: 6px;
+            background: #10b981;
+            border-radius: 50%;
+            opacity: 0;
+            animation: pulse 2s infinite;
+        }
+        
+        .credits-display.live::after {
+            opacity: 1;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        </style>
 </head>
 <body>
     <!-- Header -->
@@ -1518,26 +1556,81 @@
         }
 
         // 页面加载时检查URL参数和用户状态
+        // 修复版本 - 确保积分正确显示
         document.addEventListener('DOMContentLoaded', async function() {
-            // 初始化Supabase认证状态监听
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                console.log('认证状态变化:', event, session);
+            console.log('🚀 Pricing页面初始化...');
+            
+            // 1. 首先检查用户登录状态
+            await initializeUserState();
+            
+            // 2. 初始化积分同步系统
+            if (window.creditsSync) {
+                // 立即更新显示
+                await updateCreditsDisplay();
                 
-                if (event === 'SIGNED_IN' && session) {
-                    // 更新全局用户状态
-                    currentUser = {
-                        uuid: session.user.id,
-                        email: session.user.email,
-                        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
-                        avatar_url: session.user.user_metadata?.avatar_url || '',
-                        ...session.user.user_metadata
-                    };
-                    console.log('用户已登录:', currentUser);
-                } else if (event === 'SIGNED_OUT') {
-                    currentUser = null;
-                    console.log('用户已登出');
+                // 监听积分变化
+                window.addEventListener('creditsUpdated', function(event) {
+                    console.log('积分已更新:', event.detail.credits);
+                    updateCreditsDisplay();
+                });
+                
+                // 定期刷新积分显示
+                setInterval(updateCreditsDisplay, 10000); // 每10秒刷新一次
+            } else {
+                console.warn('积分同步系统未加载，使用默认显示');
+            }
+            
+            // 3. 更新导航栏显示
+            updateNavigationDisplay();
+        });
+        
+        // 更新积分显示的专用函数
+        async function updateCreditsDisplay() {
+            try {
+                console.log('🔄 更新积分显示...');
+                
+                // 从数据库获取最新积分
+                if (currentUser && currentUser.uuid) {
+                    await syncUserCreditsFromDatabase();
                 }
-            });
+                
+                // 获取当前积分
+                let currentCredits = 0;
+                if (window.creditsSync) {
+                    currentCredits = window.creditsSync.getCredits();
+                } else if (currentUser && currentUser.credits !== undefined) {
+                    currentCredits = currentUser.credits;
+                }
+                
+                console.log('💰 当前积分:', currentCredits);
+                
+                // 更新所有积分显示元素
+                const creditsElements = document.querySelectorAll('#creditsAmount, .credits-amount');
+                creditsElements.forEach(element => {
+                    if (element) {
+                        // 添加动画效果
+                        element.style.transition = 'all 0.3s ease';
+                        element.textContent = currentCredits;
+                        
+                        // 闪烁效果表示更新
+                        element.style.color = '#10b981';
+                        setTimeout(() => {
+                            element.style.color = '';
+                        }, 500);
+                    }
+                });
+                
+                // 更新localStorage中的积分
+                if (window.creditsSync) {
+                    window.creditsSync.setCredits(currentCredits);
+                }
+                
+                console.log('✅ 积分显示已更新:', currentCredits);
+                
+            } catch (error) {
+                console.error('❌ 更新积分显示失败:', error);
+            }
+        }
 
             // 检查初始认证状态
             await checkSupabaseSession();
