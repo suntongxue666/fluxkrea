@@ -2082,39 +2082,7 @@
             return checkSupabaseSession();
         }
 
-        // 检查Supabase会话
-        async function checkSupabaseSession() {
-            try {
-                console.log('Checking Supabase session...');
-                
-                // 检查supabaseClient是否已初始化
-                if (typeof supabaseClient === 'undefined') {
-                    console.error('Supabase client not initialized');
-                    return false;
-                }
-                
-                const { data, error } = await supabaseClient.auth.getSession();
-                if (error) {
-                    console.error('获取会话失败:', error);
-                    return false;
-                }
-
-                if (data.session && data.session.user) {
-                    // 更新全局用户状态
-                    currentUser = {
-                        uuid: data.session.user.id,
-                        email: data.session.user.email,
-                        name: data.session.user.user_metadata?.full_name || data.session.user.user_metadata?.name || '',
-                        avatar_url: data.session.user.user_metadata?.avatar_url || '',
-                        ...data.session.user.user_metadata
-                    };
-                    console.log('User session found:', currentUser.email);
-                    return true;
-                } else {
-                    console.log('No active session found');
-                    return false;
-                }
-            } catch (error) {
+         catch (error) {
                 console.error('检查会话时发生错误:', error);
                 return false;
             }
