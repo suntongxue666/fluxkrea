@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO Meta Tags -->
+    <title>Flux Krea AI Showcase - AI Generated Art Gallery</title>
+    <meta name="description" content="Explore stunning AI-generated artworks created with FLUX.1 Krea model. Browse our gallery of high-quality AI art and get inspired for your own creations.">
+    <meta name="keywords" content="AI art showcase, FLUX Krea gallery, AI generated images, AI art examples, FLUX.1 Krea showcase">
+    <meta name="author" content="FLUX Krea AI">
+    <meta name="robots" content="index, follow">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Flux Krea AI Showcase - AI Generated Art Gallery">
+    <meta property="og:description" content="Explore stunning AI-generated artworks created with FLUX.1 Krea model.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://flux-krea-ai.com/showcase.html">
+    <meta property="og:image" content="https://flux-krea-ai.com/og-image.jpg">
+    
+    <!-- Twitter Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Flux Krea AI Showcase - AI Generated Art Gallery">
+    <meta name="twitter:description" content="Explore stunning AI-generated artworks created with FLUX.1 Krea model.">
+    <meta name="twitter:image" content="https://flux-krea-ai.com/twitter-image.jpg">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://flux-krea-ai.com/showcase.html">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png">
+    <link rel="apple-touch-icon" href="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png">
+    
+    <!-- Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-HRV45ZRFKT"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-HRV45ZRFKT');
+    </script>
+    
+    <!-- External Resources -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            overflow: hidden;
+        }
+        
+        .showcase-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(45deg, #0a0a0a, #1a1a2e, #16213e);
+        }
+        
+        .showcase-header {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 10;
+        }
+        
+        .showcase-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .showcase-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1.2rem;
+            font-weight: 300;
+        }
+        
+        .showcase-image-container {
+            position: relative;
+            max-width: min(90vw, 800px);
+            max-height: min(90vh, 800px);
+            aspect-ratio: 1/1;
+        }
+        
+        .showcase-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.5);
+            transition: all 0.5s ease;
+        }
+        
+        .showcase-controls {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            z-index: 10;
+        }
+        
+        .showcase-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .indicator.active {
+            background: white;
+            transform: scale(1.2);
+        }
+        
+        .showcase-actions {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .action-btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+        
+        .action-btn.primary {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+        }
+        
+        .action-btn.primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+        }
+        
+        .action-btn.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+        
+        .close-btn {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border: none;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.1);
+        }
+        
+        .showcase-progress {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 14px;
+            z-index: 10;
+        }
+        
+        /* Loading animation */
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 5;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.1);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            .showcase-title {
+                font-size: 2rem;
+            }
+            
+            .showcase-subtitle {
+                font-size: 1rem;
+            }
+            
+            .showcase-actions {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+            }
+            
+            .action-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="showcase-container">
+        <button class="close-btn" onclick="goToGenerator()">
+            <i class="fas fa-times"></i>
+        </button>
+        
+        <div class="showcase-header">
+            <h1 class="showcase-title">FLUX.1 Krea AI Gallery</h1>
+            <p class="showcase-subtitle">Stunning AI-generated artworks powered by advanced FLUX technology</p>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+        </div>
+        
+        <div class="showcase-image-container" id="imageContainer" style="display: none;">
+            <img class="showcase-image" id="showcaseImage" src="" alt="AI Generated Showcase">
+        </div>
+        
+        <div class="showcase-controls" id="controls" style="display: none;">
+            <div class="showcase-indicators" id="indicators"></div>
+            
+            <div class="showcase-actions">
+                <a href="index.html#generator" class="action-btn primary">
+                    <i class="fas fa-rocket"></i>
+                    Start Creating
+                </a>
+                <button class="action-btn secondary" onclick="pauseAutoplay()">
+                    <i class="fas fa-pause" id="playPauseIcon"></i>
+                    <span id="playPauseText">Pause</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="showcase-progress" id="progress">
+            <span id="currentIndex">1</span> / <span id="totalImages">16</span>
+        </div>
+    </div>
+
+    <script>
+        // Showcase images array
+        const showcaseImages = [
+            'https://pic4.zhimg.com/v2-e1374c41f099af1c9714b09a13f4c29f_1440w.jpg',
+            'https://pic1.zhimg.com/v2-4dfe15bc9d72a0eaa6048ae2efbb755e_1440w.jpg',
+            'https://picx.zhimg.com/v2-972099fcef030036a5583bd4ba8aac69_1440w.jpg',
+            'https://pic4.zhimg.com/v2-c1bbf18cfc3c15c39dff6041451bc9eb_1440w.jpg',
+            'https://pic4.zhimg.com/v2-06b9a280b8a4c331a35fca57342956eb_1440w.jpg',
+            'https://pica.zhimg.com/v2-ffa8c449ab7c46656eb31ac01c4d693c_1440w.jpg',
+            'https://replicate.delivery/yhqm/VyD24fDyzM2nQSg0nQc58W2EIj16hGcWKrXJozjAMR1BeidTA/out-0.png',
+            'https://replicate.delivery/yhqm/6f5TnZKaU3RHSayghFfNxxKjhGusg98XVfDsZjQA43ZI6F7mA/out-0.png',
+            'https://replicate.delivery/yhqm/KNewAbWklqwHVyUjZ77YIJb70TmI5vGyni8clSsQYeT38idTA/out-0.png',
+            'https://replicate.delivery/yhqm/EIhr0cDHZFoLAFYMA9ezx7AVGie3qHIebTpce4yYnGwt1L2NB/out-0.png',
+            'https://replicate.delivery/yhqm/KoWJ5oSwXEq4LFOQjz65rlwvWJ7t4rIeaKkWqonVz5YzeidTA/out-0.png',
+            'https://replicate.delivery/yhqm/pNZ3A6l9B35dB9VxE0eGqkGfBGe401MjUttdOyzvpfWbEb6NB/out-0.webp',
+            'https://replicate.delivery/yhqm/nTMezRPSm4xXX6yGVVkKePeRMeC0Lwq9p4o02APPeV1mwXsbC/out-0.png',
+            'https://replicate.delivery/yhqm/QeGlhr8w4CWefov8rFAozycqveU4anxkYuUVxANfolFP710bC/out-0.webp',
+            'https://replicate.delivery/yhqm/74gHlK2Mrc7YL5dnnjopehWLftlfSA8449R6lECKI4OhjN9mA/out-0.webp',
+            'https://replicate.delivery/yhqm/hcDDSNf633zeDUz9sWkKfaftcfJLWIvuhn9vfCFWmufxelmemA/out-0.webp'
+        ];
+
+        let currentImageIndex = 0;
+        let showcaseInterval;
+        let isPaused = false;
+
+        // Initialize showcase
+        function initializeShowcase() {
+            const totalImagesElement = document.getElementById('totalImages');
+            const indicatorsContainer = document.getElementById('indicators');
+            
+            // Set total count
+            totalImagesElement.textContent = showcaseImages.length;
+            
+            // Create indicators
+            indicatorsContainer.innerHTML = '';
+            for (let i = 0; i < showcaseImages.length; i++) {
+                const indicator = document.createElement('div');
+                indicator.className = 'indicator' + (i === 0 ? ' active' : '');
+                indicator.onclick = () => goToImage(i);
+                indicatorsContainer.appendChild(indicator);
+            }
+
+            // Preload first image
+            preloadImage(0);
+        }
+        
+        // Preload image and show when ready
+        function preloadImage(index) {
+            const img = new Image();
+            img.onload = function() {
+                showImage(index);
+                hideLoading();
+                preloadNextImages(index);
+            };
+            img.onerror = function() {
+                console.error('Failed to load image:', showcaseImages[index]);
+                // Try next image
+                if (index < showcaseImages.length - 1) {
+                    preloadImage(index + 1);
+                }
+            };
+            img.src = showcaseImages[index];
+        }
+        
+        // Preload next few images for smoother experience
+        function preloadNextImages(currentIndex) {
+            for (let i = 1; i <= 3; i++) {
+                const nextIndex = (currentIndex + i) % showcaseImages.length;
+                const img = new Image();
+                img.src = showcaseImages[nextIndex];
+            }
+        }
+        
+        // Show image and controls
+        function showImage(index) {
+            const showcaseImage = document.getElementById('showcaseImage');
+            const imageContainer = document.getElementById('imageContainer');
+            const controls = document.getElementById('controls');
+            
+            showcaseImage.src = showcaseImages[index];
+            imageContainer.style.display = 'block';
+            controls.style.display = 'block';
+            
+            updateUI(index);
+        }
+        
+        // Hide loading spinner
+        function hideLoading() {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'none';
+        }
+        
+        // Update UI elements
+        function updateUI(index) {
+            currentImageIndex = index;
+            
+            // Update indicators
+            const indicators = document.querySelectorAll('.indicator');
+            indicators.forEach((indicator, i) => {
+                indicator.classList.toggle('active', i === index);
+            });
+            
+            // Update progress
+            const currentIndexElement = document.getElementById('currentIndex');
+            currentIndexElement.textContent = index + 1;
+        }
+        
+        // Go to specific image
+        function goToImage(index) {
+            if (index >= 0 && index < showcaseImages.length) {
+                preloadImage(index);
+                restartAutoplay();
+            }
+        }
+        
+        // Next image
+        function nextImage() {
+            const nextIndex = (currentImageIndex + 1) % showcaseImages.length;
+            goToImage(nextIndex);
+        }
+        
+        // Start autoplay
+        function startAutoplay() {
+            if (!isPaused) {
+                showcaseInterval = setInterval(nextImage, 4000); // 4 seconds per image
+            }
+        }
+        
+        // Stop autoplay
+        function stopAutoplay() {
+            if (showcaseInterval) {
+                clearInterval(showcaseInterval);
+                showcaseInterval = null;
+            }
+        }
+        
+        // Restart autoplay
+        function restartAutoplay() {
+            stopAutoplay();
+            startAutoplay();
+        }
+        
+        // Pause/Resume autoplay
+        function pauseAutoplay() {
+            const playPauseIcon = document.getElementById('playPauseIcon');
+            const playPauseText = document.getElementById('playPauseText');
+            
+            if (isPaused) {
+                // Resume
+                isPaused = false;
+                startAutoplay();
+                playPauseIcon.className = 'fas fa-pause';
+                playPauseText.textContent = 'Pause';
+            } else {
+                // Pause
+                isPaused = true;
+                stopAutoplay();
+                playPauseIcon.className = 'fas fa-play';
+                playPauseText.textContent = 'Play';
+            }
+        }
+        
+        // Go to generator
+        function goToGenerator() {
+            window.location.href = 'index.html#generator';
+        }
+        
+        // Keyboard controls
+        document.addEventListener('keydown', function(e) {
+            switch(e.key) {
+                case 'ArrowRight':
+                case ' ':
+                    e.preventDefault();
+                    nextImage();
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    const prevIndex = currentImageIndex === 0 ? showcaseImages.length - 1 : currentImageIndex - 1;
+                    goToImage(prevIndex);
+                    break;
+                case 'Escape':
+                    goToGenerator();
+                    break;
+                case 'p':
+                case 'P':
+                    pauseAutoplay();
+                    break;
+            }
+        });
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeShowcase();
+            startAutoplay();
+            
+            // Track page view
+            if (typeof gtag !== 'undefined') {
+                gtag('config', 'G-HRV45ZRFKT', {
+                    page_title: 'Showcase',
+                    page_location: window.location.href
+                });
+            }
+        });
+        
+        // Pause autoplay when page is not visible
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                stopAutoplay();
+            } else if (!isPaused) {
+                startAutoplay();
+            }
+        });
+    </script>
+</body>
+</html>
