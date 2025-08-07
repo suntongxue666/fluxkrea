@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分显示修复测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8fafc;
+        }
+        
+        .test-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .test-section h2 {
+            color: #1a202c;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+        }
+        
+        .credits-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #333;
+            font-weight: 600;
+            font-size: 18px;
+            padding: 12px 16px;
+            background: #f8fafc;
+            border-radius: 8px;
+            margin: 16px 0;
+        }
+        
+        .credits-display i {
+            color: #ff8c00;
+        }
+        
+        .status {
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            margin: 8px 0;
+        }
+        
+        .status.loading {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+        
+        .status.success {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .status.error {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 8px 8px 8px 0;
+            transition: all 0.2s;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+        
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔧 积分显示修复测试</h1>
+    
+    <!-- 积分显示测试 -->
+    <div class="test-section">
+        <h2>💰 积分显示测试</h2>
+        <p>测试积分显示是否会出现从20跳到实际积分的问题</p>
+        
+        <div class="credits-display">
+            <i class="fas fa-coins"></i>
+            <span id="creditsAmount">--</span>
+        </div>
+        
+        <div id="statusDisplay" class="status loading">初始化中...</div>
+        
+        <button onclick="simulateUserInitialization()">模拟用户初始化</button>
+        <button onclick="simulateFingerprintMatch()">模拟指纹匹配</button>
+        <button onclick="resetDisplay()">重置显示</button>
+    </div>
+    
+    <!-- 测试日志 -->
+    <div class="test-section">
+        <h2>📝 测试日志</h2>
+        <button onclick="clearLogs()">清除日志</button>
+        <div id="logContainer" class="log-container"></div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/js/all.min.js"></script>
+    <script>
+        // 模拟积分管理器
+        class MockCreditsManager {
+            constructor() {
+                this.credits = 0;
+                this.isInitialized = false;
+            }
+            
+            updateCreditsDisplay() {
+                const creditsElement = document.getElementById('creditsAmount');
+                if (creditsElement) {
+                    if (this.isInitialized) {
+                        creditsElement.textContent = this.credits;
+                        log(`✅ 显示积分: ${this.credits}`, 'success');
+                    } else {
+                        creditsElement.textContent = '--';
+                        log('⏳ 显示加载状态: --', 'info');
+                    }
+                }
+            }
+            
+            async initialize(userCredits) {
+                log('🔄 开始初始化积分管理器...', 'info');
+                
+                // 模拟异步加载过程
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                this.credits = userCredits;
+                this.isInitialized = true;
+                this.updateCreditsDisplay();
+                
+                log(`🎉 积分管理器初始化完成，积分: ${this.credits}`, 'success');
+            }
+        }
+        
+        let mockCreditsManager = new MockCreditsManager();
+        
+        // 日志系统
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            
+            console.log(logEntry);
+            
+            const logContainer = document.getElementById('logContainer');
+            const logElement = document.createElement('div');
+            logElement.style.color = getLogColor(type);
+            logElement.textContent = logEntry;
+            logContainer.appendChild(logElement);
+            logContainer.scrollTop = logContainer.scrollHeight;
+        }
+        
+        function getLogColor(type) {
+            switch (type) {
+                case 'success': return '#10b981';
+                case 'error': return '#f87171';
+                case 'warning': return '#fbbf24';
+                case 'info': return '#60a5fa';
+                default: return '#e2e8f0';
+            }
+        }
+        
+        function clearLogs() {
+            document.getElementById('logContainer').innerHTML = '';
+        }
+        
+        function updateStatus(message, type) {
+            const statusElement = document.getElementById('statusDisplay');
+            statusElement.textContent = message;
+            statusElement.className = `status ${type}`;
+        }
+        
+        // 模拟用户初始化
+        async function simulateUserInitialization() {
+            log('🚀 开始模拟用户初始化流程', 'info');
+            updateStatus('正在初始化...', 'loading');
+            
+            // 重置状态
+            mockCreditsManager = new MockCreditsManager();
+            mockCreditsManager.updateCreditsDisplay();
+            
+            // 模拟页面加载时的初始状态
+            log('📄 页面加载，显示初始状态', 'info');
+            
+            // 模拟用户数据加载
+            log('🔍 正在加载用户数据...', 'info');
+            
+            // 模拟找到现有用户（10积分）
+            await mockCreditsManager.initialize(10);
+            
+            updateStatus('初始化完成', 'success');
+            log('✅ 用户初始化流程完成', 'success');
+        }
+        
+        // 模拟指纹匹配
+        async function simulateFingerprintMatch() {
+            log('🔒 模拟指纹匹配流程', 'info');
+            updateStatus('指纹匹配中...', 'loading');
+            
+            // 重置状态
+            mockCreditsManager = new MockCreditsManager();
+            mockCreditsManager.updateCreditsDisplay();
+            
+            // 模拟指纹匹配找到现有用户
+            log('🔍 通过指纹查找现有用户...', 'info');
+            
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            log('🔒 通过指纹找到现有用户 - 防止积分重置', 'info');
+            log('💰 指纹匹配 - 保持积分状态: 10 (不重新分配20积分)', 'warning');
+            
+            await mockCreditsManager.initialize(10);
+            
+            updateStatus('指纹匹配完成', 'success');
+            log('✅ 指纹匹配流程完成', 'success');
+        }
+        
+        // 重置显示
+        function resetDisplay() {
+            log('🔄 重置显示状态', 'info');
+            
+            mockCreditsManager = new MockCreditsManager();
+            mockCreditsManager.updateCreditsDisplay();
+            
+            updateStatus('已重置', 'loading');
+            log('✅ 显示状态已重置', 'success');
+        }
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', () => {
+            log('📄 测试页面已加载', 'info');
+            mockCreditsManager.updateCreditsDisplay();
+            updateStatus('等待测试', 'loading');
+            
+            log('💡 测试说明:', 'info');
+            log('1. 点击"模拟用户初始化"测试正常流程', 'info');
+            log('2. 点击"模拟指纹匹配"测试指纹匹配流程', 'info');
+            log('3. 观察积分显示是否会出现跳跃', 'info');
+            log('4. 修复后应该始终显示"--"直到真实积分加载完成', 'info');
+        });
+    </script>
+</body>
+</html>
