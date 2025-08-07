@@ -33,1270 +33,189 @@
     
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HRV45ZRFKT"></script>
-    <script>
-
-        // 全局变量
-        let currentUser = null;
-        let supabaseClient = null;
-        let currentPlan = null;
-        let paypalButtonRendered = false;
-        
-        // 初始化Supabase客户端
-        const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI';
-        
-        try {
-            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('✅ Supabase客户端初始化成功');
-        } catch (error) {
-            console.error('❌ Supabase客户端初始化失败:', error);
-        }
-        
-        // 页面加载时立即初始化用户状态
-        document.addEventListener('DOMContentLoaded', async function() {
-            console.log('🚀 Pricing页面初始化...');
-            
-            try {
-                // 1. 立即从localStorage恢复用户状态
-                await restoreUserStateFromStorage();
-                
-                // 2. 检查Supabase会话状态
-                await checkAndSyncUserState();
-                
-                // 3. 初始化积分显示
-                await initializeCreditsDisplay();
-                
-                // 4. 更新UI显示
-                updateNavigationDisplay();
-                
-                console.log('✅ Pricing页面初始化完成');
-                
-            } catch (error) {
-                console.error('❌ Pricing页面初始化失败:', error);
-            }
-        });
-        
-        // 从localStorage恢复用户状态
-        async function restoreUserStateFromStorage() {
-            try {
-                console.log('🔄 从localStorage恢复用户状态...');
-                
-                const userData = localStorage.getItem('flux_krea_user');
-                if (userData) {
-                    currentUser = JSON.parse(userData);
-                    console.log('✅ 用户状态已恢复:', currentUser.email);
-                    
-                    // 立即更新UI
-                    updateNavigationDisplay();
-                    
-                    return true;
-                }
-                
-                console.log('⚠️ localStorage中没有用户数据');
-                return false;
-                
-            } catch (error) {
-                console.error('❌ 恢复用户状态失败:', error);
-                return false;
-            }
-        }
-        
-        // 检查并同步用户状态
-        async function checkAndSyncUserState() {
-            try {
-                console.log('🔍 检查Supabase会话状态...');
-                
-                if (!supabaseClient) {
-                    console.warn('⚠️ Supabase客户端未初始化');
-                    return false;
-                }
-                
-                const { data: { session }, error } = await supabaseClient.auth.getSession();
-                
-                if (error) {
-                    console.error('❌ 获取会话失败:', error);
-                    return false;
-                }
-                
-                if (session && session.user) {
-                    console.log('✅ 找到有效会话:', session.user.email);
-                    
-                    // 如果localStorage中没有用户数据，从会话中恢复
-                    if (!currentUser) {
-                        await loadUserFromSession(session.user);
-                    } else {
-                        // 同步最新的积分数据
-                        await syncUserCreditsFromDatabase();
-                    }
-                    
-                    return true;
-                } else {
-                    console.log('⚠️ 没有有效会话');
-                    currentUser = null;
-                    localStorage.removeItem('flux_krea_user');
-                    return false;
-                }
-                
-            } catch (error) {
-                console.error('❌ 检查用户状态失败:', error);
-                return false;
-            }
-        }
-        
-        // 从会话中加载用户数据
-        async function loadUserFromSession(authUser) {
-            try {
-                console.log('👤 从会话加载用户数据...');
-                
-                const { data: user, error } = await supabaseClient
-                    .from('users')
-                    .select('*')
-                    .eq('email', authUser.email)
-                    .single();
-                
-                if (error) {
-                    console.error('❌ 查询用户数据失败:', error);
-                    return;
-                }
-                
-                if (user) {
-                    currentUser = {
-                        ...user,
-                        avatar_url: authUser.user_metadata?.avatar_url,
-                        full_name: authUser.user_metadata?.full_name
-                    };
-                    
-                    // 保存到localStorage
-                    localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
-                    
-                    console.log('✅ 用户数据已加载:', currentUser.email);
-                    console.log('💰 用户积分:', currentUser.credits);
-                }
-                
-            } catch (error) {
-                console.error('❌ 加载用户数据失败:', error);
-            }
-        }
-        
-        // 从数据库同步用户积分
-        async function syncUserCreditsFromDatabase() {
-            if (!currentUser || !currentUser.uuid || !supabaseClient) return;
-            
-            try {
-                console.log('🔄 从数据库同步积分...');
-                
-                const { data, error } = await supabaseClient
-                    .from('users')
-                    .select('credits, subscription_status')
-                    .eq('uuid', currentUser.uuid)
-                    .single();
-                
-                if (error) {
-                    console.error('❌ 同步积分失败:', error);
-                    return;
-                }
-                
-                if (data) {
-                    const newCredits = data.credits || 0;
-                    console.log(`💰 积分同步: ${currentUser.credits || 0} → ${newCredits}`);
-                    
-                    // 更新全局用户状态
-                    currentUser.credits = newCredits;
-                    currentUser.subscription_status = data.subscription_status;
-                    
-                    // 更新localStorage
-                    localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
-                    
-                    // 使用统一积分同步系统
-                    if (window.creditsSync) {
-                        window.creditsSync.setCredits(newCredits);
-                    }
-                    
-                    // 更新显示
-                    updateCreditsDisplay();
-                }
-            } catch (error) {
-                console.error('❌ 同步积分异常:', error);
-            }
-        }
-        
-        // 初始化积分显示
-        async function initializeCreditsDisplay() {
-            try {
-                console.log('💰 初始化积分显示...');
-                
-                // 如果有用户数据，立即显示积分
-                if (currentUser && currentUser.credits !== undefined) {
-                    updateCreditsDisplay();
-                    
-                    // 使用统一积分同步系统
-                    if (window.creditsSync) {
-                        window.creditsSync.setCredits(currentUser.credits);
-                    }
-                }
-                
-                // 设置定期同步
-                setInterval(async () => {
-                    if (currentUser) {
-                        await syncUserCreditsFromDatabase();
-                    }
-                }, 30000); // 每30秒同步一次
-                
-            } catch (error) {
-                console.error('❌ 初始化积分显示失败:', error);
-            }
-        }
-        
-        // 更新积分显示
-        function updateCreditsDisplay() {
-            try {
-                const credits = currentUser?.credits || 0;
-                console.log('🔄 更新积分显示:', credits);
-                
-                // 更新所有积分显示元素
-                const creditsElements = document.querySelectorAll('#creditsAmount, .credits-amount');
-                creditsElements.forEach(element => {
-                    if (element) {
-                        element.textContent = credits;
-                        
-                        // 添加更新动画
-                        element.style.transition = 'all 0.3s ease';
-                        element.style.color = '#10b981';
-                        setTimeout(() => {
-                            element.style.color = '';
-                        }, 500);
-                    }
-                });
-                
-                console.log('✅ 积分显示已更新:', credits);
-                
-            } catch (error) {
-                console.error('❌ 更新积分显示失败:', error);
-            }
-        }
-        
-        // 检查用户认证状态（修复版本）
-        async function checkSupabaseSession() {
-            try {
-                console.log('🔍 检查用户认证状态...');
-                
-                // 1. 首先检查内存中的用户状态
-                if (currentUser && currentUser.email) {
-                    console.log('✅ 内存中有用户状态:', currentUser.email);
-                    return true;
-                }
-                
-                // 2. 检查localStorage
-                const userData = localStorage.getItem('flux_krea_user');
-                if (userData) {
-                    try {
-                        currentUser = JSON.parse(userData);
-                        console.log('✅ 从localStorage恢复用户状态:', currentUser.email);
-                        return true;
-                    } catch (e) {
-                        console.error('❌ 解析localStorage用户数据失败:', e);
-                    }
-                }
-                
-                // 3. 检查Supabase会话
-                if (supabaseClient) {
-                    const { data: { session }, error } = await supabaseClient.auth.getSession();
-                    
-                    if (!error && session && session.user) {
-                        console.log('✅ 找到Supabase会话:', session.user.email);
-                        await loadUserFromSession(session.user);
-                        return true;
-                    }
-                }
-                
-                console.log('❌ 用户未认证');
-                return false;
-                
-            } catch (error) {
-                console.error('❌ 检查认证状态失败:', error);
-                return false;
-            }
-        }
-              window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-HRV45ZRFKT');
-    </script>
     
-    <!-- Supabase Client -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    
-    <!-- PayPal SDK -->
-    <script src="https://www.paypal.com/sdk/js?client-id=AeiqNbUf4z7-oudEQf2oSL3-rf_xP_dHmED4pvoei4B2eH8TdPK2ajLWXiQSy78Uh3ekjxx14wZEsX-8&vault=true&intent=subscription"></script>
-    
-    <!-- External Resources -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- 统一积分同步系统 -->
-    <script src="credits_sync.js"></script>
-    
-    <!-- 用户状态同步系统 -->
-    <script src="user_state_sync.js"></script>
-    
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: #f8fafc;
-            color: #1a202c;
-            line-height: 1.6;
-        }
-        
-        /* Header Navigation */
-        .header {
-            background: rgba(255, 255, 255, 0.5);
-            backdrop-filter: blur(10px);
-            padding: 16px 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        
-        .nav {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 24px;
-        }
-        
-        .logo {
-            display: flex;
-            align-items: center;
-            font-size: 20px;
-            font-weight: 700;
-            color: #6366f1;
-            text-decoration: none;
-        }
-        
-        .logo-icon {
-            width: 36px;
-            height: 36px;
-            background: transparent;
-            border-radius: 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 12px;
-            overflow: hidden;
-        }
-        
-        .logo-icon img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 32px;
-            list-style: none;
-            align-items: center;
-        }
-        
-        .nav-links a {
-            text-decoration: none;
-            color: #64748b;
-            font-weight: 500;
-            font-size: 16px;
-            transition: color 0.2s;
-        }
-        
-        .nav-links a.active {
-            color: #6366f1;
-            font-weight: 600;
-        }
-        
-        .nav-links a:hover {
-            color: #6366f1;
-        }
-        
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-        
-        .credits-display {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            color: #333;
-            font-weight: 600;
-            font-size: 14px;
-        }
-        
-        .credits-display i {
-            color: #ff8c00;
-        }
-        
-        .signin-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 12px;
-            background: #ffffff;
-            border: 1px solid #dadce0;
-            border-radius: 8px;
-            color: #3c4043;
-            font-weight: 500;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            text-decoration: none;
-        }
-        
-        .signin-btn:hover {
-            background: #f8f9fa;
-            border-color: #dadce0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        }
-        
-        .google-icon {
-            width: 18px;
-            height: 18px;
-            background: url('https://www.gstatic.com/marketing-cms/assets/images/76/76/c79495454250aaacab1867bdcda4/about-10things-g.png') no-repeat center;
-            background-size: contain;
-        }
-        
-        /* Container */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-        
-        /* Hero Section */
-        .hero {
-            text-align: center;
-            padding: 40px 16px 20px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .hero h1 {
-            font-size: 48px;
-            font-weight: 800;
-            margin-bottom: 24px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            line-height: 1.1;
-        }
-        
-        .hero p {
-            font-size: 20px;
-            color: #64748b;
-            margin-bottom: 40px;
-            line-height: 1.6;
-        }
-        
-        /* Pricing Cards */
-        .pricing-section {
-            padding: 60px 0;
-        }
-        
-        /* Mobile responsive for pricing section */
-        @media (max-width: 768px) {
-            .pricing-section {
-                padding: 0px 0px;
-            }
-        }
-        
-        .pricing-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 32px;
-            margin-bottom: 60px;
-        }
-        
-        .pricing-card {
-            background: white;
-            border-radius: 20px;
-            padding: 40px 32px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border: 2px solid #e2e8f0;
-            position: relative;
-            transition: all 0.3s ease;
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-        }
-        
-        .pricing-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-        
-        .pricing-card.popular {
-            border-color: #6366f1;
-            transform: scale(1.05);
-        }
-        
-        .pricing-card.popular::before {
-            content: "Most Popular";
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            padding: 8px 24px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .pricing-card.discount::before {
-            content: "40% Discount";
-            position: absolute;
-            top: -12px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #f59e0b, #f97316);
-            color: white;
-            padding: 8px 24px;
-            border-radius: 20px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
-        .pricing-card.discount {
-            border-color: #f59e0b;
-            transform: scale(1.05);
-        }
-        
-        .pricing-card.discount:hover {
-            transform: scale(1.05) translateY(-4px);
-        }
-        
-        .pricing-card.popular:hover {
-            transform: scale(1.05) translateY(-4px);
-        }
-        
-        .plan-name {
-            font-size: 24px;
-            font-weight: 700;
-            color: #1a202c;
-            margin-bottom: 12px;
-        }
-        
-        .plan-description {
-            color: #64748b;
-            margin-bottom: 16px;
-            font-size: 16px;
-        }
-        
-        .plan-price {
-            display: flex;
-            align-items: baseline;
-            margin-bottom: 8px;
-        }
-        
-        .currency {
-            font-size: 24px;
-            font-weight: 600;
-            color: #6366f1;
-        }
-        
-        .price {
-            font-size: 48px;
-            font-weight: 800;
-            color: #1a202c;
-            margin: 0 4px;
-        }
-        
-        .period {
-            font-size: 18px;
-            font-weight: 500;
-            color: #64748b;
-        }
-        
-        .credits-info {
-            color: #10b981;
-            font-weight: 600;
-            margin-bottom: 32px;
-            font-size: 16px;
-        }
-        
-        .features-list {
-            list-style: none;
-            margin-bottom: 40px;
-            flex-grow: 1;
-        }
-        
-        .features-list li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 8px;
-            color: #374151;
-        }
-        
-        .features-list i {
-            color: #10b981;
-            margin-right: 12px;
-            font-size: 16px;
-        }
-        
-        .plan-button {
-            width: 100%;
-            padding: 16px 24px;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            margin-top: auto;
-        }
-        
-        .plan-button.primary {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-        }
-        
-        .plan-button.primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
-        }
-        
-        .plan-button.secondary {
-            background: #f8fafc;
-            color: #374151;
-            border: 2px solid #e2e8f0;
-        }
-        
-        .plan-button.secondary:hover {
-            background: #e2e8f0;
-            border-color: #6366f1;
-            color: #6366f1;
-        }
-        
-        .plan-button.orange {
-            background: linear-gradient(135deg, #f59e0b, #f97316);
-            color: white;
-        }
-        
-        .plan-button.orange:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.3);
-        }
-        
-        /* FAQ Section */
-        .faq-section {
-            background: white;
-            padding: 80px 0;
-        }
-        
-        .section-header {
-            text-align: center;
-            margin-bottom: 60px;
-        }
-        
-        .section-header h2 {
-            font-size: 40px;
-            font-weight: 800;
-            margin-bottom: 24px;
-            color: #1a202c;
-        }
-        
-        .section-header p {
-            font-size: 20px;
-            color: #64748b;
-        }
-        
-        .faq-container {
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        
-        .faq-item {
-            background: #f8fafc;
-            border-radius: 12px;
-            margin-bottom: 16px;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .faq-question {
-            padding: 24px 32px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background 0.2s;
-        }
-        
-        .faq-question:hover {
-            background: #e2e8f0;
-        }
-        
-        .faq-question h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #1a202c;
-            margin: 0;
-        }
-        
-        .faq-question i {
-            color: #64748b;
-            transition: transform 0.2s;
-        }
-        
-        .faq-answer {
-            padding: 0 32px 24px;
-            display: none;
-        }
-        
-        .faq-answer p {
-            color: #64748b;
-            line-height: 1.6;
-            margin: 0;
-        }
-        
-        .faq-item.active .faq-answer {
-            display: block;
-        }
-        
-        .faq-item.active .faq-question i {
-            transform: rotate(180deg);
-        }
-        
-        /* CTA Section */
-        .cta-section {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            padding: 80px 0;
-            text-align: center;
-        }
-        
-        .cta-section h2 {
-            font-size: 36px;
-            font-weight: 800;
-            margin-bottom: 24px;
-        }
-        
-        .cta-section p {
-            font-size: 20px;
-            margin-bottom: 40px;
-            opacity: 0.9;
-        }
-        
-        .cta-button {
-            display: inline-block;
-            padding: 16px 32px;
-            background: white;
-            color: #6366f1;
-            text-decoration: none;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 18px;
-            transition: all 0.2s;
-        }
-        
-        .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
-        }
-        
-        /* Footer */
-        .footer {
-            background: #1a202c;
-            color: white;
-            padding: 60px 0 32px;
-        }
-        
-        .footer-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 48px;
-            margin-bottom: 48px;
-        }
-        
-        .footer-logo {
-            color: white;
-            margin-bottom: 24px;
-        }
-        
-        .footer-description {
-            color: #94a3b8;
-            line-height: 1.6;
-            margin-bottom: 24px;
-        }
-        
-        .social-links {
-            display: flex;
-            gap: 16px;
-        }
-        
-        .social-links a {
-            color: #94a3b8;
-            font-size: 20px;
-            transition: color 0.2s;
-        }
-        
-        .social-links a:hover {
-            color: #6366f1;
-        }
-        
-        .footer-section h4 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 24px;
-        }
-        
-        .footer-links {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .footer-links li {
-            margin-bottom: 12px;
-        }
-        
-        .footer-links a {
-            color: #94a3b8;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-        
-        .footer-links a:hover {
-            color: white;
-        }
-        
-        .footer-bottom {
-            border-top: 1px solid #374151;
-            padding-top: 32px;
-            text-align: center;
-            color: #94a3b8;
-        }
-        
-        /* Login Required Modal Styles */
-        .login-benefits {
-            margin: 30px 0;
-            text-align: left;
-        }
-        
-        .login-benefits h3 {
-            color: #1e293b;
-            margin-bottom: 16px;
-            font-size: 18px;
-        }
-        
-        .login-benefits ul {
-            list-style: none;
-            padding: 0;
-        }
-        
-        .login-benefits li {
-            display: flex;
-            align-items: center;
-            margin-bottom: 12px;
-            color: #475569;
-            font-size: 14px;
-        }
-        
-        .login-benefits li i {
-            color: #10b981;
-            margin-right: 12px;
-            width: 16px;
-        }
-        
-        .login-actions {
-            display: flex;
-            gap: 16px;
-            margin-top: 30px;
-        }
-        
-        .login-actions .plan-button {
-            flex: 1;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        
-        .login-actions .secondary {
-            background: #f1f5f9;
-            color: #64748b;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .login-actions .secondary:hover {
-            background: #e2e8f0;
-            color: #475569;
-        }
-
-        /* Subscription Modal */
-        .subscription-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-
-        .subscription-modal.active {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            padding: 40px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            position: relative;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
-        }
-
-        .modal-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #64748b;
-            padding: 5px;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-
-        .modal-close:hover {
-            background: #f1f5f9;
-            color: #1a202c;
-        }
-
-        .modal-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-
-        .modal-header h2 {
-            font-size: 28px;
-            font-weight: 700;
-            color: #1a202c;
-            margin-bottom: 12px;
-        }
-
-        .modal-header p {
-            color: #64748b;
-            font-size: 16px;
-        }
-
-        .plan-summary {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 30px;
-            border: 2px solid #e2e8f0;
-        }
-
-        .plan-summary.pro {
-            border-color: #6366f1;
-            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05), rgba(139, 92, 246, 0.05));
-        }
-
-        .plan-summary.max {
-            border-color: #f59e0b;
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(249, 115, 22, 0.05));
-        }
-
-        .plan-title {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1a202c;
-            margin-bottom: 8px;
-        }
-
-        .plan-price-summary {
-            font-size: 32px;
-            font-weight: 800;
-            color: #1a202c;
-            margin-bottom: 8px;
-        }
-
-        .plan-credits-summary {
-            color: #10b981;
-            font-weight: 600;
-            margin-bottom: 16px;
-        }
-
-        .plan-features-summary {
-            color: #64748b;
-            font-size: 14px;
-        }
-
-        #paypal-button-container {
-            margin-top: 20px;
-        }
-
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 20px;
-        }
-
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid #f3f4f6;
-            border-top: 4px solid #6366f1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error-message {
-            display: none;
-            background: #fee2e2;
-            border: 1px solid #fecaca;
-            color: #dc2626;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            text-align: center;
-        }
-
-        .success-message {
-            display: none;
-            background: #d1fae5;
-            border: 1px solid #a7f3d0;
-            color: #059669;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            text-align: center;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .modal-content {
-                padding: 24px;
-                margin: 20px;
-            }
-            
-            .modal-header h2 {
-                font-size: 24px;
-            }
-            
-            .plan-price-summary {
-                font-size: 28px;
-            }
-
-            .nav-links {
-                display: none;
-            }
-            
-            .hero h1 {
-                font-size: 32px;
-            }
-            
-            .pricing-grid {
-                grid-template-columns: 1fr;
-                gap: 32px;
-            }
-            
-            .pricing-card {
-                padding: 32px 24px;
-                line-height: 1.8;
-            }
-            
-            .pricing-card.popular {
-                transform: none;
-                margin-bottom: 24px;
-            }
-            
-            .pricing-card.discount {
-                transform: none;
-                margin-bottom: 24px;
-            }
-            
-            .pricing-card.popular:hover {
-                transform: translateY(-4px);
-            }
-            
-            .pricing-card.discount:hover {
-                transform: translateY(-4px);
-            }
-            
-            .plan-name {
-                margin-bottom: 16px;
-                line-height: 1.4;
-            }
-            
-            .plan-description {
-                margin-bottom: 20px;
-                line-height: 1.6;
-            }
-            
-            .features-list {
-                line-height: 1.8;
-                margin-bottom: 24px;
-            }
-            
-            .features-list li {
-                margin-bottom: 12px;
-            }
-            
-            .section-header h2 {
-                font-size: 32px;
-            }
-            
-            .cta-section h2 {
-                font-size: 28px;
-            }
-        }
-    
-        /* 积分显示动画 */
-        #creditsAmount, .credits-amount {
-            transition: all 0.3s ease;
-            font-weight: 600;
-        }
-        
-        #creditsAmount.updating, .credits-amount.updating {
-            color: #10b981 !important;
-            transform: scale(1.1);
-        }
-        
-        .credits-display {
-            position: relative;
-        }
-        
-        .credits-display::after {
-            content: '';
-            position: absolute;
-            top: -2px;
-            right: -2px;
-            width: 6px;
-            height: 6px;
-            background: #10b981;
-            border-radius: 50%;
-            opacity: 0;
-            animation: pulse 2s infinite;
-        }
-        
-        .credits-display.live::after {
-            opacity: 1;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.7; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-        </style>
 
     <script>
-    // 页面加载时立即恢复用户状态
+    // Pricing页面用户状态管理
     let currentUser = null;
+    let supabaseClient = null;
     
-    // 立即从localStorage恢复用户状态
-    function restoreUserState() {
+    // 初始化Supabase客户端
+    const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI';
+    
+    // 页面加载时立即执行
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Pricing页面加载');
+        
+        // 初始化Supabase
+        if (typeof supabase !== 'undefined') {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        }
+        
+        // 立即恢复用户状态
+        restoreUserStateFromLocalStorage();
+    });
+    
+    // 从localStorage恢复用户状态
+    function restoreUserStateFromLocalStorage() {
         try {
+            console.log('🔄 从localStorage恢复用户状态...');
+            
             const userData = localStorage.getItem('flux_krea_user');
             if (userData) {
                 currentUser = JSON.parse(userData);
                 console.log('✅ 用户状态已恢复:', currentUser.email);
                 console.log('💰 用户积分:', currentUser.credits);
                 
-                // 立即更新积分显示
-                updateCreditsDisplay();
+                // 立即更新UI
+                updatePricingPageUI();
                 
-                // 立即更新登录状态显示
-                updateSigninButton();
+                // 从数据库同步最新积分
+                syncLatestCredits();
                 
                 return true;
+            } else {
+                console.log('⚠️ localStorage中没有用户数据');
+                return false;
             }
-            console.log('⚠️ 没有找到用户状态');
-            return false;
         } catch (error) {
             console.error('❌ 恢复用户状态失败:', error);
             return false;
         }
     }
     
-    // 更新积分显示
-    function updateCreditsDisplay() {
-        const creditsElements = document.querySelectorAll('#creditsAmount, .credits-amount');
-        const credits = currentUser ? currentUser.credits : 20;
+    // 更新pricing页面UI
+    function updatePricingPageUI() {
+        if (!currentUser) return;
         
+        // 更新积分显示
+        const creditsElements = document.querySelectorAll('#creditsAmount, .credits-amount');
         creditsElements.forEach(element => {
             if (element) {
-                element.textContent = credits;
+                element.textContent = currentUser.credits || 0;
+                console.log('✅ 积分显示已更新:', currentUser.credits);
             }
         });
         
-        console.log('✅ 积分显示已更新:', credits);
-    }
-    
-    // 更新登录按钮显示
-    function updateSigninButton() {
+        // 更新登录按钮显示
         const signinBtn = document.querySelector('.signin-btn');
-        if (signinBtn && currentUser) {
+        if (signinBtn) {
             signinBtn.innerHTML = `
                 <img src="${currentUser.avatar_url}" style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
-                <span>${currentUser.name || currentUser.email.split('@')[0]}</span>
+                <span>${currentUser.name}</span>
             `;
+            console.log('✅ 登录状态显示已更新');
         }
     }
     
-    // 页面加载时立即执行
-    document.addEventListener('DOMContentLoaded', function() {
-        console.log('🚀 Pricing页面加载完成');
+    // 从数据库同步最新积分
+    async function syncLatestCredits() {
+        if (!currentUser || !supabaseClient) return;
         
-        // 立即恢复用户状态
-        const restored = restoreUserState();
-        
-        if (restored) {
-            console.log('✅ 用户状态同步成功');
-        } else {
-            console.log('⚠️ 用户未登录状态');
+        try {
+            console.log('🔄 从数据库同步最新积分...');
+            
+            const { data, error } = await supabaseClient
+                .from('users')
+                .select('credits, subscription_status')
+                .eq('email', currentUser.email)
+                .single();
+            
+            if (!error && data) {
+                const oldCredits = currentUser.credits;
+                currentUser.credits = data.credits || 0;
+                currentUser.subscription_status = data.subscription_status;
+                
+                // 更新localStorage
+                localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+                
+                console.log(`💰 积分同步: ${oldCredits} → ${currentUser.credits}`);
+                
+                // 更新显示
+                updatePricingPageUI();
+            }
+        } catch (error) {
+            console.error('❌ 同步积分失败:', error);
         }
-    });
+    }
     
-    // 页面显示时也检查一次
-    window.addEventListener('pageshow', function() {
-        console.log('📄 页面显示，检查用户状态');
-        restoreUserState();
-    });
+    // 修复Choose Pro按钮 - 重写createSubscription函数
+    window.createSubscription = async function(planType) {
+        console.log('🎯 Choose Pro按钮被点击:', planType);
+        
+        // 检查用户登录状态
+        if (!currentUser) {
+            console.log('❌ 用户未登录');
+            alert('请先登录后再购买订阅');
+            return;
+        }
+        
+        console.log('✅ 用户已登录，继续订阅流程');
+        console.log('👤 用户信息:', currentUser.email);
+        
+        try {
+            // 调用原有的openSubscriptionModal函数
+            if (typeof openSubscriptionModal === 'function') {
+                await openSubscriptionModal(planType);
+            } else {
+                console.error('❌ openSubscriptionModal函数不存在');
+                alert('订阅功能初始化中，请稍后重试');
+            }
+        } catch (error) {
+            console.error('❌ 打开订阅弹窗失败:', error);
+            alert('订阅功能暂时不可用，请稍后重试');
+        }
+    };
+    
+    // 检查用户认证状态的函数
+    window.checkSupabaseSession = async function() {
+        console.log('🔍 检查用户认证状态...');
+        
+        // 优先检查localStorage中的用户状态
+        if (currentUser && currentUser.email) {
+            console.log('✅ 用户已登录:', currentUser.email);
+            return true;
+        }
+        
+        // 如果没有，尝试从Supabase会话恢复
+        if (supabaseClient) {
+            try {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (!error && session && session.user) {
+                    console.log('✅ 从Supabase会话恢复用户状态');
+                    
+                    currentUser = {
+                        id: session.user.id,
+                        uuid: session.user.id,
+                        email: session.user.email,
+                        name: session.user.user_metadata?.full_name || session.user.email.split('@')[0],
+                        avatar_url: session.user.user_metadata?.avatar_url || '',
+                        credits: 0,
+                        is_signed_in: true
+                    };
+                    
+                    // 保存到localStorage
+                    localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+                    
+                    // 更新UI
+                    updatePricingPageUI();
+                    
+                    // 同步积分
+                    syncLatestCredits();
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('❌ 检查Supabase会话失败:', error);
+            }
+        }
+        
+        console.log('❌ 用户未登录');
+        return false;
+    };
     </script>
-</head>
+    </head>
 <body>
     <!-- Header -->
     <header class="header">

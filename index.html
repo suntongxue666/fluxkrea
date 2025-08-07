@@ -3942,6 +3942,90 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
             console.error('❌ 同步积分失败:', error);
         }
     }
-    </script>
+    
+        // 用户登录成功后的处理
+        function handleLoginSuccess(user) {
+            console.log('🎉 用户登录成功:', user.email);
+            
+            // 创建完整的用户数据对象
+            const userData = {
+                id: user.id,
+                uuid: user.id,
+                google_id: user.id,
+                email: user.email,
+                name: user.user_metadata?.full_name || user.user_metadata?.name || user.email.split('@')[0],
+                avatar_url: user.user_metadata?.avatar_url || '',
+                credits: 10, // 默认积分，会从数据库同步
+                is_signed_in: true,
+                subscription_status: 'ACTIVE'
+            };
+            
+            // 保存到localStorage
+            localStorage.setItem('flux_krea_user', JSON.stringify(userData));
+            console.log('✅ 用户状态已保存到localStorage');
+            
+            // 立即从数据库同步真实积分
+            syncUserCreditsFromDatabase(userData);
+            
+            // 更新UI
+            updateUIAfterLogin(userData);
+        }
+        
+        // 从数据库同步用户积分
+        async function syncUserCreditsFromDatabase(userData) {
+            try {
+                console.log('🔄 从数据库同步积分...');
+                
+                // 使用Supabase直接查询
+                if (typeof supabaseClient !== 'undefined') {
+                    const { data, error } = await supabaseClient
+                        .from('users')
+                        .select('credits, subscription_status')
+                        .eq('email', userData.email)
+                        .single();
+                    
+                    if (!error && data) {
+                        // 更新用户数据
+                        userData.credits = data.credits || 0;
+                        userData.subscription_status = data.subscription_status || 'ACTIVE';
+                        
+                        // 重新保存到localStorage
+                        localStorage.setItem('flux_krea_user', JSON.stringify(userData));
+                        
+                        console.log('✅ 积分同步成功:', userData.credits);
+                        
+                        // 更新积分显示
+                        updateCreditsDisplay(userData.credits);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ 同步积分失败:', error);
+            }
+        }
+        
+        // 更新积分显示
+        function updateCreditsDisplay(credits) {
+            const creditsElements = document.querySelectorAll('#creditsAmount, .credits-amount, [id*="credits"]');
+            creditsElements.forEach(element => {
+                if (element) {
+                    element.textContent = credits;
+                }
+            });
+        }
+        
+        // 更新登录后的UI
+        function updateUIAfterLogin(userData) {
+            const signinBtn = document.querySelector('.signin-btn');
+            if (signinBtn) {
+                signinBtn.innerHTML = `
+                    <img src="${userData.avatar_url}" style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
+                    <span>${userData.name}</span>
+                `;
+            }
+            
+            // 更新积分显示
+            updateCreditsDisplay(userData.credits);
+        }
+        </script>
 </body>
 </html>
