@@ -1,5 +1,5 @@
-// 完整的PayPal Webhook处理器 - 包含数据库操作
-const { createClient } = require('@supabase/supabase-js');
+// 使用原生fetch的PayPal Webhook处理器 - 避免依赖问题
+const https = require('https');
 
 // 环境变量配置
 const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
@@ -18,15 +18,6 @@ const SUBSCRIPTION_PLANS = {
         price: 29.99
     }
 };
-
-let supabase;
-
-// 初始化Supabase
-try {
-    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-} catch (error) {
-    console.error('Supabase初始化失败:', error);
-}
 
 module.exports = async (req, res) => {
     // 设置响应头
@@ -90,10 +81,67 @@ module.exports = async (req, res) => {
     }
 };
 
+// 使用原生fetch调用Supabase API
+async function supabaseRequest(method, table, data = null, filter = null) {
+    return new Promise((resolve, reject) => {
+        let path = `/rest/v1/${table}`;
+        if (filter) {
+            path += `?${filter}`;
+        }
+        
+        const options = {
+            hostname: 'gdcjvqaqgvcxzufmessy.supabase.co',
+            port: 443,
+            path: path,
+            method: method,
+            headers: {
+                'Content-Type': 'application/json',
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'Prefer': method === 'POST' ? 'return=minimal' : 'return=representation'
+            }
+        };
+        
+        if (data) {
+            const postData = JSON.stringify(data);
+            options.headers['Content-Length'] = Buffer.byteLength(postData);
+        }
+        
+        const req = https.request(options, (res) => {
+            let responseData = '';
+            
+            res.on('data', (chunk) => {
+                responseData += chunk;
+            });
+            
+            res.on('end', () => {
+                try {
+                    const parsedData = responseData ? JSON.parse(responseData) : null;
+                    resolve({ data: parsedData, error: null, status: res.statusCode });
+                } catch (e) {
+                    if (res.statusCode >= 200 && res.statusCode < 300) {
+                        resolve({ data: null, error: null, status: res.statusCode });
+                    } else {
+                        resolve({ data: null, error: { message: responseData }, status: res.statusCode });
+                    }
+                }
+            });
+        });
+        
+        req.on('error', (error) => {
+            reject(error);
+        });
+        
+        if (data) {
+            req.write(JSON.stringify(data));
+        }
+        
+        req.end();
+    });
+}
+
 // 记录webhook事件
 async function logWebhookEvent(eventType, resource) {
-    if (!supabase) return;
-    
     try {
         const logData = {
             event_type: eventType,
@@ -102,12 +150,10 @@ async function logWebhookEvent(eventType, resource) {
             processed_at: new Date().toISOString()
         };
         
-        const { error } = await supabase
-            .from('webhook_events')
-            .insert(logData);
+        const result = await supabaseRequest('POST', 'webhook_events', logData);
         
-        if (error) {
-            console.warn('Webhook事件日志记录失败:', error.message);
+        if (result.error) {
+            console.warn('Webhook事件日志记录失败:', result.error.message);
         } else {
             console.log('Webhook事件已记录');
         }
@@ -118,11 +164,6 @@ async function logWebhookEvent(eventType, resource) {
 
 // 处理订阅激活事件
 async function handleSubscriptionActivated(resource) {
-    if (!supabase) {
-        console.error('数据库连接不可用');
-        return;
-    }
-    
     try {
         console.log('处理订阅激活:', resource.id);
         
@@ -153,25 +194,17 @@ async function handleSubscriptionActivated(resource) {
         let user = null;
         
         // 通过UUID查找
-        const { data: uuidUser, error: uuidError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('uuid', userInfo.user_id)
-            .single();
+        const uuidResult = await supabaseRequest('GET', 'users', null, `uuid=eq.${userInfo.user_id}&select=*`);
         
-        if (!uuidError && uuidUser) {
-            user = uuidUser;
+        if (!uuidResult.error && uuidResult.data && uuidResult.data.length > 0) {
+            user = uuidResult.data[0];
             console.log('通过UUID找到用户:', user.email);
         } else {
             // 通过邮箱查找
-            const { data: emailUser, error: emailError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('email', userInfo.email)
-                .single();
+            const emailResult = await supabaseRequest('GET', 'users', null, `email=eq.${userInfo.email}&select=*`);
             
-            if (!emailError && emailUser) {
-                user = emailUser;
+            if (!emailResult.error && emailResult.data && emailResult.data.length > 0) {
+                user = emailResult.data[0];
                 console.log('通过邮箱找到用户:', user.email);
             }
         }
@@ -189,17 +222,16 @@ async function handleSubscriptionActivated(resource) {
         console.log(`积分更新: ${currentCredits} + ${creditsToAdd} = ${newCredits}`);
         
         // 更新用户积分
-        const { error: updateError } = await supabase
-            .from('users')
-            .update({
-                credits: newCredits,
-                subscription_status: 'ACTIVE',
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id);
+        const updateData = {
+            credits: newCredits,
+            subscription_status: 'ACTIVE',
+            updated_at: new Date().toISOString()
+        };
         
-        if (updateError) {
-            console.error('更新用户积分失败:', updateError);
+        const updateResult = await supabaseRequest('PATCH', 'users', updateData, `id=eq.${user.id}`);
+        
+        if (updateResult.error) {
+            console.error('更新用户积分失败:', updateResult.error.message);
             return;
         }
         
@@ -207,16 +239,16 @@ async function handleSubscriptionActivated(resource) {
         
         // 记录积分交易
         try {
-            await supabase
-                .from('credit_transactions')
-                .insert({
-                    user_uuid: user.uuid,
-                    transaction_type: 'EARN',
-                    amount: creditsToAdd,
-                    balance_after: newCredits,
-                    description: `${planDetails.name}订阅激活`,
-                    source: 'paypal_webhook'
-                });
+            const transactionData = {
+                user_uuid: user.uuid,
+                transaction_type: 'EARN',
+                amount: creditsToAdd,
+                balance_after: newCredits,
+                description: `${planDetails.name}订阅激活`,
+                source: 'paypal_webhook'
+            };
+            
+            await supabaseRequest('POST', 'credit_transactions', transactionData);
             console.log('积分交易已记录');
         } catch (transError) {
             console.warn('积分交易记录失败:', transError.message);
