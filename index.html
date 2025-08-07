@@ -1156,204 +1156,6 @@
             }
         }
 
-        /* Showcase Modal */
-        .showcase-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-        }
-
-        .showcase-modal.active {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        .showcase-content {
-            text-align: center;
-            max-width: 90%;
-            max-height: 90%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .showcase-image {
-            width: 1024px;
-            height: 1024px;
-            max-width: min(90vw, 1024px);
-            max-height: min(calc(100vh - 200px), 1024px);
-            object-fit: cover;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-            margin-bottom: 20px;
-            aspect-ratio: 1/1;
-        }
-
-        .showcase-title {
-            color: white;
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            margin-top: 0;
-        }
-
-        .showcase-description {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 18px;
-            margin-bottom: 32px;
-            max-width: 600px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-
-        .showcase-get-started {
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            padding: 14px 28px;
-            border: none;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin-top: 8px;
-        }
-
-        .showcase-get-started:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
-        }
-
-        .showcase-indicators {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-
-        .indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-
-        .indicator.active {
-            background: white;
-            transform: scale(1.2);
-        }
-
-        @media (max-width: 768px) {
-            .showcase-image {
-                width: 90vw;
-                height: 90vw;
-                max-height: 90vw;
-                aspect-ratio: 1/1;
-            }
-
-            .showcase-title {
-                font-size: 24px;
-            }
-
-            .showcase-description {
-                font-size: 16px;
-            }
-        }
-        
-        /* Generated Image Result Styles */
-        .result-success {
-            text-align: center;
-            padding: 0px;
-        }
-        
-        .generated-image {
-            width: 100%;
-            max-width: 512px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-            margin-bottom: 16px;
-        }
-        
-        .result-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: center;
-            margin-bottom: 16px;
-        }
-        
-        .action-btn {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .action-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
-        }
-        
-        .generation-info {
-            color: #64748b;
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-        
-        .result-error {
-            text-align: center;
-            padding: 48px;
-            color: #dc3545;
-        }
-        
-        .result-error i {
-            font-size: 48px;
-            margin-bottom: 24px;
-        }
-        
-        .result-error h3 {
-            font-size: 24px;
-            margin-bottom: 16px;
-        }
-        
-        .generating-status {
-            text-align: center;
-            padding: 60px 24px;
-            color: #6366f1;
-        }
-        
-        .loading-spinner {
-            width: 48px;
-            height: 48px;
-            border: 4px solid #e2e8f0;
-            border-top: 4px solid #6366f1;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 24px;
-        }
-        
         /* Loading Modal */
         .loading-modal {
             position: fixed;
@@ -1619,20 +1421,20 @@
         </div>
     </div>
 
-    <!-- Insufficient Credits Modal -->
+    <!-- Authentication Required Modal for Unauthenticated Users -->
     <div class="credits-modal" id="creditsModal">
         <div class="credits-modal-content">
             <div class="credits-modal-icon">
                 <i class="fas fa-coins"></i>
             </div>
-            <h3>Credits current is 0</h3>
-            <p>Generate an image needs <span id="modalRequiredCredits">10</span> credits. Please sign in for more credits.</p>
+            <h3>Credits Balance is 20</h3>
+            <p>Please sign in with Google to gain 20 credits in order to record your AI Creations.</p>
             <div class="credits-modal-actions">
-                <button class="signin-btn" onclick="signInFromModal()" style="margin-right: 12px;">
-                    <div class="google-icon"></div>
+                <button class="credits-modal-btn primary" onclick="signInFromModal()">
+                    <div class="google-icon-modal"></div>
                     <span>Sign in</span>
                 </button>
-                <button class="credits-modal-btn primary" onclick="closeCreditsModal()">
+                <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
                     <span>Close</span>
                 </button>
             </div>
@@ -1647,21 +1449,6 @@
         </div>
     </div>
 
-    <!-- Showcase Modal -->
-    <div class="showcase-modal" id="showcaseModal">
-        <div class="showcase-content">
-            <div class="showcase-indicators" id="showcaseIndicators">
-                <!-- Indicators will be generated by JavaScript -->
-            </div>
-            <img class="showcase-image" id="showcaseImage" src="" alt="AI Generated Showcase">
-            <h2 class="showcase-title">FLUX.1 Krea AI Generated Images</h2>
-            <button class="showcase-get-started" onclick="closeShowcase(); scrollToGenerator();">
-                <i class="fas fa-rocket"></i>
-                Get Started
-            </button>
-        </div>
-    </div>
-
     <!-- Header -->
     <header class="header">
         <nav class="nav">
@@ -1673,7 +1460,7 @@
             </a>
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
-                <li><a href="#showcase" class="active" onclick="openShowcase(); return false;">Showcase</a></li>
+                <li><a href="showcase.html" class="active">Showcase</a></li>
                 <li><a href="pricing.html">Pricing</a></li>
                 <li><a href="#faq">FAQ</a></li>
             </ul>
@@ -1687,7 +1474,7 @@
                     🔧 调试
                 </button>
                 
-                <div class="signin-btn">
+                <div class="signin-btn" onclick="handleSignInClick()">
                     <div class="google-icon"></div>
                     <span>Sign in</span>
                 </div>
@@ -2055,7 +1842,7 @@
                     <h4>Product</h4>
                     <ul class="footer-links">
                         <li><a href="#features">Features</a></li>
-                        <li><a href="#showcase" onclick="openShowcase(); return false;">Showcase</a></li>
+                        <li><a href="showcase.html">Showcase</a></li>
                         <li><a href="pricing.html">Pricing</a></li>
                         <li><a href="#faq">FAQ</a></li>
                     </ul>
@@ -2176,116 +1963,6 @@
             });
         });
 
-        // Showcase functionality
-        const showcaseImages = [
-            'https://pic4.zhimg.com/v2-e1374c41f099af1c9714b09a13f4c29f_1440w.jpg',
-            'https://pic1.zhimg.com/v2-4dfe15bc9d72a0eaa6048ae2efbb755e_1440w.jpg',
-            'https://picx.zhimg.com/v2-972099fcef030036a5583bd4ba8aac69_1440w.jpg',
-            'https://pic4.zhimg.com/v2-c1bbf18cfc3c15c39dff6041451bc9eb_1440w.jpg',
-            'https://pic4.zhimg.com/v2-06b9a280b8a4c331a35fca57342956eb_1440w.jpg',
-            'https://pica.zhimg.com/v2-ffa8c449ab7c46656eb31ac01c4d693c_1440w.jpg',
-            'https://replicate.delivery/yhqm/VyD24fDyzM2nQSg0nQc58W2EIj16hGcWKrXJozjAMR1BeidTA/out-0.png',
-            'https://replicate.delivery/yhqm/6f5TnZKaU3RHSayghFfNxxKjhGusg98XVfDsZjQA43ZI6F7mA/out-0.png',
-            'https://replicate.delivery/yhqm/KNewAbWklqwHVyUjZ77YIJb70TmI5vGyni8clSsQYeT38idTA/out-0.png',
-            'https://replicate.delivery/yhqm/EIhr0cDHZFoLAFYMA9ezx7AVGie3qHIebTpce4yYnGwt1L2NB/out-0.png',
-            'https://replicate.delivery/yhqm/KoWJ5oSwXEq4LFOQjz65rlwvWJ7t4rIeaKkWqonVz5YzeidTA/out-0.png',
-            'https://replicate.delivery/yhqm/pNZ3A6l9B35dB9VxE0eGqkGfBGe401MjUttdOyzvpfWbEb6NB/out-0.webp',
-            'https://replicate.delivery/yhqm/nTMezRPSm4xXX6yGVVkKePeRMeC0Lwq9p4o02APPeV1mwXsbC/out-0.png',
-            'https://replicate.delivery/yhqm/QeGlhr8w4CWefov8rFAozycqveU4anxkYuUVxANfolFP710bC/out-0.webp',
-            'https://replicate.delivery/yhqm/74gHlK2Mrc7YL5dnnjopehWLftlfSA8449R6lECKI4OhjN9mA/out-0.webp',
-            'https://replicate.delivery/yhqm/hcDDSNf633zeDUz9sWkKfaftcfJLWIvuhn9vfCFWmufxelmemA/out-0.webp'
-        ];
-
-        let currentImageIndex = 0;
-        let showcaseInterval;
-
-        function initializeShowcase() {
-            const modal = document.getElementById('showcaseModal');
-            const image = document.getElementById('showcaseImage');
-            const indicators = document.getElementById('showcaseIndicators');
-
-            // Create indicators
-            indicators.innerHTML = '';
-            for (let i = 0; i < showcaseImages.length; i++) {
-                const indicator = document.createElement('div');
-                indicator.className = 'indicator' + (i === 0 ? ' active' : '');
-                indicator.onclick = () => goToImage(i);
-                indicators.appendChild(indicator);
-            }
-
-            // Show first image
-            updateImage();
-            
-            // Do not auto-show modal - only show when clicked
-        }
-
-        function updateImage() {
-            const image = document.getElementById('showcaseImage');
-            const indicators = document.querySelectorAll('.indicator');
-            
-            image.src = showcaseImages[currentImageIndex];
-            
-            // Update indicators
-            indicators.forEach((indicator, index) => {
-                indicator.classList.toggle('active', index === currentImageIndex);
-            });
-        }
-
-        function nextImage() {
-            currentImageIndex = (currentImageIndex + 1) % showcaseImages.length;
-            updateImage();
-        }
-
-        function goToImage(index) {
-            currentImageIndex = index;
-            updateImage();
-            stopAutoplay();
-            startAutoplay();
-        }
-
-        function startAutoplay() {
-            showcaseInterval = setInterval(nextImage, 3000); // Change every 3 seconds
-        }
-
-        function stopAutoplay() {
-            if (showcaseInterval) {
-                clearInterval(showcaseInterval);
-            }
-        }
-
-        function openShowcase() {
-            const modal = document.getElementById('showcaseModal');
-            
-            // Set active state for showcase nav
-            document.querySelectorAll('.nav-links a').forEach(link => {
-                link.classList.remove('active');
-            });
-            document.querySelector('a[href="#showcase"]').classList.add('active');
-            
-            // Show modal
-            modal.classList.add('active');
-            startAutoplay();
-        }
-
-        function closeShowcase() {
-            const modal = document.getElementById('showcaseModal');
-            stopAutoplay();
-            modal.classList.remove('active');
-            
-            // Remove active class from Showcase nav and set to Features
-            document.querySelectorAll('.nav-links a').forEach(link => {
-                link.classList.remove('active');
-            });
-            document.querySelector('a[href="#features"]').classList.add('active');
-        }
-
-        // Initialize showcase when page loads
-        document.addEventListener('DOMContentLoaded', initializeShowcase);
-
-        // Pause autoplay when modal is hovered
-        document.getElementById('showcaseModal').addEventListener('mouseenter', stopAutoplay);
-        document.getElementById('showcaseModal').addEventListener('mouseleave', startAutoplay);
-        
         // 积分系统和用户管理 - Supabase集成
         const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co'
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI'
@@ -2372,63 +2049,84 @@
             // 处理已认证用户
             async handleAuthenticatedUser(authUser) {
                 try {
-                    const anonymousUuid = getUserUUID(); // 获取本地匿名 UUID
+                    console.log('处理已认证用户:', authUser);
                     
-                    // 设置用户上下文（使用匿名 UUID保持连续性）
-                    await supabaseClient.rpc('set_user_context', { user_uuid: anonymousUuid });
-                    
-                    // 查找现有的用户记录（优先查找匿名用户）
+                    // 以Google ID为主要标识查找用户
                     let { data: user, error } = await supabaseClient
                         .from('users')
                         .select('*')
-                        .eq('uuid', anonymousUuid)
+                        .eq('google_id', authUser.id)
                         .single();
                     
                     if (error && error.code === 'PGRST116') {
-                        // 匿名用户不存在，检查是否已有Google用户记录
-                        const { data: existingGoogleUser, error: googleError } = await supabaseClient
+                        // 用户不存在，检查是否有匿名用户需要升级
+                        const anonymousUuid = getUserUUID();
+                        
+                        // 查找匹配的匿名用户（通过指纹或UUID）
+                        const fingerprint = generateUserFingerprint();
+                        let { data: anonymousUser, error: anonError } = await supabaseClient
                             .from('users')
                             .select('*')
-                            .eq('google_id', authUser.id)
+                            .eq('fingerprint', fingerprint)
+                            .eq('is_signed_in', false)
                             .single();
                         
-                        if (!googleError && existingGoogleUser) {
-                            // 已有Google用户记录，更新本地UUID为数据库中UUID
-                            localStorage.setItem('user_uuid', existingGoogleUser.uuid);
-                            user = existingGoogleUser;
+                        if (anonError && anonError.code === 'PGRST116') {
+                            // 通过UUID查找
+                            const { data: uuidUser, error: uuidError } = await supabaseClient
+                                .from('users')
+                                .select('*')
+                                .eq('uuid', anonymousUuid)
+                                .eq('is_signed_in', false)
+                                .single();
+                            
+                            if (!uuidError) {
+                                anonymousUser = uuidUser;
+                            }
+                        }
+                        
+                        if (anonymousUser) {
+                            // 升级现有匿名用户为认证用户
+                            console.log('升级匿名用户为认证用户:', anonymousUser.uuid);
+                            const { data: upgradedUser, error: upgradeError } = await supabaseClient
+                                .from('users')
+                                .update({
+                                    is_signed_in: true,
+                                    google_id: authUser.id,
+                                    email: authUser.email,
+                                    name: authUser.user_metadata?.full_name || authUser.email,
+                                    avatar_url: authUser.user_metadata?.avatar_url,
+                                    last_seen_at: new Date().toISOString()
+                                })
+                                .eq('id', anonymousUser.id)
+                                .select()
+                                .single();
+                                
+                            if (upgradeError) throw upgradeError;
+                            user = upgradedUser;
+                            
+                            console.log('匿名用户升级成功，保留原有积分:', user.credits);
                         } else {
-                            // 创建新的用户记录（使用本地UUID作主键）
-                            user = await this.createUserRecord(authUser, anonymousUuid);
+                            // 创建新的认证用户
+                            console.log('创建新的认证用户');
+                            user = await this.createUserRecord(authUser);
                         }
                     } else if (error) {
                         throw error;
+                    } else {
+                        // 用户存在，更新最后访问时间
+                        console.log('已存在认证用户，更新访问时间');
+                        await supabaseClient
+                            .from('users')
+                            .update({ 
+                                last_seen_at: new Date().toISOString(),
+                                name: authUser.user_metadata?.full_name || user.name,
+                                avatar_url: authUser.user_metadata?.avatar_url || user.avatar_url
+                            })
+                            .eq('id', user.id);
                     }
                     
-                    // 升级用户为认证用户（更新认证信息）
-                    const { error: updateError } = await supabaseClient
-                        .from('users')
-                        .update({ 
-                            last_seen_at: new Date().toISOString(),
-                            is_signed_in: true,
-                            google_id: authUser.id,
-                            email: authUser.email,
-                            name: authUser.user_metadata?.full_name || authUser.email,
-                            avatar_url: authUser.user_metadata?.avatar_url
-                        })
-                        .eq('uuid', anonymousUuid);
-                    
-                    if (updateError) {
-                        console.error('更新用户认证信息失败:', updateError);
-                    }
-                    
-                    // 获取更新后的用户信息
-                    const { data: updatedUser } = await supabaseClient
-                        .from('users')
-                        .select('*')
-                        .eq('uuid', anonymousUuid)
-                        .single();
-                    
-                    this.currentUser = { ...updatedUser, ...authUser.user_metadata };
+                    this.currentUser = { ...user, ...authUser.user_metadata };
                     currentUser = this.currentUser;
                     
                     // 同步用户状态到其他页面
@@ -2438,7 +2136,7 @@
                     
                     this.updateUIForAuthenticatedUser();
                     
-                    console.log('用户认证升级成功:', this.currentUser);
+                    console.log('用户认证完成:', this.currentUser);
                     
                 } catch (error) {
                     console.error('处理认证用户失败:', error);
@@ -2605,15 +2303,19 @@
             }
             
             
-            // 创建用户记录（保持相同UUID）
+            // 创建用户记录（以Google ID为主要标识）
             async createUserRecord(authUser, existingUuid = null) {
-                const userUuid = existingUuid || authUser.id;
+                const userUuid = existingUuid || getUserUUID();
                 const fingerprint = generateUserFingerprint();
                 const ip = await getUserIP();
-                const userIdentifier = `${userUuid}_${fingerprint}_${ip}`.replace(/[^a-zA-Z0-9_]/g, '');
+                const userIdentifier = await generateUserIdentifier();
                 
                 const userData = {
                     uuid: userUuid,
+                    google_id: authUser.id,
+                    email: authUser.email,
+                    name: authUser.user_metadata?.full_name || authUser.email,
+                    avatar_url: authUser.user_metadata?.avatar_url,
                     user_identifier: userIdentifier,
                     fingerprint: fingerprint,
                     ip_address: ip,
@@ -2623,17 +2325,9 @@
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     screen_resolution: `${screen.width}x${screen.height}`,
                     credits: systemSettings.default_credits || 20,
-                    total_credits_earned: systemSettings.default_credits || 20
+                    total_credits_earned: systemSettings.default_credits || 20,
+                    is_signed_in: true
                 };
-                
-                // 如果是认证用户，添加认证信息
-                if (authUser) {
-                    userData.is_signed_in = true;
-                    userData.google_id = authUser.id;
-                    userData.email = authUser.email;
-                    userData.name = authUser.user_metadata?.full_name || authUser.email;
-                    userData.avatar_url = authUser.user_metadata?.avatar_url;
-                }
                 
                 const { data, error } = await supabaseClient
                     .from('users')
@@ -2649,8 +2343,8 @@
                     userUuid, 
                     'EARN', 
                     systemSettings.default_credits || 20, 
-                    authUser ? '新用户注册奖励' : '新用户奖励', 
-                    authUser ? 'signup_bonus' : 'anonymous_bonus'
+                    '新用户注册奖励', 
+                    'signup_bonus'
                 );
                 
                 return data;
@@ -3036,6 +2730,35 @@
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', async function() {
             try {
+                // 检查是否是首次访问，如果是则跳转到showcase
+                const hasVisitedBefore = localStorage.getItem('flux_krea_visited');
+                const urlParams = new URLSearchParams(window.location.search);
+                const skipShowcase = urlParams.get('skip_showcase') === 'true';
+                
+                // 如果不是首次访问或者URL中有跳过showcase的参数，则正常初始化
+                if (hasVisitedBefore || skipShowcase || window.location.hash) {
+                    await normalPageInitialization();
+                } else {
+                    // 首次访问，标记已访问并跳转到showcase
+                    localStorage.setItem('flux_krea_visited', 'true');
+                    
+                    // 延迟跳转，让页面稍微加载一下
+                    setTimeout(() => {
+                        window.location.href = 'showcase.html';
+                    }, 500);
+                    return;
+                }
+                
+            } catch (error) {
+                console.error('页面初始化失败:', error);
+                // 发生错误时也进行正常初始化
+                await normalPageInitialization();
+            }
+        });
+        
+        // 正常页面初始化逻辑
+        async function normalPageInitialization() {
+            try {
                 // 1. 加载系统配置
                 await loadSystemSettings();
                 
@@ -3048,7 +2771,7 @@
                 await creditsManager.initialize(currentUser);
                 
                 // 4. 初始化其他功能
-                initializeShowcase();
+                // (已移除showcase初始化，因为现在使用独立页面)
                 
                 // 5. 监听认证状态变化
                 supabaseClient.auth.onAuthStateChange(async (event, session) => {
@@ -3082,9 +2805,8 @@
                 userManager.handleLocalMode();
                 creditsManager = new CreditsManager();
                 await creditsManager.initialize(currentUser);
-                initializeShowcase();
             }
-        });
+        }
         
         // 图像生成功能 - 完全使用模拟模式
         async function generateImage() {
@@ -3121,6 +2843,15 @@
             const generationCost = systemSettings.generation_cost || 10;
             console.log('生成成本:', generationCost);
             console.log('积分检查结果:', creditsManager.hasEnoughCredits(generationCost));
+            
+            // 未登录用户点击生成时，不管积分多少，都显示登录提示
+            if (!currentUser || !currentUser.is_signed_in) {
+                generateBtn.disabled = false;
+                generateBtn.innerHTML = originalContent;
+                console.log('未登录用户尝试生成图像，显示认证弹窗');
+                showAuthenticationModal();
+                return;
+            }
             
             if (!creditsManager.hasEnoughCredits(generationCost)) {
                 generateBtn.disabled = false;
@@ -3517,7 +3248,22 @@
             }
         });
         
-        // 管理员调试菜单
+        // 显示认证弹窗（未登录用户点击生成时）
+        function showAuthenticationModal() {
+            const modal = document.getElementById('creditsModal');
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        // 处理登录按钮点击
+        function handleSignInClick() {
+            if (userManager) {
+                userManager.signInWithGoogle();
+            } else {
+                console.error('用户管理器未初始化');
+                alert('系统初始化中，请稍后再试');
+            }
+        }
         function showDebugMenu() {
             if (!currentUser || currentUser.email !== 'sunwei7482@gmail.com') {
                 alert('此功能仅管理员可用');
@@ -4047,36 +3793,6 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-        
-        // 每日预览弹窗显示限制
-        let dailyPreviewCount = parseInt(localStorage.getItem('dailyPreviewCount') || '0');
-        let lastPreviewDate = localStorage.getItem('lastPreviewDate') || '';
-        const today = new Date().toDateString();
-        
-        // 重置每日计数
-        if (lastPreviewDate !== today) {
-            dailyPreviewCount = 0;
-            localStorage.setItem('lastPreviewDate', today);
-        }
-        
-        // 显示预览弹窗（一天最多3次）
-        function showPreviewModal() {
-            if (dailyPreviewCount < 3) {
-                dailyPreviewCount++;
-                localStorage.setItem('dailyPreviewCount', dailyPreviewCount.toString());
-                
-                // 延迟显示预览弹窗
-                setTimeout(() => {
-                    openShowcase();
-                }, 1000);
-            }
-        }
-        
-        // 页面加载时显示预览弹窗
-        document.addEventListener('DOMContentLoaded', function() {
-            // 页面加载完成后显示预览弹窗
-            setTimeout(showPreviewModal, 2000);
-        });
         
         // 点击弹窗背景关闭弹窗
         document.addEventListener('DOMContentLoaded', function() {
