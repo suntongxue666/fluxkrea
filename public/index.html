@@ -1427,8 +1427,8 @@
             <div class="credits-modal-icon">
                 <i class="fas fa-coins"></i>
             </div>
-            <h3>Credits Balance is 20</h3>
-            <p>Please sign in with Google to gain 20 credits in order to record your AI Creations.</p>
+            <h3>Credits Balance is Low</h3>
+            <p>Please sign in with Google to gain credits in order to record your AI Creations.</p>
             <div class="credits-modal-actions">
                 <button class="credits-modal-btn primary" onclick="signInFromModal()">
                     <div class="google-icon-modal"></div>
@@ -1467,7 +1467,7 @@
             <div class="nav-actions">
                 <div class="credits-display" id="creditsDisplay">
                     <i class="fas fa-coins"></i>
-                    <span id="creditsAmount">20</span>
+                    <span id="creditsAmount">--</span>
                 </div>
                 <!-- 管理员调试按钮 - 仅对特定账户显示 -->
                 <button id="debugRefreshBtn" onclick="showDebugMenu()" style="padding: 4px 8px; font-size: 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer; display: none;" title="管理员调试菜单">
@@ -2609,14 +2609,19 @@
                     console.log('积分管理器初始化 - 本地模式:', { credits: this.credits });
                 }
                 
-                this.updateCreditsDisplay();
                 this.isInitialized = true;
+                this.updateCreditsDisplay(); // 确保在设置isInitialized后再更新显示
             }
             
             updateCreditsDisplay() {
                 const creditsElement = document.getElementById('creditsAmount');
                 if (creditsElement) {
-                    creditsElement.textContent = this.credits;
+                    // 只有在积分管理器初始化完成后才显示积分
+                    if (this.isInitialized) {
+                        creditsElement.textContent = this.credits;
+                    } else {
+                        creditsElement.textContent = '--'; // 加载中状态
+                    }
                 }
                 
                 // 同步积分到其他页面
@@ -2759,6 +2764,12 @@
         // 正常页面初始化逻辑
         async function normalPageInitialization() {
             try {
+                // 显示加载状态
+                const creditsElement = document.getElementById('creditsAmount');
+                if (creditsElement) {
+                    creditsElement.textContent = '--';
+                }
+                
                 // 1. 加载系统配置
                 await loadSystemSettings();
                 
