@@ -1,15 +1,25 @@
-// 修复版PayPal Webhook处理器 - 解决500错误
+// 基于PayPal官方文档的标准Webhook处理器
+// 参考: https://developer.paypal.com/docs/subscriptions/
 const { createClient } = require('@supabase/supabase-js');
 
 // 环境变量配置
 const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI';
 
-// 计划详情映射 - 修正计划ID
-const PLAN_DETAILS = {
-    'P-5ML4271244454362WXNWU5NI': { name: 'Pro Plan', credits: 1000, price: 9.99 },
-    'P-3NJ78684DS796242VNCJBKQQ': { name: 'Max Plan', credits: 5000, price: 29.99 },
-    'P-5S785818YS7424947NCJBKQA': { name: 'Pro Plan', credits: 1000, price: 9.99 } // 新的Pro计划ID
+// 计划配置
+const SUBSCRIPTION_PLANS = {
+    'P-5S785818YS7424947NCJBKQA': { 
+        name: 'Pro Plan', 
+        credits: 1000, 
+        price: 9.99,
+        type: 'pro'
+    },
+    'P-3NJ78684DS796242VNCJBKQQ': { 
+        name: 'Max Plan', 
+        credits: 5000, 
+        price: 29.99,
+        type: 'max'
+    }
 };
 
 let supabase;
@@ -18,115 +28,165 @@ let supabase;
 try {
     supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 } catch (error) {
-    console.error('Supabase初始化失败:', error);
+    console.error('❌ Supabase初始化失败:', error);
 }
 
 module.exports = async (req, res) => {
-    // 设置响应头
+    // 设置标准HTTP响应头
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, PAYPAL-TRANSMISSION-ID, PAYPAL-CERT-ID, PAYPAL-AUTH-ALGO, PAYPAL-TRANSMISSION-SIG, PAYPAL-TRANSMISSION-TIME');
     res.setHeader('Content-Type', 'application/json');
     
+    const startTime = Date.now();
+    
     try {
-        console.log('🔔 PayPal Webhook received:', req.method);
+        console.log(`🔔 PayPal Webhook [${req.method}] - ${new Date().toISOString()}`);
         
-        // 处理OPTIONS请求
+        // 处理预检请求
         if (req.method === 'OPTIONS') {
-            return res.status(200).json({ message: 'CORS OK' });
+            return res.status(200).json({ message: 'CORS preflight OK' });
         }
         
-        // 处理GET请求（健康检查）
+        // 健康检查端点
         if (req.method === 'GET') {
-            return res.status(200).json({ 
-                message: 'PayPal Webhook is running',
+            return res.status(200).json({
+                service: 'PayPal Webhook Handler',
+                status: 'healthy',
                 timestamp: new Date().toISOString(),
-                status: 'healthy'
+                version: '1.0.0',
+                supported_events: [
+                    'BILLING.SUBSCRIPTION.CREATED',
+                    'BILLING.SUBSCRIPTION.ACTIVATED', 
+                    'BILLING.SUBSCRIPTION.CANCELLED',
+                    'BILLING.SUBSCRIPTION.SUSPENDED',
+                    'BILLING.SUBSCRIPTION.PAYMENT.FAILED',
+                    'PAYMENT.SALE.COMPLETED'
+                ]
             });
         }
         
         // 只处理POST请求
         if (req.method !== 'POST') {
-            return res.status(405).json({ error: 'Method not allowed' });
+            return res.status(405).json({ 
+                error: 'Method Not Allowed',
+                allowed_methods: ['GET', 'POST', 'OPTIONS']
+            });
         }
         
-        // 检查Supabase连接
+        // 验证Supabase连接
         if (!supabase) {
-            console.error('❌ Supabase未初始化');
-            return res.status(500).json({ error: 'Database not available' });
+            console.error('❌ 数据库连接不可用');
+            return res.status(200).json({
+                status: 'received',
+                message: 'Database connection unavailable',
+                timestamp: new Date().toISOString()
+            });
         }
         
-        // 解析请求体
-        const eventData = req.body;
-        if (!eventData) {
-            return res.status(400).json({ error: 'No request body' });
+        // 解析webhook事件数据
+        const webhookEvent = req.body;
+        if (!webhookEvent || !webhookEvent.event_type) {
+            console.warn('⚠️ 无效的webhook数据');
+            return res.status(200).json({
+                status: 'received',
+                message: 'Invalid webhook data',
+                timestamp: new Date().toISOString()
+            });
         }
         
-        const { event_type, resource } = eventData;
+        const { event_type, resource, id: webhook_id } = webhookEvent;
         
-        console.log('📋 Event type:', event_type);
-        console.log('📋 Resource ID:', resource?.id);
-        console.log('📋 Plan ID:', resource?.plan_id);
+        console.log(`📋 处理事件: ${event_type}`);
+        console.log(`🆔 Webhook ID: ${webhook_id}`);
+        console.log(`📦 Resource ID: ${resource?.id}`);
         
-        // 记录webhook事件（不阻塞主流程）
-        logWebhookEvent(event_type, resource).catch(err => {
-            console.warn('⚠️ 日志记录失败:', err.message);
-        });
+        // 记录webhook事件到数据库
+        await logWebhookEvent(webhookEvent);
         
-        // 处理订阅激活事件
-        if (event_type === 'BILLING.SUBSCRIPTION.ACTIVATED') {
-            try {
-                await handleSubscriptionActivated(resource);
-                console.log('✅ 订阅激活处理成功');
-            } catch (activationError) {
-                console.error('❌ 订阅激活处理失败:', activationError);
-                // 记录错误但不返回500，避免PayPal重试
-                logWebhookEvent(event_type, resource, 'ERROR', activationError.message).catch(() => {});
-            }
-        } else {
-            console.log('⚠️ 未处理的事件类型:', event_type);
+        // 根据事件类型分发处理
+        let processingResult = null;
+        
+        switch (event_type) {
+            case 'BILLING.SUBSCRIPTION.CREATED':
+                processingResult = await handleSubscriptionCreated(resource);
+                break;
+                
+            case 'BILLING.SUBSCRIPTION.ACTIVATED':
+                processingResult = await handleSubscriptionActivated(resource);
+                break;
+                
+            case 'BILLING.SUBSCRIPTION.CANCELLED':
+                processingResult = await handleSubscriptionCancelled(resource);
+                break;
+                
+            case 'BILLING.SUBSCRIPTION.SUSPENDED':
+                processingResult = await handleSubscriptionSuspended(resource);
+                break;
+                
+            case 'BILLING.SUBSCRIPTION.PAYMENT.FAILED':
+                processingResult = await handlePaymentFailed(resource);
+                break;
+                
+            case 'PAYMENT.SALE.COMPLETED':
+                processingResult = await handlePaymentCompleted(resource);
+                break;
+                
+            default:
+                console.log(`⚠️ 未处理的事件类型: ${event_type}`);
+                processingResult = { status: 'ignored', message: 'Event type not handled' };
         }
         
-        // 总是返回成功响应
+        const processingTime = Date.now() - startTime;
+        console.log(`✅ 事件处理完成 (${processingTime}ms)`);
+        
+        // 返回成功响应（PayPal要求200状态码）
         return res.status(200).json({
-            message: 'Webhook processed',
+            status: 'success',
             event_type: event_type,
+            webhook_id: webhook_id,
             resource_id: resource?.id,
+            processing_result: processingResult,
+            processing_time_ms: processingTime,
             timestamp: new Date().toISOString()
         });
         
     } catch (error) {
+        const processingTime = Date.now() - startTime;
         console.error('❌ Webhook处理异常:', error);
         
-        // 记录错误
+        // 记录错误但仍返回200状态码，避免PayPal重试
         try {
-            await logWebhookEvent('ERROR', { error: error.message }, 'ERROR');
+            await logWebhookEvent({
+                event_type: 'ERROR',
+                resource: { error: error.message, stack: error.stack },
+                id: 'error-' + Date.now()
+            }, 'ERROR');
         } catch (logError) {
             console.error('❌ 错误日志记录失败:', logError);
         }
         
-        // 返回成功响应避免PayPal重试（但记录错误）
         return res.status(200).json({
-            message: 'Webhook received but processing failed',
+            status: 'error',
+            message: 'Webhook processing failed',
             error: error.message,
+            processing_time_ms: processingTime,
             timestamp: new Date().toISOString()
         });
     }
 };
 
-// 记录webhook事件
-async function logWebhookEvent(eventType, resource, status = 'SUCCESS', errorMessage = null) {
+// 记录webhook事件到数据库
+async function logWebhookEvent(webhookEvent, status = 'SUCCESS') {
     try {
         const logData = {
-            event_type: eventType,
-            resource_data: resource || {},
+            event_type: webhookEvent.event_type,
+            webhook_id: webhookEvent.id,
+            resource_data: webhookEvent.resource || {},
             processing_status: status,
-            processed_at: new Date().toISOString()
+            processed_at: new Date().toISOString(),
+            raw_event: webhookEvent
         };
-        
-        if (errorMessage) {
-            logData.resource_data.error = errorMessage;
-        }
         
         const { error } = await supabase
             .from('webhook_events')
@@ -135,7 +195,7 @@ async function logWebhookEvent(eventType, resource, status = 'SUCCESS', errorMes
         if (error) {
             console.warn('⚠️ Webhook事件日志记录失败:', error.message);
         } else {
-            console.log('✅ Webhook事件已记录');
+            console.log('✅ Webhook事件已记录到数据库');
         }
     } catch (error) {
         console.error('❌ 日志记录异常:', error);
@@ -144,141 +204,75 @@ async function logWebhookEvent(eventType, resource, status = 'SUCCESS', errorMes
 
 // 处理订阅创建事件
 async function handleSubscriptionCreated(resource) {
-    console.log('🆕 处理订阅创建:', resource.id);
+    console.log('🆕 处理订阅创建事件:', resource.id);
     
     try {
-        const subscriptionId = resource.id;
-        const planId = resource.plan_id;
-        const customId = resource.custom_id;
+        const subscriptionData = extractSubscriptionData(resource);
         
-        // 解析用户信息
-        let userInfo = null;
-        try {
-            userInfo = JSON.parse(customId);
-        } catch (e) {
-            console.warn('⚠️ 无法解析custom_id:', customId);
-            userInfo = { user_id: customId };
-        }
-        
-        console.log('👤 用户信息:', userInfo);
-        
-        // 保存订阅关联
-        const subscriptionData = {
-            google_user_id: userInfo.user_id,
-            google_user_email: userInfo.email,
-            paypal_subscription_id: subscriptionId,
-            plan_id: planId,
-            plan_type: userInfo.plan_type || 'pro',
-            status: 'CREATED'
-        };
-        
-        const { error: insertError } = await supabase
+        // 保存订阅信息到数据库
+        const { error } = await supabase
             .from('user_subscriptions')
-            .insert(subscriptionData);
+            .upsert({
+                paypal_subscription_id: subscriptionData.subscriptionId,
+                google_user_id: subscriptionData.userInfo.user_id,
+                google_user_email: subscriptionData.userInfo.email,
+                plan_id: subscriptionData.planId,
+                plan_type: subscriptionData.planDetails.type,
+                status: 'CREATED',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'paypal_subscription_id' });
         
-        if (insertError) {
-            console.error('❌ 保存订阅关联失败:', insertError);
-        } else {
-            console.log('✅ 订阅关联已保存');
+        if (error) {
+            console.error('❌ 保存订阅信息失败:', error);
+            return { status: 'error', message: error.message };
         }
+        
+        console.log('✅ 订阅创建事件处理完成');
+        return { status: 'success', message: 'Subscription created' };
         
     } catch (error) {
         console.error('❌ 处理订阅创建失败:', error);
+        return { status: 'error', message: error.message };
     }
 }
 
-// 处理订阅激活事件
+// 处理订阅激活事件（关键事件 - 添加积分）
 async function handleSubscriptionActivated(resource) {
-    console.log('🚀 处理订阅激活:', resource.id);
+    console.log('🚀 处理订阅激活事件:', resource.id);
     
-    const subscriptionId = resource.id;
-    const planId = resource.plan_id;
-    const customId = resource.custom_id;
-    
-    // 获取计划详情
-    const planDetails = PLAN_DETAILS[planId];
-    if (!planDetails) {
-        throw new Error(`未知的计划ID: ${planId}`);
-    }
-    
-    console.log('📋 计划详情:', planDetails);
-    
-    // 解析用户信息
-    let userInfo = null;
     try {
-        userInfo = JSON.parse(customId);
-        console.log('👤 解析用户信息:', userInfo);
-    } catch (e) {
-        console.warn('⚠️ 无法解析custom_id:', customId);
-        throw new Error('Invalid custom_id format');
-    }
-    
-    // 查找用户
-    let user = null;
-    
-    // 优先通过UUID查找
-    try {
-        const { data: uuidUser, error: uuidError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('uuid', userInfo.user_id)
-            .single();
+        const subscriptionData = extractSubscriptionData(resource);
+        const { userInfo, planDetails, subscriptionId } = subscriptionData;
         
-        if (!uuidError && uuidUser) {
-            user = uuidUser;
-            console.log('✅ 通过UUID找到用户:', user.email);
+        // 查找用户
+        const user = await findUser(userInfo);
+        if (!user) {
+            throw new Error(`找不到用户: ${userInfo.email} (UUID: ${userInfo.user_id})`);
         }
-    } catch (err) {
-        console.warn('⚠️ UUID查找失败:', err.message);
-    }
-    
-    // 如果UUID查找失败，尝试邮箱查找
-    if (!user) {
-        try {
-            const { data: emailUser, error: emailError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('email', userInfo.email)
-                .single();
-            
-            if (!emailError && emailUser) {
-                user = emailUser;
-                console.log('✅ 通过邮箱找到用户:', user.email);
-            }
-        } catch (err) {
-            console.warn('⚠️ 邮箱查找失败:', err.message);
+        
+        // 计算新积分
+        const currentCredits = user.credits || 0;
+        const creditsToAdd = planDetails.credits;
+        const newCredits = currentCredits + creditsToAdd;
+        
+        console.log(`💰 积分更新: ${currentCredits} + ${creditsToAdd} = ${newCredits}`);
+        
+        // 开始数据库事务
+        const { error: updateError } = await supabase
+            .from('users')
+            .update({
+                credits: newCredits,
+                subscription_status: 'ACTIVE',
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', user.id);
+        
+        if (updateError) {
+            throw new Error(`更新用户积分失败: ${updateError.message}`);
         }
-    }
-    
-    if (!user) {
-        throw new Error(`找不到用户: ${userInfo.email} (UUID: ${userInfo.user_id})`);
-    }
-    
-    // 计算新积分
-    const currentCredits = user.credits || 0;
-    const creditsToAdd = planDetails.credits;
-    const newCredits = currentCredits + creditsToAdd;
-    
-    console.log(`💰 积分更新: ${currentCredits} + ${creditsToAdd} = ${newCredits}`);
-    
-    // 更新用户积分和状态
-    const { error: updateError } = await supabase
-        .from('users')
-        .update({
-            credits: newCredits,
-            subscription_status: 'ACTIVE',
-            updated_at: new Date().toISOString()
-        })
-        .eq('id', user.id);
-    
-    if (updateError) {
-        throw new Error(`更新用户积分失败: ${updateError.message}`);
-    }
-    
-    console.log('✅ 用户积分已更新');
-    
-    // 记录积分交易（不阻塞主流程）
-    try {
+        
+        // 记录积分交易
         await supabase
             .from('credit_transactions')
             .insert({
@@ -287,60 +281,192 @@ async function handleSubscriptionActivated(resource) {
                 amount: creditsToAdd,
                 balance_after: newCredits,
                 description: `${planDetails.name}订阅激活`,
-                source: 'paypal_webhook'
+                source: 'paypal_subscription'
             });
-        console.log('✅ 积分交易已记录');
-    } catch (transError) {
-        console.warn('⚠️ 积分交易记录失败:', transError.message);
-    }
-    
-    // 创建/更新订阅关联（不阻塞主流程）
-    try {
+        
+        // 更新订阅状态
         await supabase
             .from('user_subscriptions')
-            .upsert({
-                google_user_id: user.uuid,
-                google_user_email: user.email,
-                paypal_subscription_id: subscriptionId,
-                plan_id: planId,
-                plan_type: userInfo.plan_type || 'pro',
-                status: 'ACTIVE',
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            }, { onConflict: 'paypal_subscription_id' });
-        console.log('✅ 订阅关联已更新');
-    } catch (subError) {
-        console.warn('⚠️ 订阅关联更新失败:', subError.message);
-    }
-    
-    console.log('🎉 订阅激活完成!');
-    console.log(`👤 用户: ${user.email}`);
-    console.log(`💰 新积分: ${newCredits}`);
-}
-
-// 处理订阅取消事件
-async function handleSubscriptionCancelled(resource) {
-    console.log('❌ 处理订阅取消:', resource.id);
-    
-    try {
-        const subscriptionId = resource.id;
-        
-        // 更新订阅关联状态
-        const { error: statusError } = await supabase
-            .from('user_subscriptions')
             .update({
-                status: 'CANCELLED',
+                status: 'ACTIVE',
+                activated_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             })
             .eq('paypal_subscription_id', subscriptionId);
         
-        if (statusError) {
-            console.error('❌ 更新订阅状态失败:', statusError);
-        } else {
-            console.log('✅ 订阅取消状态已更新');
+        console.log('🎉 订阅激活完成!');
+        console.log(`👤 用户: ${user.email}`);
+        console.log(`💰 新积分: ${newCredits}`);
+        
+        return { 
+            status: 'success', 
+            message: 'Subscription activated and credits added',
+            user_email: user.email,
+            credits_added: creditsToAdd,
+            new_balance: newCredits
+        };
+        
+    } catch (error) {
+        console.error('❌ 处理订阅激活失败:', error);
+        return { status: 'error', message: error.message };
+    }
+}
+
+// 处理订阅取消事件
+async function handleSubscriptionCancelled(resource) {
+    console.log('❌ 处理订阅取消事件:', resource.id);
+    
+    try {
+        const subscriptionId = resource.id;
+        
+        // 更新订阅状态
+        const { error } = await supabase
+            .from('user_subscriptions')
+            .update({
+                status: 'CANCELLED',
+                cancelled_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
+            .eq('paypal_subscription_id', subscriptionId);
+        
+        if (error) {
+            throw new Error(`更新订阅状态失败: ${error.message}`);
         }
+        
+        console.log('✅ 订阅取消事件处理完成');
+        return { status: 'success', message: 'Subscription cancelled' };
         
     } catch (error) {
         console.error('❌ 处理订阅取消失败:', error);
+        return { status: 'error', message: error.message };
     }
+}
+
+// 处理订阅暂停事件
+async function handleSubscriptionSuspended(resource) {
+    console.log('⏸️ 处理订阅暂停事件:', resource.id);
+    
+    try {
+        const subscriptionId = resource.id;
+        
+        // 更新订阅状态
+        const { error } = await supabase
+            .from('user_subscriptions')
+            .update({
+                status: 'SUSPENDED',
+                suspended_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            })
+            .eq('paypal_subscription_id', subscriptionId);
+        
+        if (error) {
+            throw new Error(`更新订阅状态失败: ${error.message}`);
+        }
+        
+        console.log('✅ 订阅暂停事件处理完成');
+        return { status: 'success', message: 'Subscription suspended' };
+        
+    } catch (error) {
+        console.error('❌ 处理订阅暂停失败:', error);
+        return { status: 'error', message: error.message };
+    }
+}
+
+// 处理支付失败事件
+async function handlePaymentFailed(resource) {
+    console.log('💳 处理支付失败事件:', resource.id);
+    
+    try {
+        // 这里可以添加支付失败的处理逻辑
+        // 比如发送邮件通知、暂停服务等
+        
+        console.log('✅ 支付失败事件处理完成');
+        return { status: 'success', message: 'Payment failure recorded' };
+        
+    } catch (error) {
+        console.error('❌ 处理支付失败事件失败:', error);
+        return { status: 'error', message: error.message };
+    }
+}
+
+// 处理支付完成事件
+async function handlePaymentCompleted(resource) {
+    console.log('💰 处理支付完成事件:', resource.id);
+    
+    try {
+        // 对于订阅，支付完成通常跟随订阅激活
+        // 这里主要记录支付信息
+        
+        console.log('✅ 支付完成事件处理完成');
+        return { status: 'success', message: 'Payment completion recorded' };
+        
+    } catch (error) {
+        console.error('❌ 处理支付完成事件失败:', error);
+        return { status: 'error', message: error.message };
+    }
+}
+
+// 提取订阅数据的通用函数
+function extractSubscriptionData(resource) {
+    const subscriptionId = resource.id;
+    const planId = resource.plan_id;
+    const customId = resource.custom_id;
+    
+    // 获取计划详情
+    const planDetails = SUBSCRIPTION_PLANS[planId];
+    if (!planDetails) {
+        throw new Error(`未知的计划ID: ${planId}`);
+    }
+    
+    // 解析用户信息
+    let userInfo = null;
+    try {
+        userInfo = JSON.parse(customId);
+    } catch (e) {
+        throw new Error(`无法解析custom_id: ${customId}`);
+    }
+    
+    return {
+        subscriptionId,
+        planId,
+        planDetails,
+        userInfo
+    };
+}
+
+// 查找用户的通用函数
+async function findUser(userInfo) {
+    // 优先通过UUID查找
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('uuid', userInfo.user_id)
+            .single();
+        
+        if (!error && user) {
+            console.log('✅ 通过UUID找到用户:', user.email);
+            return user;
+        }
+    } catch (err) {
+        console.warn('⚠️ UUID查找失败:', err.message);
+    }
+    
+    // 如果UUID查找失败，尝试邮箱查找
+    try {
+        const { data: user, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', userInfo.email)
+            .single();
+        
+        if (!error && user) {
+            console.log('✅ 通过邮箱找到用户:', user.email);
+            return user;
+        }
+    } catch (err) {
+        console.warn('⚠️ 邮箱查找失败:', err.message);
+    }
+    
+    return null;
 }
