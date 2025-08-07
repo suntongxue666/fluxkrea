@@ -44,6 +44,12 @@
     <!-- Supabase Client -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     
+    <!-- 统一积分同步系统 -->
+    <script src="credits_sync.js"></script>
+    
+    <!-- 用户状态同步系统 -->
+    <script src="user_state_sync.js"></script>
+    
     <!-- External Resources -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -2425,6 +2431,11 @@
                     this.currentUser = { ...updatedUser, ...authUser.user_metadata };
                     currentUser = this.currentUser;
                     
+                    // 同步用户状态到其他页面
+                    if (window.userStateSync) {
+                        window.userStateSync.setCurrentUser(this.currentUser);
+                    }
+                    
                     this.updateUIForAuthenticatedUser();
                     
                     console.log('用户认证升级成功:', this.currentUser);
@@ -2559,6 +2570,11 @@
                     this.currentUser = user;
                     currentUser = this.currentUser;
                     
+                    // 同步用户状态到其他页面
+                    if (window.userStateSync) {
+                        window.userStateSync.setCurrentUser(this.currentUser);
+                    }
+                    
                     this.updateUIForAnonymousUser();
                     
                 } catch (error) {
@@ -2578,6 +2594,11 @@
                     is_local_mode: true
                 };
                 currentUser = this.currentUser;
+                
+                // 同步用户状态到其他页面
+                if (window.userStateSync) {
+                    window.userStateSync.setCurrentUser(this.currentUser);
+                }
                 
                 console.log('使用本地存储模式');
                 this.updateUIForAnonymousUser();
@@ -2902,6 +2923,11 @@
                 const creditsElement = document.getElementById('creditsAmount');
                 if (creditsElement) {
                     creditsElement.textContent = this.credits;
+                }
+                
+                // 同步积分到其他页面
+                if (window.userStateSync && this.currentUser) {
+                    window.userStateSync.updateUserCredits(this.credits);
                 }
             }
             
