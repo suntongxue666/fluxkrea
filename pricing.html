@@ -1221,6 +1221,81 @@
             100% { transform: scale(1); opacity: 1; }
         }
         </style>
+
+    <script>
+    // 页面加载时立即恢复用户状态
+    let currentUser = null;
+    
+    // 立即从localStorage恢复用户状态
+    function restoreUserState() {
+        try {
+            const userData = localStorage.getItem('flux_krea_user');
+            if (userData) {
+                currentUser = JSON.parse(userData);
+                console.log('✅ 用户状态已恢复:', currentUser.email);
+                console.log('💰 用户积分:', currentUser.credits);
+                
+                // 立即更新积分显示
+                updateCreditsDisplay();
+                
+                // 立即更新登录状态显示
+                updateSigninButton();
+                
+                return true;
+            }
+            console.log('⚠️ 没有找到用户状态');
+            return false;
+        } catch (error) {
+            console.error('❌ 恢复用户状态失败:', error);
+            return false;
+        }
+    }
+    
+    // 更新积分显示
+    function updateCreditsDisplay() {
+        const creditsElements = document.querySelectorAll('#creditsAmount, .credits-amount');
+        const credits = currentUser ? currentUser.credits : 20;
+        
+        creditsElements.forEach(element => {
+            if (element) {
+                element.textContent = credits;
+            }
+        });
+        
+        console.log('✅ 积分显示已更新:', credits);
+    }
+    
+    // 更新登录按钮显示
+    function updateSigninButton() {
+        const signinBtn = document.querySelector('.signin-btn');
+        if (signinBtn && currentUser) {
+            signinBtn.innerHTML = `
+                <img src="${currentUser.avatar_url}" style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
+                <span>${currentUser.name || currentUser.email.split('@')[0]}</span>
+            `;
+        }
+    }
+    
+    // 页面加载时立即执行
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Pricing页面加载完成');
+        
+        // 立即恢复用户状态
+        const restored = restoreUserState();
+        
+        if (restored) {
+            console.log('✅ 用户状态同步成功');
+        } else {
+            console.log('⚠️ 用户未登录状态');
+        }
+    });
+    
+    // 页面显示时也检查一次
+    window.addEventListener('pageshow', function() {
+        console.log('📄 页面显示，检查用户状态');
+        restoreUserState();
+    });
+    </script>
 </head>
 <body>
     <!-- Header -->

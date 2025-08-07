@@ -3885,6 +3885,63 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
             getCreditsManager: () => creditsManager,
             getSystemSettings: () => systemSettings
         };
+    
+    // 用户登录后保存状态到localStorage
+    function saveUserStateToStorage(user) {
+        try {
+            const userData = {
+                id: user.id,
+                uuid: user.id, // Google ID作为UUID
+                email: user.email,
+                name: user.user_metadata?.full_name || user.email,
+                avatar_url: user.user_metadata?.avatar_url,
+                credits: 10, // 默认积分，会从数据库同步
+                is_signed_in: true
+            };
+            localStorage.setItem('flux_krea_user', JSON.stringify(userData));
+            console.log('✅ 用户状态已保存到localStorage:', userData);
+        } catch (error) {
+            console.error('❌ 保存用户状态失败:', error);
+        }
+    }
+    
+    // 修改现有的登录成功处理
+    async function handleAuthSuccess(user) {
+        console.log('🎉 登录成功:', user.email);
+        
+        // 保存到localStorage
+        saveUserStateToStorage(user);
+        
+        // 更新UI
+        updateUIForAuthenticatedUser();
+        
+        // 从数据库同步最新积分
+        await syncUserCreditsFromDatabase(user);
+    }
+    
+    // 同步用户积分
+    async function syncUserCreditsFromDatabase(user) {
+        try {
+            const response = await fetch('/api/get-user-credits', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userIdentifier: user.id })
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success) {
+                    // 更新localStorage中的积分
+                    const userData = JSON.parse(localStorage.getItem('flux_krea_user'));
+                    userData.credits = data.credits;
+                    localStorage.setItem('flux_krea_user', JSON.stringify(userData));
+                    console.log('✅ 积分已同步:', data.credits);
+                }
+            }
+        } catch (error) {
+            console.error('❌ 同步积分失败:', error);
+        }
+    }
     </script>
 </body>
 </html>
