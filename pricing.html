@@ -2313,22 +2313,85 @@
         });
         
         // 初始化用户状态
+        // 改进的用户状态同步
         async function initializeUserState() {
             try {
-                console.log('🔍 检查用户登录状态...');
+                console.log('🔍 初始化用户状态...');
                 
-                // 检查Supabase会话
-                const isLoggedIn = await checkSupabaseSession();
+                // 1. 先从localStorage读取缓存
+                const cachedUser = localStorage.getItem('flux_krea_user');
+                if (cachedUser) {
+                    try {
+                        currentUser = JSON.parse(cachedUser);
+                        console.log('📦 从缓存加载用户:', currentUser.email);
+                        
+                        // 立即更新UI
+                        updateNavigationDisplay();
+                        
+                        // 异步验证和更新
+                        validateUserSession();
+                    } catch (e) {
+                        console.warn('缓存用户数据无效:', e);
+                    }
+                }
                 
-                if (isLoggedIn && currentUser) {
-                    console.log('✅ 用户已登录:', currentUser.email);
+                // 2. 检查Supabase会话
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (session && session.user) {
+                    console.log('✅ 用户已登录:', session.user.email);
                     
-                    // 同步用户数据到localStorage
-                    localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+                    // 从数据库获取完整用户信息
+                    const { data: user, error } = await supabaseClient
+                        .from('users')
+                        .select('*')
+                        .eq('email', session.user.email)
+                        .single();
                     
-                    // 从数据库获取最新积分
-                    await syncUserCreditsFromDatabase();
+                    if (!error && user) {
+                        currentUser = {
+                            ...session.user,
+                            ...user,
+                            avatar_url: session.user.user_metadata?.avatar_url
+                        };
+                        
+                        // 更新localStorage
+                        localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+                        
+                        // 同步积分
+                        await syncUserCreditsFromDatabase();
+                    }
                 } else {
+                    console.log('❌ 用户未登录');
+                    currentUser = null;
+                    localStorage.removeItem('flux_krea_user');
+                }
+                
+                // 3. 最终更新UI
+                updateNavigationDisplay();
+                
+            } catch (error) {
+                console.error('❌ 初始化用户状态失败:', error);
+            }
+        }
+        
+        // 验证用户会话
+        async function validateUserSession() {
+            if (!currentUser) return;
+            
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                
+                if (!session) {
+                    console.log('⚠️ 会话已过期，清除用户状态');
+                    currentUser = null;
+                    localStorage.removeItem('flux_krea_user');
+                    updateNavigationDisplay();
+                }
+            } catch (error) {
+                console.error('❌ 验证会话失败:', error);
+            }
+        } else {
                     console.log('❌ 用户未登录');
                     currentUser = null;
                     localStorage.removeItem('flux_krea_user');
@@ -2409,6 +2472,114 @@
                 }
             }
         }
-    </script>
-</body>
+    
+        
+        // 修复版本 - Sign in逻辑
+        async function signInWithGoogle() {
+            try {
+                console.log('🔐 开始Google登录...');
+                
+                const { data, error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: window.location.href // 登录后回到当前页面
+                    }
+                });
+                
+                if (error) {
+                    console.error('❌ 登录失败:', error);
+                    alert('登录失败，请重试');
+                    return;
+                }
+                
+                console.log('✅ 登录请求已发送');
+                
+            } catch (error) {
+                console.error('❌ 登录异常:', error);
+                alert('登录异常，请重试');
+            }
+        }
+        
+        
+        // 订阅按钮处理逻辑
+        function handleSubscription(planType) {
+            console.log('🛒 处理订阅:', planType);
+            
+            // 检查用户登录状态
+            if (!currentUser || !currentUser.email) {
+                console.log('用户未登录，显示登录提示');
+                showLoginRequiredModal();
+                return;
+            }
+            
+            // 根据计划类型创建PayPal订阅
+            if (planType === 'pro') {
+                createPayPalSubscription('P-5S785818YS7424947NCJBKQA', 'pro');
+            } else if (planType === 'max') {
+                createPayPalSubscription('P-3NJ78684DS796242VNCJBKQQ', 'max');
+            } else {
+                console.error('未知的订阅计划:', planType);
+                alert('订阅计划错误，请刷新页面重试');
+            }
+        }
+        
+        // 创建PayPal订阅
+        function createPayPalSubscription(planId, planType) {
+            console.log('💳 创建PayPal订阅:', { planId, planType });
+            
+            if (!window.paypal) {
+                console.error('PayPal SDK未加载');
+                alert('支付系统加载中，请稍后重试');
+                return;
+            }
+            
+            // 显示PayPal按钮容器
+            const paypalContainer = document.getElementById('paypal-button-container');
+            if (paypalContainer) {
+                paypalContainer.innerHTML = ''; // 清空容器
+                paypalContainer.style.display = 'block';
+                
+                // 渲染PayPal按钮
+                window.paypal.Buttons({
+                    createSubscription: function(data, actions) {
+                        return actions.subscription.create({
+                            'plan_id': planId,
+                            'custom_id': JSON.stringify({
+                                user_id: currentUser.uuid,
+                                email: currentUser.email,
+                                plan_type: planType
+                            })
+                        });
+                    },
+                    onApprove: function(data, actions) {
+                        console.log('✅ PayPal订阅已批准:', data.subscriptionID);
+                        
+                        // 显示成功消息
+                        alert('订阅成功！积分将在几分钟内添加到您的账户。');
+                        
+                        // 隐藏PayPal按钮
+                        paypalContainer.style.display = 'none';
+                        
+                        // 刷新页面以更新积分显示
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 2000);
+                    },
+                    onError: function(err) {
+                        console.error('❌ PayPal订阅失败:', err);
+                        alert('订阅失败，请重试');
+                        paypalContainer.style.display = 'none';
+                    },
+                    onCancel: function(data) {
+                        console.log('⚠️ 用户取消订阅:', data);
+                        paypalContainer.style.display = 'none';
+                    }
+                }).render('#paypal-button-container');
+            }
+        }
+        </script>
+
+    <!-- PayPal按钮容器 -->
+    <div id="paypal-button-container" style="display: none; margin: 20px 0; padding: 20px; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+    </body>
 </html>

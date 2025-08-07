@@ -1596,8 +1596,101 @@
             font-size: 14px;
             margin: 0;
         }
+        
+        /* 防闪烁CSS */
+        .signin-btn, #creditsDisplay {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .signin-btn.loaded, #creditsDisplay.loaded {
+            opacity: 1;
+        }
+        
+        /* 预加载状态指示 */
+        .signin-btn.preloaded, #creditsDisplay.preloaded {
+            opacity: 1;
+        }
         </style>
-</head>
+
+    <script>
+
+        // 预加载缓存系统 - 避免UI闪烁
+        (function() {
+            // 立即从localStorage读取用户状态
+            const cachedUser = localStorage.getItem('flux_krea_user');
+            const cachedCredits = localStorage.getItem('flux_krea_credits');
+            
+            if (cachedUser) {
+                try {
+                    const user = JSON.parse(cachedUser);
+                    window.preloadedUser = user;
+                    
+                    // 立即设置全局用户状态
+                    window.currentUser = user;
+                    
+                    console.log('🚀 预加载用户状态:', user.email);
+                } catch (e) {
+                    console.warn('预加载用户状态失败:', e);
+                }
+            }
+            
+            if (cachedCredits) {
+                try {
+                    const credits = JSON.parse(cachedCredits);
+                    window.preloadedCredits = credits;
+                    
+                    console.log('🚀 预加载积分状态:', credits);
+                } catch (e) {
+                    console.warn('预加载积分状态失败:', e);
+                }
+            }
+        })();
+        
+        // 立即更新UI显示 - 避免闪烁
+        function immediateUIUpdate() {
+            if (window.preloadedUser) {
+                const user = window.preloadedUser;
+                
+                // 立即更新登录按钮
+                const signinBtn = document.querySelector('.signin-btn');
+                if (signinBtn) {
+                    signinBtn.innerHTML = `
+                        <img src="${user.avatar_url || 'https://via.placeholder.com/18'}" 
+                             style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
+                        <span>${user.email.split('@')[0]}</span>
+                    `;
+                    signinBtn.style.display = 'flex';
+                }
+                
+                // 立即显示积分
+                const creditsDisplay = document.getElementById('creditsDisplay');
+                if (creditsDisplay) {
+                    creditsDisplay.style.display = 'flex';
+                }
+            }
+            
+            if (window.preloadedCredits && window.preloadedUser) {
+                const userIdentifier = window.preloadedUser.uuid || window.preloadedUser.email;
+                const userCredits = window.preloadedCredits[userIdentifier];
+                
+                if (userCredits !== undefined) {
+                    const creditsAmount = document.getElementById('creditsAmount');
+                    if (creditsAmount) {
+                        creditsAmount.textContent = userCredits;
+                    }
+                }
+            }
+        }
+        
+        // DOM加载完成后立即执行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', immediateUIUpdate);
+        } else {
+            immediateUIUpdate();
+        }
+    </script>
+    </head>
 <body>
     <!-- Signout Confirmation Modal -->
     <div class="signout-modal" id="signoutModal">
@@ -2207,11 +2300,144 @@
         }
         
         // 高级用户管理系统
+        // 改进的用户管理器 - 减少UI闪烁
         class UserManager {
             constructor() {
-                this.currentUser = null;
+                this.currentUser = window.preloadedUser || null;
                 this.isInitialized = false;
             }
+            
+            // 初始化用户管理器
+            async initialize() {
+                if (this.isInitialized) return;
+                
+                try {
+                    console.log('🔍 初始化用户管理器...');
+                    
+                    // 如果有预加载的用户，先使用预加载数据
+                    if (window.preloadedUser) {
+                        this.currentUser = window.preloadedUser;
+                        currentUser = this.currentUser;
+                        
+                        // 异步验证和更新用户状态
+                        this.validateAndUpdateUser();
+                    } else {
+                        // 检查Supabase会话
+                        const isLoggedIn = await checkSupabaseSession();
+                        
+                        if (isLoggedIn && currentUser) {
+                            await this.handleAuthenticatedUser(currentUser);
+                        } else {
+                            await this.handleAnonymousUser();
+                        }
+                    }
+                    
+                    this.isInitialized = true;
+                    console.log('✅ 用户管理器初始化完成');
+                } catch (error) {
+                    console.error('❌ 用户管理器初始化失败:', error);
+                    await this.handleAnonymousUser();
+                }
+            }
+            
+            // 异步验证和更新用户状态
+            async validateAndUpdateUser() {
+                try {
+                    if (!this.currentUser || !this.currentUser.uuid) return;
+                    
+                    console.log('🔄 验证用户状态...');
+                    
+                    // 检查Supabase会话是否有效
+                    const { data: { session } } = await supabaseClient.auth.getSession();
+                    
+                    if (session && session.user) {
+                        // 从数据库获取最新用户信息
+                        const { data: latestUser, error } = await supabaseClient
+                            .from('users')
+                            .select('*')
+                            .eq('uuid', this.currentUser.uuid)
+                            .single();
+                        
+                        if (!error && latestUser) {
+                            // 更新用户信息
+                            this.currentUser = { ...this.currentUser, ...latestUser };
+                            currentUser = this.currentUser;
+                            
+                            // 更新localStorage
+                            localStorage.setItem('flux_krea_user', JSON.stringify(this.currentUser));
+                            
+                            // 更新积分显示
+                            if (window.creditsSync) {
+                                window.creditsSync.setCredits(latestUser.credits || 0);
+                            }
+                            
+                            console.log('✅ 用户状态已更新:', latestUser.credits);
+                        }
+                    } else {
+                        // 会话无效，清除用户状态
+                        console.log('⚠️ 会话无效，清除用户状态');
+                        this.currentUser = null;
+                        currentUser = null;
+                        localStorage.removeItem('flux_krea_user');
+                        await this.handleAnonymousUser();
+                    }
+                } catch (error) {
+                    console.error('❌ 验证用户状态失败:', error);
+                }
+            }
+            
+            // 其他方法保持不变...
+            async handleAuthenticatedUser(authUser) {
+                // 原有逻辑保持不变
+                console.log('处理已认证用户:', authUser);
+                this.currentUser = authUser;
+                currentUser = this.currentUser;
+                this.updateUIForAuthenticatedUser();
+            }
+            
+            async handleAnonymousUser() {
+                // 原有逻辑保持不变
+                console.log('处理匿名用户');
+                this.currentUser = null;
+                currentUser = null;
+                this.updateUIForAnonymousUser();
+            }
+            
+            updateUIForAuthenticatedUser() {
+                const signinBtn = document.querySelector('.signin-btn');
+                const creditsDisplay = document.getElementById('creditsDisplay');
+                
+                if (signinBtn && this.currentUser) {
+                    signinBtn.innerHTML = `
+                        <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/18'}" 
+                             style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
+                        <span>${this.currentUser.email.split('@')[0]}</span>
+                    `;
+                    signinBtn.style.display = 'flex';
+                }
+                
+                if (creditsDisplay) {
+                    creditsDisplay.style.display = 'flex';
+                }
+            }
+            
+            updateUIForAnonymousUser() {
+                const signinBtn = document.querySelector('.signin-btn');
+                const creditsDisplay = document.getElementById('creditsDisplay');
+                
+                if (signinBtn) {
+                    signinBtn.innerHTML = `
+                        <div class="google-icon"></div>
+                        <span>Sign in</span>
+                    `;
+                    signinBtn.style.display = 'flex';
+                }
+                
+                if (creditsDisplay) {
+                    creditsDisplay.style.display = 'flex';
+                }
+            }
+        }
             
             // 初始化用户管理器
             async initialize() {
