@@ -41,17 +41,11 @@
       gtag('config', 'G-HRV45ZRFKT');
     </script>
     
-    <!-- Supabase Client -->
+    <!-- Supabase SDK and init (must load before auth-bootstrap) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    
-    <!-- 统一积分同步系统 -->
-    <script src="credits_sync.js"></script>
-    
-    <!-- 用户状态同步系统 -->
-    <script src="user_state_sync.js"></script>
+    <script src="/js/supabase-init.js" defer></script>
     
     <!-- External Resources -->
-    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
     <!-- Structured Data -->
@@ -3682,13 +3676,23 @@
             document.body.style.overflow = 'hidden';
         }
         
-        // 处理登录按钮点击
-        function handleSignInClick() {
-            if (userManager) {
-                userManager.signInWithGoogle();
-            } else {
-                console.error('用户管理器未初始化');
-                alert('系统初始化中，请稍后再试');
+        // 处理登录按钮点击（统一使用 Supabase OAuth）
+        async function handleSignInClick() {
+            if (!window.supabaseClient?.auth) {
+                alert('Auth not ready. Please refresh and try again.');
+                return;
+            }
+            try {
+                const { error } = await supabaseClient.auth.signInWithOAuth({
+                    provider: 'google',
+                    options: {
+                        redirectTo: `${window.location.origin}/index.html`,
+                        queryParams: { access_type: 'offline', prompt: 'consent' }
+                    }
+                });
+                if (error) alert('Login failed: ' + error.message);
+            } catch (_) {
+                alert('Login error, please retry.');
             }
         }
         function showDebugMenu() {
