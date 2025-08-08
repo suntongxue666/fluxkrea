@@ -40,12 +40,10 @@
       gtag('config', 'G-HRV45ZRFKT');
     </script>
     
-        <!-- Supabase SDK -->
-        <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-        <!-- Initialize Supabase client before auth-bootstrap -->
-        <script src="/js/supabase-init.js" defer></script>
-        
- 
+    <!-- Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Initialize Supabase client before auth-bootstrap -->
+    <script src="/js/supabase-init.js" defer></script>
     
     <style>
         * {
@@ -914,7 +912,7 @@
                     <i class="fas fa-coins"></i>
                     <span id="creditsAmount">20</span>
                 </div>
-                <a href="index.html" class="signin-btn">
+                <a href="#" class="signin-btn" id="pricingSignInBtn">
                     <div class="google-icon"></div>
                     <span>Sign in</span>
                 </a>
@@ -2291,7 +2289,33 @@
             }
         }
 
-        
+        // 让导航栏 Sign in 直接触发 Google 登录并回到本页
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('pricingSignInBtn');
+            if (!btn) return;
+            btn.addEventListener('click', async (e) => {
+                e.preventDefault();
+                if (typeof redirectToLogin === 'function') {
+                    return redirectToLogin();
+                }
+                if (window.supabaseClient?.auth) {
+                    try {
+                        const { error } = await supabaseClient.auth.signInWithOAuth({
+                            provider: 'google',
+                            options: {
+                                redirectTo: `${window.location.origin}/pricing.html`,
+                                queryParams: { access_type: 'offline', prompt: 'consent' }
+                            }
+                        });
+                        if (error) alert('Login failed: ' + error.message);
+                    } catch (_) {
+                        alert('Login error, please retry.');
+                    }
+                } else {
+                    alert('Auth not ready. Please refresh and try again.');
+                }
+            });
+        });
     </script>
     <script src="/js/auth-bootstrap.js" defer></script>
 </body>
