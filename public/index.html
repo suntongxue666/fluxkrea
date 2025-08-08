@@ -3283,7 +3283,7 @@
                 return;
             }
             
-            const prompt = document.getElementById('promptInput').value.trim();
+            const prompt = document.getElementById('prompt').value.trim();
             if (!prompt) {
                 alert('请输入图像描述');
                 return;
@@ -3336,14 +3336,14 @@
                 
                 // 调用API生成图像（增加等待时间到30秒）
                 const imageSize = document.getElementById('imageSize').value;
-                const guidanceScale = document.getElementById('guidanceScale').value;
+                const steps = document.getElementById('stepsSlider').value; // Changed from guidanceScale
                 
-                console.log('调用图像生成API...', { prompt, imageSize, guidanceScale });
+                console.log('调用图像生成API...', { prompt, imageSize, steps }); // Changed guidanceScale to steps
                 
                 // 模拟更长的等待时间
                 await new Promise(resolve => setTimeout(resolve, 5000));
                 
-                const result = await callImageGenerationAPI(prompt, imageSize, guidanceScale);
+                const result = await callImageGenerationAPI(prompt, imageSize, steps); // Changed guidanceScale to steps
                 
                 if (result && result.imageUrl) {
                     // 显示成功结果
@@ -3857,7 +3857,7 @@
                         <img src="${result.imageUrl}" alt="Generated Image" class="generated-image" />
                         <div class="result-actions">
                             <button onclick="downloadImage('${result.imageUrl}', 'test-api-${Date.now()}.png')" class="action-btn">
-                                <i class="fas fa-download"></i> Download
+                                <i class="fas fa-download"></i></i> Download
                             </button>
                         </div>
                         <p class="generation-info">API测试成功 - 生成时间: ${(result.generationTime / 1000).toFixed(1)}s</p>
@@ -3897,8 +3897,6 @@
                 
                 // 重新加载系统设置
                 await loadSystemSettings();
-                
-                        // 重新初始化用户管理器 (disabled)
                 
                 // 重新初始化积分管理器
                 await creditsManager.initialize(currentUser);
@@ -4385,7 +4383,7 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                 return;
             }
             
-            const prompt = document.getElementById('promptInput').value.trim();
+            const prompt = document.getElementById('prompt').value.trim();
             if (!prompt) {
                 alert('请输入图像描述');
                 return;
@@ -4438,7 +4436,7 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                 
                 // 调用API生成图像（增加等待时间到30秒）
                 const imageSize = document.getElementById('imageSize').value;
-                const guidanceScale = document.getElementById('guidanceScale').value;
+                const guidanceScale = document.getElementById('stepsSlider').value; // Corrected to stepsSlider.value
                 
                 console.log('调用图像生成API...', { prompt, imageSize, guidanceScale });
                 
@@ -4533,46 +4531,6 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
         }
         </script>
 
-    <!-- Login Required Modal -->
-    <div id="loginRequiredModal" class="login-modal">
-        <div class="modal-overlay" onclick="closeLoginModal()"></div>
-        <div class="modal-content">
-            <button class="modal-close" onclick="closeLoginModal()">
-                <i class="fas fa-times"></i>
-            </button>
-            
-            <div class="modal-header">
-                <h2>Credits Balance is 20</h2>
-                <p>Sign in to continue generating amazing AI images</p>
-            </div>
-            
-            <div class="login-benefits">
-                <div class="benefit-item">
-                    <i class="fas fa-bolt"></i>
-                    <span>Keep your credits across sessions</span>
-                </div>
-                <div class="benefit-item">
-                    <i class="fas fa-history"></i>
-                    <span>Access your generation history</span>
-                </div>
-                <div class="benefit-item">
-                    <i class="fas fa-crown"></i>
-                    <span>Unlock premium features</span>
-                </div>
-            </div>
-            
-            <div class="modal-actions">
-                <button class="google-signin-btn" onclick="signInWithGoogle()">
-                    <div class="google-icon"></div>
-                    Sign in with Google
-                </button>
-                <button class="secondary-btn" onclick="closeLoginModal()">
-                    Maybe Later
-                </button>
-            </div>
-        </div>
-    </div>
-    
     <!-- Login Required Modal -->
     <div id="loginRequiredModal" class="login-modal">
         <div class="modal-overlay" onclick="closeLoginModal()"></div>
