@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
   // 4) 动态导入 ESM 版 supabase-js
   let createClient;
   try {
-    ({ createClient } = await import('@supabase/supabase-js'));
+    ({ createClient } = await import('@supabase/supabase-js/dist/module/index.js'));
   } catch (e) {
     return res.status(500).json({ ok: false, code: 'IMPORT_FAIL', message: e?.message || 'import_failed' });
   }
