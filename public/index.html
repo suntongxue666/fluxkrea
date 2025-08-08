@@ -1,53 +1,60 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+
     <!-- SEO Meta Tags -->
     <title>Flux Krea AI - Free AI Image Generator, Fast HD Art Creation</title>
-    <meta name="description" content="Create stunning AI images from text prompts powered by Flux.1 Krea dev Model, No-Signup,High-Quality, Realistic 4K art creation and maker in secongs.">
-    <meta name="keywords" content="Flux Krea,AI image generator,Free AI art generator, Text to image, Free image generator, Professional AI images, FLUX.1 Krea,Free Image Generation, AI Art Creation">
+    <meta name="description"
+        content="Create stunning AI images from text prompts powered by Flux.1 Krea dev Model, No-Signup,High-Quality, Realistic 4K art creation and maker in secongs.">
+    <meta name="keywords"
+        content="Flux Krea,AI image generator,Free AI art generator, Text to image, Free image generator, Professional AI images, FLUX.1 Krea,Free Image Generation, AI Art Creation">
     <meta name="author" content="FLUX Krea AI">
     <meta name="robots" content="index, follow">
-    
+
     <!-- Open Graph Meta Tags -->
     <meta property="og:title" content="Flux Krea AI - Free AI Image Generator, Fast HD Art Creation">
-    <meta property="og:description" content="Create stunning, professional-quality images from text prompts using advanced FLUX AI technology. Generate images in seconds with superior quality and control.">
+    <meta property="og:description"
+        content="Create stunning, professional-quality images from text prompts using advanced FLUX AI technology. Generate images in seconds with superior quality and control.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://flux-krea-ai.com">
     <meta property="og:image" content="https://flux-krea-ai.com/og-image.jpg">
-    
+
     <!-- Twitter Meta Tags -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Flux Krea AI - Free AI Image Generator, Fast HD Art Creation">
-    <meta name="twitter:description" content="Generate high-quality AI images instantly with FLUX Krea AI. Professional results in seconds.">
+    <meta name="twitter:description"
+        content="Generate high-quality AI images instantly with FLUX Krea AI. Professional results in seconds.">
     <meta name="twitter:image" content="https://flux-krea-ai.com/twitter-image.jpg">
-    
+
     <!-- Canonical URL -->
     <link rel="canonical" href="https://flux-krea-ai.com">
-    
+
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png">
-    <link rel="apple-touch-icon" href="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png">
-    
+    <link rel="icon" type="image/png"
+        href="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png">
+    <link rel="apple-touch-icon"
+        href="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png">
+
     <!-- Google Analytics -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-HRV45ZRFKT"></script>
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
 
-      gtag('config', 'G-HRV45ZRFKT');
+        gtag('config', 'G-HRV45ZRFKT');
     </script>
-    
+
     <!-- Supabase SDK and init (must load before auth-bootstrap) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="js/supabase-init.js" defer></script>
-    
+
     <!-- External Resources -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
+
     <!-- Structured Data -->
     <script type="application/ld+json">
     {
@@ -69,32 +76,32 @@
         }
     }
     </script>
-    
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: #f8fafc;
             color: #1a202c;
             line-height: 1.6;
         }
-        
+
         /* Header Navigation */
         .header {
             background: rgba(255, 255, 255, 0.5);
             backdrop-filter: blur(10px);
             padding: 16px 0;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             position: sticky;
             top: 0;
             z-index: 100;
         }
-        
+
         .nav {
             max-width: 1200px;
             margin: 0 auto;
@@ -103,7 +110,7 @@
             align-items: center;
             padding: 0 24px;
         }
-        
+
         .logo {
             display: flex;
             align-items: center;
@@ -112,7 +119,7 @@
             color: #6366f1;
             text-decoration: none;
         }
-        
+
         .logo-icon {
             width: 36px;
             height: 36px;
@@ -124,20 +131,20 @@
             margin-right: 12px;
             overflow: hidden;
         }
-        
+
         .logo-icon img {
             width: 100%;
             height: 100%;
             object-fit: contain;
         }
-        
+
         .nav-links {
             display: flex;
             gap: 32px;
             list-style: none;
             align-items: center;
         }
-        
+
         .nav-links a {
             text-decoration: none;
             color: #64748b;
@@ -145,22 +152,22 @@
             font-size: 16px;
             transition: color 0.2s;
         }
-        
+
         .nav-links a.active {
             color: #6366f1;
             font-weight: 600;
         }
-        
+
         .nav-links a:hover {
             color: #6366f1;
         }
-        
+
         .nav-actions {
             display: flex;
             align-items: center;
             gap: 16px;
         }
-        
+
         .credits-display {
             display: flex;
             align-items: center;
@@ -169,11 +176,11 @@
             font-weight: 600;
             font-size: 14px;
         }
-        
+
         .credits-display i {
             color: #ff8c00;
         }
-        
+
         .signin-btn {
             display: flex;
             align-items: center;
@@ -187,22 +194,22 @@
             font-size: 14px;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        
+
         .signin-btn:hover {
             background: #f8f9fa;
             border-color: #dadce0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         .google-icon {
             width: 18px;
             height: 18px;
             background: url('https://www.gstatic.com/marketing-cms/assets/images/76/76/c79495454250aaacab1867bdcda4/about-10things-g.png') no-repeat center;
             background-size: contain;
         }
-        
+
         /* Hero Section */
         .hero {
             text-align: center;
@@ -210,7 +217,7 @@
             max-width: 800px;
             margin: 0 auto;
         }
-        
+
         .hero-badge {
             display: inline-block;
             background: #e0e7ff;
@@ -221,7 +228,7 @@
             font-weight: 600;
             margin-bottom: 24px;
         }
-        
+
         .hero-badges {
             display: flex;
             gap: 12px;
@@ -229,7 +236,7 @@
             margin-bottom: 24px;
             flex-wrap: wrap;
         }
-        
+
         .badge {
             padding: 8px 16px;
             border-radius: 20px;
@@ -237,23 +244,23 @@
             font-weight: 600;
             color: white;
         }
-        
+
         .badge.orange {
             background: #f97316;
         }
-        
+
         .badge.green {
             background: #10b981;
         }
-        
+
         .badge.blue {
             background: #3b82f6;
         }
-        
+
         .badge.purple {
             background: #8b5cf6;
         }
-        
+
         .hero h1 {
             font-size: 48px;
             font-weight: 800;
@@ -264,28 +271,28 @@
             background-clip: text;
             line-height: 1.1;
         }
-        
+
         .hero p {
             font-size: 16px;
             color: #64748b;
             margin: 0px 0px 0px;
             line-height: 1.6;
         }
-        
+
         /* Main Generator */
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 24px;
         }
-        
+
         .main-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 48px;
             margin: 0px 0px 60px;
         }
-        
+
         .card {
             background: white;
             border-radius: 20px;
@@ -293,7 +300,7 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             border: 1px solid #e2e8f0;
         }
-        
+
         .card h2 {
             font-size: 24px;
             font-weight: 700;
@@ -302,13 +309,13 @@
             align-items: center;
             gap: 12px;
         }
-        
+
         .card-subtitle {
             color: #64748b;
             margin-bottom: 32px;
             font-size: 16px;
         }
-        
+
         /* Generation Mode */
         .mode-buttons {
             display: flex;
@@ -317,7 +324,7 @@
             width: 100%;
             justify-content: center;
         }
-        
+
         .mode-btn {
             width: 100%;
             height: 57px;
@@ -339,18 +346,18 @@
             box-sizing: border-box;
             white-space: nowrap;
         }
-        
+
         .mode-btn.active {
             border-color: #6366f1;
             background: #6366f1;
             color: white;
         }
-        
+
         .mode-btn:hover:not(.active) {
             border-color: #6366f1;
             background: #f8faff;
         }
-        
+
         .coming-soon {
             position: absolute;
             top: -8px;
@@ -363,7 +370,7 @@
             border-radius: 8px;
             text-transform: uppercase;
         }
-        
+
         /* Prompt Input */
         .prompt-section h3 {
             font-size: 18px;
@@ -371,7 +378,7 @@
             margin-bottom: 16px;
             color: #374151;
         }
-        
+
         .prompt-textarea {
             width: 100%;
             min-height: 120px;
@@ -386,18 +393,18 @@
             align-items: center;
             vertical-align: middle;
         }
-        
+
         .prompt-textarea::placeholder {
             color: rgba(100, 116, 139, 0.5);
             opacity: 1;
         }
-        
+
         .prompt-textarea:focus {
             outline: none;
             border-color: #6366f1;
             box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
-        
+
         .copy-btn {
             margin-top: 12px;
             margin-right: 8px;
@@ -410,11 +417,11 @@
             color: #64748b;
             transition: all 0.2s;
         }
-        
+
         .copy-btn:hover {
             background: #e2e8f0;
         }
-        
+
         .clear-btn {
             margin-top: 12px;
             padding: 8px 16px;
@@ -426,13 +433,13 @@
             color: #64748b;
             transition: all 0.2s;
         }
-        
+
         .clear-btn:hover {
             background: #fee2e2;
             color: #dc2626;
             border-color: #fca5a5;
         }
-        
+
         /* Settings */
         .settings-grid {
             display: grid;
@@ -440,7 +447,7 @@
             gap: 24px;
             margin-bottom: 32px;
         }
-        
+
         .setting-item label {
             display: block;
             font-size: 16px;
@@ -448,7 +455,7 @@
             margin-bottom: 8px;
             color: #374151;
         }
-        
+
         .setting-item select {
             width: 100%;
             padding: 12px 16px;
@@ -458,16 +465,16 @@
             font-size: 16px;
             transition: border-color 0.2s;
         }
-        
+
         .setting-item select:focus {
             outline: none;
             border-color: #6366f1;
         }
-        
+
         .slider-container {
             grid-column: span 2;
         }
-        
+
         .slider {
             width: 100%;
             height: 6px;
@@ -476,7 +483,7 @@
             outline: none;
             -webkit-appearance: none;
         }
-        
+
         .slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
@@ -486,13 +493,13 @@
             background: #6366f1;
             cursor: pointer;
         }
-        
+
         .slider-value {
             float: right;
             font-weight: 600;
             color: #6366f1;
         }
-        
+
         /* Generate Button */
         .generate-btn {
             width: 100%;
@@ -510,30 +517,30 @@
             justify-content: space-between;
             gap: 8px;
         }
-        
+
         .generate-btn .btn-content {
             display: flex;
             align-items: center;
             gap: 8px;
         }
-        
+
         .generate-btn .credits-cost {
             font-size: 12px;
             opacity: 0.9;
             font-weight: 500;
         }
-        
+
         .generate-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
         }
-        
+
         .generate-btn:disabled {
             opacity: 0.7;
             cursor: not-allowed;
             transform: none;
         }
-        
+
         /* H5 Pricing Entry Button */
         .h5-pricing-btn {
             display: none;
@@ -555,38 +562,38 @@
             gap: 10px;
             box-shadow: 0 4px 15px rgba(245, 158, 11, 0.2);
         }
-        
+
         .h5-pricing-btn:hover {
             background: linear-gradient(135deg, #f97316, #ea580c);
             transform: translateY(-2px);
             box-shadow: 0 8px 30px rgba(245, 158, 11, 0.4);
         }
-        
+
         /* Result Section */
         .result-placeholder {
             text-align: center;
             padding: 80px 24px;
             color: #94a3b8;
         }
-        
+
         .result-placeholder i {
             font-size: 64px;
             margin-bottom: 24px;
             opacity: 0.5;
         }
-        
+
         .result-image {
             width: 100%;
             border-radius: 16px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
         }
-        
+
         .loading {
             text-align: center;
             padding: 80px 24px;
             color: #6366f1;
         }
-        
+
         .spinner {
             width: 48px;
             height: 48px;
@@ -596,12 +603,17 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 24px;
         }
-        
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
-        
+
         /* Error and Success States */
         .result-error {
             text-align: center;
@@ -611,40 +623,40 @@
             border-radius: 12px;
             color: #dc2626;
         }
-        
+
         .result-error i {
             font-size: 48px;
             margin-bottom: 16px;
             color: #f87171;
         }
-        
+
         .result-error h3 {
             font-size: 20px;
             font-weight: 600;
             margin-bottom: 12px;
             color: #dc2626;
         }
-        
+
         .result-success {
             text-align: center;
             padding: 0px;
         }
-        
+
         .generated-image {
             width: 100%;
             max-width: 512px;
             border-radius: 12px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
             margin-bottom: 20px;
         }
-        
+
         .result-actions {
             display: flex;
             gap: 12px;
             justify-content: center;
             margin-bottom: 16px;
         }
-        
+
         .action-btn {
             padding: 8px 16px;
             background: #6366f1;
@@ -659,23 +671,23 @@
             align-items: center;
             gap: 6px;
         }
-        
+
         .action-btn:hover {
             background: #5b5bd6;
             transform: translateY(-1px);
         }
-        
+
         .generation-info {
             color: #64748b;
             font-size: 14px;
             margin: 8px 0;
         }
-        
+
         .generating-status {
             text-align: center;
             padding: 60px 24px;
         }
-        
+
         .loading-spinner {
             width: 40px;
             height: 40px;
@@ -685,55 +697,55 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 20px;
         }
-        
+
         .generating-status h3 {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 8px;
             color: #374151;
         }
-        
+
         .generating-status p {
             color: #64748b;
             font-size: 14px;
         }
-        
+
         /* Steps Section */
         .steps-section {
             background: white;
             padding: 60px 0;
         }
-        
+
         .section-header {
             text-align: center;
             margin-bottom: 36px;
         }
-        
+
         .section-header h2 {
             font-size: 40px;
             font-weight: 800;
             margin-bottom: 24px;
             color: #1a202c;
         }
-        
+
         .section-header p {
             font-size: 20px;
             color: #64748b;
             max-width: 1120px;
             margin: 0 auto;
         }
-        
+
         .steps-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 48px;
         }
-        
+
         .step-card {
             text-align: center;
             padding: 32px;
         }
-        
+
         .step-icon {
             width: 80px;
             height: 80px;
@@ -746,32 +758,32 @@
             color: white;
             font-size: 32px;
         }
-        
+
         .step-card h3 {
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 16px;
             color: #1a202c;
         }
-        
+
         .step-card p {
             color: #64748b;
             line-height: 1.6;
         }
-        
+
         /* Features Section */
         .features-section {
             background: #f8fafc;
             padding: 60px 0;
         }
-        
+
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 48px;
             margin-top: 80px;
         }
-        
+
         .feature-card {
             background: white;
             border-radius: 20px;
@@ -784,35 +796,35 @@
             flex-direction: column;
             height: 100%;
         }
-        
+
         .feature-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
         }
-        
+
         .feature-image {
             margin-bottom: 24px;
         }
-        
+
         .feature-image img {
             width: 100%;
             border-radius: 12px;
         }
-        
+
         .feature-card h3 {
             font-size: 20px;
             font-weight: 700;
             margin-bottom: 16px;
             color: #1a202c;
         }
-        
+
         .feature-card p {
             color: #64748b;
             line-height: 1.6;
             margin-bottom: 24px;
             flex-grow: 1;
         }
-        
+
         .demo-btn {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
@@ -830,12 +842,12 @@
             margin: 0 auto;
             align-self: flex-end;
         }
-        
+
         .demo-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
         }
-        
+
         /* CTA Buttons */
         .cta-btn {
             display: inline-block;
@@ -847,30 +859,30 @@
             transition: all 0.2s;
             cursor: pointer;
         }
-        
+
         .cta-btn.primary {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
             color: white;
         }
-        
+
         .cta-btn.primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
         }
-        
+
         /* Testimonials Section */
         .testimonials-section {
             background: white;
             padding: 60px 0;
         }
-        
+
         .testimonials-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 32px;
             margin-top: 80px;
         }
-        
+
         .testimonial-card {
             background: white;
             border-radius: 20px;
@@ -878,26 +890,26 @@
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
             border: 1px solid #e2e8f0;
         }
-        
+
         .stars {
             color: #fbbf24;
             margin-bottom: 24px;
             font-size: 18px;
         }
-        
+
         .testimonial-card p {
             color: #374151;
             line-height: 1.6;
             margin-bottom: 24px;
             font-style: italic;
         }
-        
+
         .testimonial-author {
             display: flex;
             align-items: center;
             gap: 16px;
         }
-        
+
         .author-avatar {
             width: 48px;
             height: 48px;
@@ -910,22 +922,22 @@
             font-weight: 700;
             font-size: 18px;
         }
-        
+
         .author-name {
             font-weight: 600;
             color: #1a202c;
         }
-        
+
         .author-title {
             color: #64748b;
             font-size: 14px;
         }
-        
+
         .stats {
             text-align: center;
             margin-top: 80px;
         }
-        
+
         .stats-grid {
             display: flex;
             justify-content: center;
@@ -933,33 +945,33 @@
             gap: 80px;
             flex-wrap: wrap;
         }
-        
+
         .stat-item {
             text-align: center;
         }
-        
+
         .stat-number {
             font-size: 40px;
             font-weight: 800;
             color: #6366f1;
         }
-        
+
         .stat-label {
             color: #64748b;
             font-size: 16px;
         }
-        
+
         /* FAQ Section */
         .faq-section {
             background: #f8fafc;
             padding: 60px 0;
         }
-        
+
         .faq-container {
             max-width: 800px;
             margin: 80px auto 0;
         }
-        
+
         .faq-item {
             background: white;
             border-radius: 12px;
@@ -967,7 +979,7 @@
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             border: 1px solid #e2e8f0;
         }
-        
+
         .faq-question {
             padding: 24px 32px;
             cursor: pointer;
@@ -976,155 +988,155 @@
             align-items: center;
             transition: background 0.2s;
         }
-        
+
         .faq-question:hover {
             background: #f8fafc;
         }
-        
+
         .faq-question h3 {
             font-size: 18px;
             font-weight: 600;
             color: #1a202c;
             margin: 0;
         }
-        
+
         .faq-question i {
             color: #64748b;
             transition: transform 0.2s;
         }
-        
+
         .faq-answer {
             padding: 0 32px 24px;
             display: none;
         }
-        
+
         .faq-answer p {
             color: #64748b;
             line-height: 1.6;
             margin: 0;
         }
-        
+
         .faq-item.active .faq-answer {
             display: block;
         }
-        
+
         .faq-item.active .faq-question i {
             transform: rotate(180deg);
         }
-        
+
         /* Footer */
         .footer {
             background: #1a202c;
             color: white;
             padding: 80px 0 32px;
         }
-        
+
         .footer-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 48px;
             margin-bottom: 48px;
         }
-        
+
         .footer-logo {
             color: white;
             margin-bottom: 24px;
         }
-        
+
         .footer-description {
             color: #94a3b8;
             line-height: 1.6;
             margin-bottom: 24px;
         }
-        
+
         .social-links {
             display: flex;
             gap: 16px;
         }
-        
+
         .social-links a {
             color: #94a3b8;
             font-size: 20px;
             transition: color 0.2s;
         }
-        
+
         .social-links a:hover {
             color: #6366f1;
         }
-        
+
         .footer-section h4 {
             font-size: 18px;
             font-weight: 600;
             margin-bottom: 24px;
         }
-        
+
         .footer-links {
             list-style: none;
             padding: 0;
         }
-        
+
         .footer-links li {
             margin-bottom: 12px;
         }
-        
+
         .footer-links a {
             color: #94a3b8;
             text-decoration: none;
             transition: color 0.2s;
         }
-        
+
         .footer-links a:hover {
             color: white;
         }
-        
+
         .footer-bottom {
             border-top: 1px solid #374151;
             padding-top: 32px;
             text-align: center;
             color: #94a3b8;
         }
-        
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .nav-links {
                 display: none;
             }
-            
+
             /* 移动端登录按钮样式 */
             .signin-btn {
                 display: flex !important;
                 padding: 4px 6px;
                 font-size: 12px;
             }
-            
+
             /* 移动端显示积分显示 */
             .credits-display {
                 display: flex !important;
             }
-            
+
             .hero h1 {
                 font-size: 32px;
             }
-            
+
             .hero p {
                 font-size: 18px;
             }
-            
+
             .main-grid {
                 grid-template-columns: 1fr;
                 gap: 32px;
             }
-            
+
             .settings-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .mode-buttons {
                 flex-direction: column;
                 align-items: center;
                 width: 100%;
             }
-            
+
             .mode-btn {
                 width: 100% !important;
                 max-width: 366px !important;
@@ -1136,15 +1148,15 @@
                 text-overflow: ellipsis !important;
                 gap: 6px !important;
             }
-            
+
             .section-header h2 {
                 font-size: 32px;
             }
-            
+
             .stats-grid {
                 gap: 40px;
             }
-            
+
             .h5-pricing-btn {
                 display: flex;
             }
@@ -1166,12 +1178,12 @@
             visibility: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .loading-modal.active {
             opacity: 1;
             visibility: visible;
         }
-        
+
         .loading-modal-content {
             background: white;
             border-radius: 12px;
@@ -1180,7 +1192,7 @@
             max-width: 320px;
             width: 90%;
         }
-        
+
         .loading-modal .loading-spinner {
             width: 40px;
             height: 40px;
@@ -1190,12 +1202,17 @@
             animation: spin 1s linear infinite;
             margin: 0 auto 16px;
         }
-        
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
-        
+
         /* Insufficient Credits Modal */
         .credits-modal {
             position: fixed;
@@ -1212,12 +1229,12 @@
             visibility: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .credits-modal.active {
             opacity: 1;
             visibility: visible;
         }
-        
+
         .credits-modal-content {
             background: white;
             border-radius: 20px;
@@ -1229,11 +1246,11 @@
             transform: scale(0.9);
             transition: transform 0.3s ease;
         }
-        
+
         .credits-modal.active .credits-modal-content {
             transform: scale(1);
         }
-        
+
         .credits-modal-icon {
             width: 80px;
             height: 80px;
@@ -1246,27 +1263,27 @@
             color: white;
             font-size: 36px;
         }
-        
+
         .credits-modal h3 {
             font-size: 24px;
             font-weight: 700;
             margin-bottom: 12px;
             color: #1a202c;
         }
-        
+
         .credits-modal p {
             color: #64748b;
             font-size: 16px;
             line-height: 1.6;
             margin-bottom: 32px;
         }
-        
+
         .credits-modal-actions {
             display: flex;
             gap: 12px;
             justify-content: center;
         }
-        
+
         .credits-modal-btn {
             padding: 12px 24px;
             border-radius: 10px;
@@ -1279,36 +1296,36 @@
             align-items: center;
             gap: 8px;
         }
-        
+
         .credits-modal-btn.primary {
             background: #ffffff;
             border: 1px solid #dadce0;
             color: #3c4043;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
-        
+
         .credits-modal-btn.primary:hover {
             background: #f8f9fa;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         .credits-modal-btn.secondary {
             background: #f1f5f9;
             color: #64748b;
             border: 1px solid #e2e8f0;
         }
-        
+
         .credits-modal-btn.secondary:hover {
             background: #e2e8f0;
         }
-        
+
         .google-icon-modal {
             width: 18px;
             height: 18px;
             background: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTE3LjY0IDkuMjA0NTVDMTcuNjQgOC41NjYzNiAxNy41ODM2IDcuOTUyNzMgMTcuNDggNy4zNjM2NEg5VjEwLjg0NTVIMTMuODQzNkMxMy42MzUgMTEuOTcgMTMuMDAwOSAxMi45MjMgMTIuMTEgMTMuNTYxNFYxNS44MTk1SDEzLjk1NjRDMTUuNjU3MyAxNC4yNTI3IDE2LjY0IDEyLjk0NTUgMTcuNjQgOS4yMDQ1NVoiIGZpbGw9IiM0Mjg1RjQiLz4KPHBhdGggZD0iTTkgMThDMTEuNDMgMTggMTMuNDY3MyAxNy4xOTQxIDE0Ljk1NjQgMTUuODE5NUwxMy4xMSAxMy41NjE0QzEyLjQyIDEzLjk5OTEgMTEuNTQgMTQuMjYxNCAxMC4wMzY0IDE0LjI2MTRDNy42NSAxNC4yNjE0IDUuNjcyNzMgMTMuNjA0MSA0LjM2NCA5LjI1SDE2LjI0NTVWNy4zNjM2NEgzLjI3VjE0LjI2MTRDMy4yNyAxNS4wODQxIDQuMDg2MzYgMTcuNjEzNiA5IDE4WiIgZmlsbD0iIzM0QTg1MyIvPgo8cGF0aCBkPSJNMy4zNjM2NCA5LjI3SDBWMTYuMjczNkMwIDExLjUyNzMgMy4zNjM2NCA4LjE2MzY0IDguMSA4LjE2MzY0VjEwLjM0MTRDNi4xNzQ1NSAxMC4zNDE0IDMuNzMwOTEgMTAuNjEzNiAzLjM2MzY0IDEwLjk5MDlWOS4yN1oiIGZpbGw9IiNGQkJDMDQiLz4KPHBhdGggZD0iTTkgNy4xNkM2LjM4MTgyIDcuMTYgNC4yIDkuMzQxODIgMy4zNjM2NCA3LjUwNDU1TDEuNTQwOTEgNS42M0M2LjAwOTA5IDEuMTU0NTUgMTEuNDMgMS4xNTQ1NSAxNi45IDYuNjM2MzZMMTUuMDc3MyA4LjQ1OTA5Qzg1IDcuMzk1NDUgOS40NzI3MyA7LjE2IDkgNy4xNloiIGZpbGw9IiNFQTQzMzUiLz4KPC9zdmc+Cg==') no-repeat center;
             background-size: contain;
         }
-        
+
         /* 退出登录确认弹窗 */
         .signout-modal {
             position: fixed;
@@ -1325,12 +1342,12 @@
             visibility: hidden;
             transition: all 0.3s ease;
         }
-        
+
         .signout-modal.active {
             opacity: 1;
             visibility: visible;
         }
-        
+
         .signout-modal-content {
             background: white;
             border-radius: 16px;
@@ -1342,24 +1359,24 @@
             transform: scale(0.9);
             transition: transform 0.3s ease;
         }
-        
+
         .signout-modal.active .signout-modal-content {
             transform: scale(1);
         }
-        
+
         .signout-modal h3 {
             font-size: 20px;
             font-weight: 600;
             margin-bottom: 24px;
             color: #1a202c;
         }
-        
+
         .signout-modal-actions {
             display: flex;
             gap: 12px;
             justify-content: center;
         }
-        
+
         .signout-modal-btn {
             padding: 10px 24px;
             border-radius: 8px;
@@ -1369,25 +1386,25 @@
             transition: all 0.2s;
             border: none;
         }
-        
+
         .signout-modal-btn.cancel {
             background: #f1f5f9;
             color: #64748b;
         }
-        
+
         .signout-modal-btn.cancel:hover {
             background: #e2e8f0;
         }
-        
+
         .signout-modal-btn.confirm {
             background: #dc2626;
             color: white;
         }
-        
+
         .signout-modal-btn.confirm:hover {
             background: #b91c1c;
         }
-        
+
         /* 用户头像样式 */
         .user-avatar {
             width: 32px;
@@ -1396,12 +1413,12 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        
+
         .user-avatar:hover {
             transform: scale(1.05);
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
-    
+
         /* Login Modal Styles */
         .login-modal {
             position: fixed;
@@ -1414,11 +1431,11 @@
             align-items: center;
             justify-content: center;
         }
-        
+
         .login-modal.active {
             display: flex;
         }
-        
+
         .modal-overlay {
             position: absolute;
             top: 0;
@@ -1428,7 +1445,7 @@
             background: rgba(0, 0, 0, 0.5);
             backdrop-filter: blur(4px);
         }
-        
+
         .modal-content {
             position: relative;
             background: white;
@@ -1441,18 +1458,19 @@
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             animation: modalSlideIn 0.3s ease-out;
         }
-        
+
         @keyframes modalSlideIn {
             from {
                 opacity: 0;
                 transform: translateY(-20px) scale(0.95);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0) scale(1);
             }
         }
-        
+
         .modal-close {
             position: absolute;
             top: 16px;
@@ -1469,33 +1487,33 @@
             color: #64748b;
             transition: all 0.2s;
         }
-        
+
         .modal-close:hover {
             background: #e2e8f0;
             color: #374151;
         }
-        
+
         .modal-header {
             text-align: center;
             margin-bottom: 32px;
         }
-        
+
         .modal-header h2 {
             font-size: 28px;
             font-weight: 700;
             margin-bottom: 12px;
             color: #1a202c;
         }
-        
+
         .modal-header p {
             color: #64748b;
             font-size: 16px;
         }
-        
+
         .login-benefits {
             margin: 32px 0;
         }
-        
+
         .benefit-item {
             display: flex;
             align-items: center;
@@ -1503,19 +1521,19 @@
             padding: 12px 0;
             color: #374151;
         }
-        
+
         .benefit-item i {
             width: 24px;
             color: #6366f1;
             font-size: 18px;
         }
-        
+
         .modal-actions {
             display: flex;
             flex-direction: column;
             gap: 16px;
         }
-        
+
         .google-signin-btn {
             display: flex;
             align-items: center;
@@ -1530,23 +1548,23 @@
             font-size: 16px;
             cursor: pointer;
             transition: all 0.2s;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             width: 100%;
         }
-        
+
         .google-signin-btn:hover {
             background: #f8f9fa;
             border-color: #dadce0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         .google-signin-btn .google-icon {
             width: 18px;
             height: 18px;
             background: url('https://www.gstatic.com/marketing-cms/assets/images/76/76/c79495454250aaacab1867bdcda4/about-10things-g.png') no-repeat center;
             background-size: contain;
         }
-        
+
         .secondary-btn {
             padding: 14px 24px;
             background: #f1f5f9;
@@ -1558,17 +1576,17 @@
             cursor: pointer;
             transition: all 0.2s;
         }
-        
+
         .secondary-btn:hover {
             background: #e2e8f0;
             color: #374151;
         }
-        
+
         .generation-progress {
             margin-top: 24px;
             width: 100%;
         }
-        
+
         .progress-bar {
             width: 100%;
             height: 6px;
@@ -1577,67 +1595,68 @@
             overflow: hidden;
             margin-bottom: 12px;
         }
-        
+
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #6366f1, #8b5cf6);
             width: 0%;
             transition: width 20s ease-out;
         }
-        
+
         .progress-text {
             text-align: center;
             color: #64748b;
             font-size: 14px;
             margin: 0;
         }
-        
+
         /* 确保按钮和积分显示可见 */
-        .signin-btn, #creditsDisplay {
+        .signin-btn,
+        #creditsDisplay {
             opacity: 1;
             transition: opacity 0.3s ease;
         }
-        </style>
+    </style>
 
     <script>
 
         // 预加载缓存系统 - 避免UI闪烁
-        (function() {
+        (function () {
             // 立即从localStorage读取用户状态
             const cachedUser = localStorage.getItem('flux_krea_user');
             const cachedCredits = localStorage.getItem('flux_krea_credits');
-            
+
             if (cachedUser) {
                 try {
                     const user = JSON.parse(cachedUser);
                     window.preloadedUser = user;
-                    
+
                     // 立即设置全局用户状态
                     window.currentUser = user;
-                    
+
                     console.log('🚀 预加载用户状态:', user.email);
                 } catch (e) {
                     console.warn('预加载用户状态失败:', e);
                 }
             }
-            
+
             if (cachedCredits) {
                 try {
                     const credits = JSON.parse(cachedCredits);
                     window.preloadedCredits = credits;
-                    
+
                     console.log('🚀 预加载积分状态:', credits);
                 } catch (e) {
                     console.warn('预加载积分状态失败:', e);
                 }
             }
         })();
-        
+
         // 立即更新UI显示 - 避免闪烁
         function immediateUIUpdate() {
             if (window.preloadedUser) {
                 const user = window.preloadedUser;
-                
+
                 // 立即更新登录按钮
                 const signinBtn = document.querySelector('.signin-btn');
                 if (signinBtn) {
@@ -1648,18 +1667,18 @@
                     `;
                     signinBtn.style.display = 'flex';
                 }
-                
+
                 // 立即显示积分
                 const creditsDisplay = document.getElementById('creditsDisplay');
                 if (creditsDisplay) {
                     creditsDisplay.style.display = 'flex';
                 }
             }
-            
+
             if (window.preloadedCredits && window.preloadedUser) {
                 const userIdentifier = window.preloadedUser.uuid || window.preloadedUser.email;
                 const userCredits = window.preloadedCredits[userIdentifier];
-                
+
                 if (userCredits !== undefined) {
                     const creditsAmount = document.getElementById('creditsAmount');
                     if (creditsAmount) {
@@ -1668,7 +1687,7 @@
                 }
             }
         }
-        
+
         // DOM加载完成后立即执行
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', immediateUIUpdate);
@@ -1676,12 +1695,13 @@
             immediateUIUpdate();
         }
     </script>
-    
+
     <!-- 防缓存控制 -->
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    </head>
+</head>
+
 <body>
     <div class="signout-modal" id="signoutModal">
         <div class="signout-modal-content">
@@ -1726,7 +1746,8 @@
         <nav class="nav">
             <a href="#" class="logo">
                 <div class="logo-icon">
-                    <img src="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png" alt="FluxKrea.me AI Logo">
+                    <img src="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png"
+                        alt="FluxKrea.me AI Logo">
                 </div>
                 Flux Krea AI
             </a>
@@ -1742,10 +1763,12 @@
                     <span id="creditsAmount">--</span>
                 </div>
                 <!-- 管理员调试按钮 - 仅对特定账户显示 -->
-                <button id="debugRefreshBtn" onclick="showDebugMenu()" style="padding: 4px 8px; font-size: 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer; display: none;" title="管理员调试菜单">
+                <button id="debugRefreshBtn" onclick="showDebugMenu()"
+                    style="padding: 4px 8px; font-size: 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer; display: none;"
+                    title="管理员调试菜单">
                     🔧 调试
                 </button>
-                
+
                 <div class="signin-btn" onclick="handleSignInClick()">
                     <div class="google-icon"></div>
                     <span>Sign in</span>
@@ -1753,7 +1776,7 @@
             </div>
         </nav>
     </header>
-    
+
     <!-- Hero Section -->
     <section class="hero">
         <div class="hero-badges">
@@ -1765,7 +1788,7 @@
         <h1>Create Stunning Images with FLUX.1 Krea Dev Model</h1>
         <p>Turn text into stunning, HQ images with Flux.1 Krea Dev — Powered by 12B-Parameter AI model.</p>
     </section>
-    
+
     <!-- Main Generator -->
     <section id="generator" class="container">
         <div class="main-grid">
@@ -1775,21 +1798,18 @@
                     <i class="fas fa-magic"></i>
                     Generation Mode
                 </h2>
-                
+
                 <div class="mode-buttons">
                     <button class="mode-btn active" data-mode="text">
                         <i class="fas fa-pen"></i>
                         Text to Image
                     </button>
                 </div>
-                
+
                 <div class="prompt-section">
                     <h3>Positive Prompt</h3>
-                    <textarea 
-                        class="prompt-textarea" 
-                        id="prompt"
-                        placeholder="360 image tiny planet, tiny round planet, urban, the pand in this pic walking tiny planet Norway northern lights, perfectly centered, centered in frame."
-                    ></textarea>
+                    <textarea class="prompt-textarea" id="prompt"
+                        placeholder="360 image tiny planet, tiny round planet, urban, the pand in this pic walking tiny planet Norway northern lights, perfectly centered, centered in frame."></textarea>
                     <button class="copy-btn" onclick="pastePrompt()">
                         <i class="fas fa-paste"></i> Paste
                     </button>
@@ -1797,7 +1817,7 @@
                         <i class="fas fa-trash"></i> Clear
                     </button>
                 </div>
-                
+
                 <div style="margin-top: 32px;">
                     <div class="settings-grid">
                         <div class="setting-item">
@@ -1812,7 +1832,7 @@
                                 <option value="512x512">Square (512×512)</option>
                             </select>
                         </div>
-                        
+
                         <div class="slider-container">
                             <label>
                                 <i class="fas fa-layer-group"></i>
@@ -1822,7 +1842,7 @@
                             <input type="range" min="1" max="4" value="4" class="slider" id="stepsSlider">
                         </div>
                     </div>
-                    
+
                     <button class="generate-btn" id="generateBtn" onclick="generateImage()">
                         <span class="btn-content">
                             <i class="fas fa-bolt"></i>
@@ -1830,7 +1850,7 @@
                         </span>
                         <span class="credits-cost">-10 Credits</span>
                     </button>
-                    
+
                     <!-- H5 Pricing Entry Button -->
                     <a href="pricing.html" class="h5-pricing-btn">
                         <i class="fas fa-credit-card"></i>
@@ -1838,12 +1858,12 @@
                     </a>
                 </div>
             </div>
-            
+
             <!-- Right Panel -->
             <div class="card">
                 <h2>Generated Images</h2>
                 <p class="card-subtitle">Your AI-generated artwork will appear here</p>
-                
+
                 <div id="resultArea">
                     <div class="result-placeholder">
                         <i class="fas fa-image"></i>
@@ -1854,13 +1874,16 @@
             </div>
         </div>
     </section>
-    
+
     <!-- Features Section -->
     <section id="features" class="features-section">
         <div class="container">
             <div class="section-header">
                 <h2>Why use FLUX.1 Krea?</h2>
-                <p style="margin: 0px 24px; max-width: 1120px; margin-left: auto; margin-right: auto;">FLUX.1 Krea is a state of the art open source text to image model created with an emphasis on aesthetics and photorealism. Unlike other models trained on massive datasets, FLUX.1 Krea was trained on hand curated, high-quality training data to deliver the best results.</p>
+                <p style="margin: 0px 24px; max-width: 1120px; margin-left: auto; margin-right: auto;">FLUX.1 Krea is a
+                    state of the art open source text to image model created with an emphasis on aesthetics and
+                    photorealism. Unlike other models trained on massive datasets, FLUX.1 Krea was trained on hand
+                    curated, high-quality training data to deliver the best results.</p>
                 <div style="margin-top: 32px;">
                     <a href="#generator" class="cta-btn primary" onclick="scrollToGenerator()">
                         Try Flux.1 Krea in the main tool
@@ -1870,77 +1893,95 @@
                     </p>
                 </div>
             </div>
-            
+
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-image">
-                        <img src="https://pic4.zhimg.com/v2-e1374c41f099af1c9714b09a13f4c29f_1440w.jpg" alt="AI Images that Don't Look So AI">
+                        <img src="https://pic4.zhimg.com/v2-e1374c41f099af1c9714b09a13f4c29f_1440w.jpg"
+                            alt="AI Images that Don't Look So AI">
                     </div>
                     <h3>Reality - Don't Look So AI</h3>
-                    <p>Our new model offers accurate skin textures, dynamic camera angles, and expressive color. Discover striking visuals in an exceptionally artistic latent space.</p>
-                    <button class="demo-btn" onclick="demoGenerate('photorealistic portrait of a person with detailed skin texture, dynamic camera angle, professional photography')">
+                    <p>Our new model offers accurate skin textures, dynamic camera angles, and expressive color.
+                        Discover striking visuals in an exceptionally artistic latent space.</p>
+                    <button class="demo-btn"
+                        onclick="demoGenerate('photorealistic portrait of a person with detailed skin texture, dynamic camera angle, professional photography')">
                         <i class="fas fa-play"></i> Try now
                     </button>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-image">
-                        <img src="https://pic1.zhimg.com/v2-4dfe15bc9d72a0eaa6048ae2efbb755e_1440w.jpg" alt="Lightning Fast Generation">
+                        <img src="https://pic1.zhimg.com/v2-4dfe15bc9d72a0eaa6048ae2efbb755e_1440w.jpg"
+                            alt="Lightning Fast Generation">
                     </div>
                     <h3>Lightning fast</h3>
-                    <p>Get high definition images back in seconds. Fast iteration lets you explore, experiment, and evolve your vision without interrupting your flow.</p>
-                    <button class="demo-btn" onclick="demoGenerate('a futuristic cityscape at golden hour, high definition, cinematic lighting')">
+                    <p>Get high definition images back in seconds. Fast iteration lets you explore, experiment, and
+                        evolve your vision without interrupting your flow.</p>
+                    <button class="demo-btn"
+                        onclick="demoGenerate('a futuristic cityscape at golden hour, high definition, cinematic lighting')">
                         <i class="fas fa-play"></i> Try now
                     </button>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-image">
-                        <img src="https://picx.zhimg.com/v2-972099fcef030036a5583bd4ba8aac69_1440w.jpg" alt="Free Access">
+                        <img src="https://picx.zhimg.com/v2-972099fcef030036a5583bd4ba8aac69_1440w.jpg"
+                            alt="Free Access">
                     </div>
                     <h3>Free AI Image Generator</h3>
-                    <p>Enjoy free FLUX.1 Krea generations on Krea or download the weights and run it on your own hardware. No sign up or credit card required. Generate AI images online for free.</p>
-                    <button class="demo-btn" onclick="demoGenerate('beautiful landscape with mountains and lake, golden hour lighting, artistic style')">
+                    <p>Enjoy free FLUX.1 Krea generations on Krea or download the weights and run it on your own
+                        hardware. No sign up or credit card required. Generate AI images online for free.</p>
+                    <button class="demo-btn"
+                        onclick="demoGenerate('beautiful landscape with mountains and lake, golden hour lighting, artistic style')">
                         <i class="fas fa-play"></i> Try now
                     </button>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-image">
-                        <img src="https://pic4.zhimg.com/v2-c1bbf18cfc3c15c39dff6041451bc9eb_1440w.jpg" alt="Hand Curated Training">
+                        <img src="https://pic4.zhimg.com/v2-c1bbf18cfc3c15c39dff6041451bc9eb_1440w.jpg"
+                            alt="Hand Curated Training">
                     </div>
                     <h3>Hand Curated Training Data</h3>
-                    <p>Unlike other models trained on massive datasets, FLUX.1 Krea was trained on hand curated, high-quality training data to deliver the best aesthetic results.</p>
-                    <button class="demo-btn" onclick="demoGenerate('artistic portrait with exceptional detail and aesthetic composition, professional quality')">
+                    <p>Unlike other models trained on massive datasets, FLUX.1 Krea was trained on hand curated,
+                        high-quality training data to deliver the best aesthetic results.</p>
+                    <button class="demo-btn"
+                        onclick="demoGenerate('artistic portrait with exceptional detail and aesthetic composition, professional quality')">
                         <i class="fas fa-play"></i> Try now
                     </button>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-image">
-                        <img src="https://pic4.zhimg.com/v2-06b9a280b8a4c331a35fca57342956eb_1440w.jpg" alt="Open Source">
+                        <img src="https://pic4.zhimg.com/v2-06b9a280b8a4c331a35fca57342956eb_1440w.jpg"
+                            alt="Open Source">
                     </div>
                     <h3>Open Source Excellence</h3>
-                    <p>FLUX.1 Krea is open source, allowing you to download the weights and run it on your own hardware for complete control and privacy.</p>
-                    <button class="demo-btn" onclick="demoGenerate('tech illustration showing open source concept, clean design, modern style')">
+                    <p>FLUX.1 Krea is open source, allowing you to download the weights and run it on your own hardware
+                        for complete control and privacy.</p>
+                    <button class="demo-btn"
+                        onclick="demoGenerate('tech illustration showing open source concept, clean design, modern style')">
                         <i class="fas fa-play"></i> Try now
                     </button>
                 </div>
-                
+
                 <div class="feature-card">
                     <div class="feature-image">
-                        <img src="https://pica.zhimg.com/v2-ffa8c449ab7c46656eb31ac01c4d693c_1440w.jpg" alt="Photorealism">
+                        <img src="https://pica.zhimg.com/v2-ffa8c449ab7c46656eb31ac01c4d693c_1440w.jpg"
+                            alt="Photorealism">
                     </div>
                     <h3>Emphasis on Photorealism</h3>
-                    <p>Created with a special focus on aesthetics and photorealistic results, delivering images that are virtually indistinguishable from real photography.</p>
-                    <button class="demo-btn" onclick="demoGenerate('photorealistic nature scene with incredible detail, professional photography style')">
+                    <p>Created with a special focus on aesthetics and photorealistic results, delivering images that are
+                        virtually indistinguishable from real photography.</p>
+                    <button class="demo-btn"
+                        onclick="demoGenerate('photorealistic nature scene with incredible detail, professional photography style')">
                         <i class="fas fa-play"></i> Try now
                     </button>
                 </div>
             </div>
         </div>
     </section>
-    
+
     <!-- Testimonials Section -->
     <section class="testimonials-section">
         <div class="container">
@@ -1948,13 +1989,15 @@
                 <h2>Trusted by creators worldwide</h2>
                 <p>Join thousands of artists, designers, and creators who use FLUX.1 Krea daily</p>
             </div>
-            
+
             <div class="testimonials-grid">
                 <div class="testimonial-card">
                     <div class="stars">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i>
                     </div>
-                    <p>"FLUX.1 Krea has revolutionized my creative workflow. The quality is incredible and the speed is unmatched. I can now create professional-grade images in seconds!"</p>
+                    <p>"FLUX.1 Krea has revolutionized my creative workflow. The quality is incredible and the speed is
+                        unmatched. I can now create professional-grade images in seconds!"</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">S</div>
                         <div>
@@ -1963,12 +2006,14 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="testimonial-card">
                     <div class="stars">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i>
                     </div>
-                    <p>"As a marketing professional, I need high-quality visuals fast. FLUX.1 Krea delivers exactly what I need - stunning images that perfectly match my vision."</p>
+                    <p>"As a marketing professional, I need high-quality visuals fast. FLUX.1 Krea delivers exactly what
+                        I need - stunning images that perfectly match my vision."</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">M</div>
                         <div>
@@ -1977,12 +2022,14 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="testimonial-card">
                     <div class="stars">
-                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                        <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i
+                            class="fas fa-star"></i><i class="fas fa-star"></i>
                     </div>
-                    <p>"The level of detail and realism is mind-blowing. I've tried many AI image generators, but FLUX.1 Krea is in a league of its own."</p>
+                    <p>"The level of detail and realism is mind-blowing. I've tried many AI image generators, but FLUX.1
+                        Krea is in a league of its own."</p>
                     <div class="testimonial-author">
                         <div class="author-avatar">E</div>
                         <div>
@@ -1992,7 +2039,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="stats">
                 <div class="stats-grid">
                     <div class="stat-item">
@@ -2015,7 +2062,7 @@
             </div>
         </div>
     </section>
-    
+
     <!-- FAQ Section -->
     <section id="faq" class="faq-section">
         <div class="container">
@@ -2023,7 +2070,7 @@
                 <h2>Frequently Asked Questions</h2>
                 <p>Everything you need to know about FLUX.1 Krea</p>
             </div>
-            
+
             <div class="faq-container">
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
@@ -2031,63 +2078,71 @@
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>FLUX.1 Krea is a state-of-the-art AI image generation model that creates high-quality, photorealistic images from text descriptions. It's designed to understand complex prompts and generate professional-grade visuals in seconds.</p>
+                        <p>FLUX.1 Krea is a state-of-the-art AI image generation model that creates high-quality,
+                            photorealistic images from text descriptions. It's designed to understand complex prompts
+                            and generate professional-grade visuals in seconds.</p>
                     </div>
                 </div>
-                
+
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
                         <h3>How fast is image generation?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>FLUX.1 Krea generates high-quality images in just 4-10 seconds, making it one of the fastest AI image generators available while maintaining exceptional quality.</p>
+                        <p>FLUX.1 Krea generates high-quality images in just 4-10 seconds, making it one of the fastest
+                            AI image generators available while maintaining exceptional quality.</p>
                     </div>
                 </div>
-                
+
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
                         <h3>Can I use generated images commercially?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Yes! All images generated with FLUX.1 Krea can be used for commercial purposes without restrictions. You own the rights to your generated content.</p>
+                        <p>Yes! All images generated with FLUX.1 Krea can be used for commercial purposes without
+                            restrictions. You own the rights to your generated content.</p>
                     </div>
                 </div>
-                
+
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
                         <h3>What image sizes are supported?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>FLUX.1 Krea supports various aspect ratios including square (1024×1024), landscape (1024×768), and portrait (768×1024) formats, all in high resolution.</p>
+                        <p>FLUX.1 Krea supports various aspect ratios including square (1024×1024), landscape
+                            (1024×768), and portrait (768×1024) formats, all in high resolution.</p>
                     </div>
                 </div>
-                
+
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
                         <h3>How do I write effective prompts?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Be descriptive and specific. Include details about style, lighting, composition, and mood. For example: "A serene mountain lake at sunset, oil painting style, warm golden lighting, peaceful atmosphere."</p>
+                        <p>Be descriptive and specific. Include details about style, lighting, composition, and mood.
+                            For example: "A serene mountain lake at sunset, oil painting style, warm golden lighting,
+                            peaceful atmosphere."</p>
                     </div>
                 </div>
-                
+
                 <div class="faq-item">
                     <div class="faq-question" onclick="toggleFAQ(this)">
                         <h3>Is there a free trial available?</h3>
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Yes! We offer free credits for new users to try FLUX.1 Krea. You can generate several images to experience the quality and speed before upgrading.</p>
+                        <p>Yes! We offer free credits for new users to try FLUX.1 Krea. You can generate several images
+                            to experience the quality and speed before upgrading.</p>
                     </div>
                 </div>
             </div>
         </div>
     </section>
-    
+
     <!-- Footer -->
     <footer class="footer">
         <div class="container">
@@ -2095,8 +2150,9 @@
                 <div>
                     <div class="logo footer-logo">
                         <div class="logo-icon">
-                    <img src="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png" alt="FluxKrea.me AI Logo">
-                </div>
+                            <img src="https://ciwjjfcuhubjydajazkk.supabase.co/storage/v1/object/public/webstie-icon//FluxKrea%20log-120.png"
+                                alt="FluxKrea.me AI Logo">
+                        </div>
                         FluxKrea.me AI
                     </div>
                     <p class="footer-description">
@@ -2109,7 +2165,7 @@
                         <a href="#"><i class="fab fa-linkedin"></i></a>
                     </div>
                 </div>
-                
+
                 <div class="footer-section">
                     <h4>Product</h4>
                     <ul class="footer-links">
@@ -2119,14 +2175,14 @@
                         <li><a href="#faq">FAQ</a></li>
                     </ul>
                 </div>
-                
+
                 <div class="footer-section">
                     <h4>Contact</h4>
                     <ul class="footer-links">
                         <li><a href="mailto:tiktreeapp@gmail.com">tiktreeapp@gmail.com</a></li>
                     </ul>
                 </div>
-                
+
                 <div class="footer-section">
                     <h4>Support</h4>
                     <ul class="footer-links">
@@ -2135,16 +2191,16 @@
                     </ul>
                 </div>
             </div>
-            
+
             <div class="footer-bottom">
                 <p>&copy; 2025 Flux Krea AI. All rights reserved. Powered by advanced AI technology.</p>
             </div>
         </div>
     </footer>
-    
+
     <script>
         // Token 现在在服务器端环境变量中，前端不再需要
-        
+
         // Mode switching
         document.querySelectorAll('.mode-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -2152,15 +2208,15 @@
                 btn.classList.add('active');
             });
         });
-        
+
         // Steps slider
         const stepsSlider = document.getElementById('stepsSlider');
         const stepsValue = document.getElementById('stepsValue');
-        
+
         stepsSlider.addEventListener('input', () => {
             stepsValue.textContent = stepsSlider.value;
         });
-        
+
         // Paste prompt function
         async function pastePrompt() {
             try {
@@ -2168,7 +2224,7 @@
                 const promptTextarea = document.getElementById('prompt');
                 promptTextarea.value = clipboardText;
                 promptTextarea.focus();
-                
+
                 const btn = document.querySelector('.copy-btn');
                 const originalText = btn.innerHTML;
                 btn.innerHTML = '<i class="fas fa-check"></i> Pasted!';
@@ -2180,48 +2236,48 @@
                 alert('无法访问剪切板，请确保浏览器支持该功能');
             }
         }
-        
+
         // Clear prompt function
         function clearPrompt() {
             document.getElementById('prompt').value = '';
             document.getElementById('prompt').focus();
         }
-        
+
         // Generate image function
         // Demo generation function
         function demoGenerate(prompt) {
             document.getElementById('prompt').value = prompt;
             generateImage();
-            
+
             // Scroll to generator
-            document.getElementById('generator').scrollIntoView({ 
-                behavior: 'smooth' 
+            document.getElementById('generator').scrollIntoView({
+                behavior: 'smooth'
             });
         }
-        
+
         // Scroll to generator function
         function scrollToGenerator() {
-            document.getElementById('generator').scrollIntoView({ 
-                behavior: 'smooth' 
+            document.getElementById('generator').scrollIntoView({
+                behavior: 'smooth'
             });
         }
-        
+
         // FAQ toggle function
         function toggleFAQ(element) {
             const faqItem = element.parentElement;
             const isActive = faqItem.classList.contains('active');
-            
+
             // Close all FAQ items
             document.querySelectorAll('.faq-item').forEach(item => {
                 item.classList.remove('active');
             });
-            
+
             // Open clicked item if it wasn't active
             if (!isActive) {
                 faqItem.classList.add('active');
             }
         }
-        
+
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
@@ -2238,7 +2294,7 @@
         // 积分系统和用户管理 - Supabase集成
         const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co'
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI'
-        
+
         // 初始化Supabase客户端
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
@@ -2248,11 +2304,11 @@
                 detectSessionInUrl: true
             }
         });
-        
+
         // 全局变量
         let currentUser = null;
         let systemSettings = {};
-        
+
         // 加载系统配置
         async function loadSystemSettings() {
             try {
@@ -2260,9 +2316,9 @@
                     .from('system_settings')
                     .select('key, value, data_type')
                     .eq('is_public', true);
-                    
+
                 if (error) throw error;
-                
+
                 // 转换为对象格式
                 data.forEach(setting => {
                     let value = setting.value;
@@ -2273,7 +2329,7 @@
                     }
                     systemSettings[setting.key] = value;
                 });
-                
+
                 console.log('系统配置加载成功:', systemSettings);
             } catch (error) {
                 console.error('加载系统配置失败:', error);
@@ -2288,7 +2344,7 @@
                 };
             }
         }
-        
+
         /* DISABLED: Legacy UserManager (replaced by supabase-init + auth-bootstrap)
         class UserManager {
             constructor() {
@@ -2887,13 +2943,13 @@
         }
         */
         // LEGACY BLOCK ENDS
-        
+
         // 检查是否为管理员用户
         function isAdminUser() {
             const adminEmails = ['sunwei7482@gmail.com'];
             return currentUser && currentUser.email && adminEmails.includes(currentUser.email);
         }
-        
+
         // 生成用户指纹（增强版，包含更多设备特征）
         function generateUserFingerprint() {
             const canvas = document.createElement('canvas');
@@ -2901,7 +2957,7 @@
             ctx.textBaseline = 'top';
             ctx.font = '14px Arial';
             ctx.fillText('User fingerprint', 2, 2);
-            
+
             const fingerprint = {
                 userAgent: navigator.userAgent,
                 language: navigator.language,
@@ -2918,27 +2974,27 @@
                 canvas: canvas.toDataURL(),
                 webgl: getWebGLFingerprint()
             };
-            
+
             return btoa(JSON.stringify(fingerprint)).replace(/[^a-zA-Z0-9]/g, '').substring(0, 32);
         }
-        
+
         // 获取WebGL指纹
         function getWebGLFingerprint() {
             try {
                 const canvas = document.createElement('canvas');
                 const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
                 if (!gl) return 'no-webgl';
-                
+
                 const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
                 const vendor = debugInfo ? gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) : 'unknown';
                 const renderer = debugInfo ? gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) : 'unknown';
-                
+
                 return `${vendor}_${renderer}`.substring(0, 50);
             } catch (e) {
                 return 'webgl-error';
             }
         }
-        
+
         // 获取或创建用户 UUID
         function getUserUUID() {
             let uuid = localStorage.getItem('user_uuid');
@@ -2948,7 +3004,7 @@
             }
             return uuid;
         }
-        
+
         // 获取用户 IP
         async function getUserIP() {
             try {
@@ -2960,27 +3016,27 @@
                 return 'unknown';
             }
         }
-        
+
         // 生成唯一用户标识
         async function generateUserIdentifier() {
             const uuid = getUserUUID();
             const fingerprint = generateUserFingerprint();
             const ip = await getUserIP();
-            
+
             return `${uuid}_${fingerprint}_${ip}`.replace(/[^a-zA-Z0-9_]/g, '');
         }
-        
+
         // 新的积分管理系统 - 集成Supabase
         class CreditsManager {
             constructor() {
                 this.credits = 0;
                 this.isInitialized = false;
             }
-            
+
             // 初始化积分管理器
             async initialize(user) {
                 this.currentUser = user;
-                
+
                 if (user && !user.is_local_mode && user.uuid) {
                     // 从数据库强制同步最新积分
                     try {
@@ -2990,11 +3046,11 @@
                             .select('credits')
                             .eq('uuid', user.uuid)
                             .single();
-                        
+
                         if (!error && userData) {
                             this.credits = userData.credits || 0;
                             console.log('✅ 数据库同步积分成功:', { uuid: user.uuid, credits: this.credits });
-                            
+
                             // 同时更新全局用户对象
                             if (window.currentUser) {
                                 window.currentUser.credits = this.credits;
@@ -3007,21 +3063,52 @@
                         console.error('❌ 积分同步异常:', error);
                         this.credits = user.credits || 0;
                     }
-                    
+
                     console.log('积分管理器初始化 - 数据库模式:', { uuid: user.uuid, credits: this.credits });
                 } else {
                     // 本地存储模式或匿名用户
                     this.credits = parseInt(localStorage.getItem('user_credits')) || systemSettings.default_credits || 20;
                     console.log('积分管理器初始化 - 本地模式:', { credits: this.credits });
                 }
-                
+
                 this.isInitialized = true;
                 this.updateCreditsDisplay(); // 确保在设置isInitialized后再更新显示
             }
-            
+
+            // 强制从数据库同步积分
+            async syncFromDatabase() {
+                if (!this.currentUser || !this.currentUser.uuid) return;
+
+                try {
+                    const response = await fetch('/api/get-user-credits', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            userIdentifier: this.currentUser.uuid
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.success && data.credits !== undefined) {
+                            this.credits = data.credits;
+                            console.log('✅ 积分已从数据库同步:', this.credits);
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ 积分同步失败:', error);
+                }
+            }
+
             updateCreditsDisplay() {
                 const creditsElement = document.getElementById('creditsAmount');
                 if (creditsElement) {
+                    // 强制从数据库同步最新积分
+                    if (this.currentUser && this.currentUser.uuid) {
+                        this.syncFromDatabase();
+                    }
                     // 只有在积分管理器初始化完成后才显示积分
                     if (this.isInitialized) {
                         creditsElement.textContent = this.credits;
@@ -3029,54 +3116,54 @@
                         creditsElement.textContent = '--'; // 加载中状态
                     }
                 }
-                
+
                 // 同步积分到其他页面
                 if (window.userStateSync && this.currentUser) {
                     window.userStateSync.updateUserCredits(this.credits);
                 }
             }
-            
+
             hasEnoughCredits(cost = null) {
                 const actualCost = cost || systemSettings.generation_cost || 10;
                 return this.credits >= actualCost;
             }
-            
+
             async deductCredits(cost = null) {
                 const actualCost = cost || systemSettings.generation_cost || 10;
-                
+
                 if (!this.hasEnoughCredits(actualCost)) {
                     return false;
                 }
-                
+
                 this.credits -= actualCost;
-                
+
                 try {
                     if (this.currentUser && !this.currentUser.is_local_mode) {
                         // 更新数据库
                         const { error } = await supabaseClient
                             .from('users')
-                            .update({ 
+                            .update({
                                 credits: this.credits,
                                 total_credits_used: (this.currentUser.total_credits_used || 0) + actualCost
                             })
                             .eq('uuid', this.currentUser.uuid);
-                        
+
                         if (error) throw error;
-                        
+
                         // 记录积分交易
                         await userManager.addCreditTransaction(
-                            this.currentUser.id, 
-                            this.currentUser.uuid, 
-                            'SPEND', 
-                            actualCost, 
-                            '图像生成消费', 
+                            this.currentUser.id,
+                            this.currentUser.uuid,
+                            'SPEND',
+                            actualCost,
+                            '图像生成消费',
                             'generation'
                         );
                     } else {
                         // 本地存储模式
                         localStorage.setItem('user_credits', this.credits.toString());
                     }
-                    
+
                     this.updateCreditsDisplay();
                     return true;
                 } catch (error) {
@@ -3087,37 +3174,37 @@
                     return false;
                 }
             }
-            
+
             async addCredits(amount) {
                 this.credits += amount;
-                
+
                 try {
                     if (this.currentUser && !this.currentUser.is_local_mode) {
                         // 更新数据库
                         const { error } = await supabaseClient
                             .from('users')
-                            .update({ 
+                            .update({
                                 credits: this.credits,
                                 total_credits_earned: (this.currentUser.total_credits_earned || 0) + amount
                             })
                             .eq('uuid', this.currentUser.uuid);
-                        
+
                         if (error) throw error;
-                        
+
                         // 记录积分交易
                         await userManager.addCreditTransaction(
-                            this.currentUser.id, 
-                            this.currentUser.uuid, 
-                            'EARN', 
-                            amount, 
-                            '积分返还', 
+                            this.currentUser.id,
+                            this.currentUser.uuid,
+                            'EARN',
+                            amount,
+                            '积分返还',
                             'refund'
                         );
                     } else {
                         // 本地存储模式
                         localStorage.setItem('user_credits', this.credits.toString());
                     }
-                    
+
                     this.updateCreditsDisplay();
                 } catch (error) {
                     console.error('添加积分失败:', error);
@@ -3126,47 +3213,47 @@
                     this.updateCreditsDisplay();
                 }
             }
-            
+
             // 获取积分余额
             getBalance() {
                 return this.credits;
             }
         }
-        
-        
+
+
         // 初始化系统
         let userManager;
         let creditsManager;
-        
+
         // 页面加载时初始化
-        document.addEventListener('DOMContentLoaded', async function() {
+        document.addEventListener('DOMContentLoaded', async function () {
             try {
                 // 检查是否是首次访问，如果是则跳转到showcase
                 const hasVisitedBefore = localStorage.getItem('flux_krea_visited');
                 const urlParams = new URLSearchParams(window.location.search);
                 const skipShowcase = urlParams.get('skip_showcase') === 'true';
-                
+
                 // 如果不是首次访问或者URL中有跳过showcase的参数，则正常初始化
                 if (hasVisitedBefore || skipShowcase || window.location.hash) {
                     await normalPageInitialization();
                 } else {
                     // 首次访问，标记已访问并跳转到showcase
                     localStorage.setItem('flux_krea_visited', 'true');
-                    
+
                     // 延迟跳转，让页面稍微加载一下
                     setTimeout(() => {
                         window.location.href = 'showcase.html';
                     }, 500);
                     return;
                 }
-                
+
             } catch (error) {
                 console.error('页面初始化失败:', error);
                 // 发生错误时也进行正常初始化
                 await normalPageInitialization();
             }
         });
-        
+
         // 正常页面初始化逻辑
         async function normalPageInitialization() {
             try {
@@ -3175,33 +3262,33 @@
                 if (creditsElement) {
                     creditsElement.textContent = '--';
                 }
-                
+
                 // 1. 加载系统配置
                 await loadSystemSettings();
-                
+
                 // 2. 初始化用户管理器
                 userManager = new UserManager();
                 await userManager.initialize();
-                
+
                 // 3. 初始化积分管理器
                 creditsManager = new CreditsManager();
                 await creditsManager.initialize(currentUser);
-                
+
                 // 4. 初始化其他功能
                 // (已移除showcase初始化，因为现在使用独立页面)
-                
+
                 // 5. 监听认证状态变化
                 supabaseClient.auth.onAuthStateChange(async (event, session) => {
                     console.log('认证状态变化:', event, session);
                     if (event === 'SIGNED_IN' && session) {
                         await userManager.handleAuthenticatedUser(session.user);
                         await creditsManager.initialize(currentUser);
-                        
+
                         // 检查是否需要跳转到pricing页面
                         const redirectTarget = localStorage.getItem('redirect_after_signin');
                         if (redirectTarget === 'pricing') {
                             localStorage.removeItem('redirect_after_signin');
-                            
+
                             // 显示加载提示，然后跳转
                             showLoadingModal('正在跳转到定价页面...');
                             setTimeout(() => {
@@ -3213,7 +3300,7 @@
                         await creditsManager.initialize(currentUser);
                     }
                 });
-                
+
                 console.log('系统初始化完成');
             } catch (error) {
                 console.error('系统初始化失败:', error);
@@ -3224,7 +3311,7 @@
                 await creditsManager.initialize(currentUser);
             }
         }
-        
+
         // 图像生成功能 - 完全使用模拟模式
         // Login Modal Functions
         function showLoginModal() {
@@ -3234,7 +3321,7 @@
                 document.body.style.overflow = 'hidden';
             }
         }
-        
+
         function closeLoginModal() {
             const modal = document.getElementById('loginRequiredModal');
             if (modal) {
@@ -3242,25 +3329,30 @@
                 document.body.style.overflow = 'auto';
             }
         }
-        
+
         // 修改Generate按钮逻辑
         // 修复版Generate函数 - 积分为0时跳转pricing页面
         async function generateImage() {
             console.log('=== 🎯 开始图像生成 ===');
-            
+
+            // 强制同步最新积分
+            if (creditsManager && creditsManager.syncFromDatabase) {
+                await creditsManager.syncFromDatabase();
+            }
+
             // 检查用户登录状态
             if (!currentUser) {
                 console.log('用户未登录，显示登录弹窗');
                 showLoginModal();
                 return;
             }
-            
+
             // 检查积分
             const currentCredits = creditsManager?.credits || currentUser?.credits || 0;
             const generationCost = systemSettings?.generation_cost || 10;
-            
+
             console.log(`💰 当前积分: ${currentCredits}, 需要积分: ${generationCost}`);
-            
+
             // 如果积分为0或不足，跳转到pricing页面
             if (currentCredits === 0) {
                 console.log('💰 积分为0，跳转到pricing页面');
@@ -3273,16 +3365,16 @@
                 window.location.href = 'pricing.html';
                 return;
             }
-            
+
             const prompt = document.getElementById('prompt').value.trim();
             if (!prompt) {
                 alert('请输入图像描述');
                 return;
             }
-            
+
             const resultArea = document.getElementById('resultArea');
             const generateBtn = document.getElementById('generateBtn');
-            
+
             try {
                 // 禁用按钮
                 generateBtn.disabled = true;
@@ -3292,7 +3384,7 @@
                         Generating...
                     </span>
                 `;
-                
+
                 // 显示生成状态（增加等待时间）
                 resultArea.innerHTML = `
                     <div class="generating-status">
@@ -3307,7 +3399,7 @@
                         </div>
                     </div>
                 `;
-                
+
                 // 添加进度动画
                 setTimeout(() => {
                     const progressFill = document.querySelector('.progress-fill');
@@ -3315,7 +3407,7 @@
                         progressFill.style.width = '100%';
                     }
                 }, 100);
-                
+
                 // 扣除积分
                 if (creditsManager) {
                     await creditsManager.deductCredits(generationCost, 'AI图像生成');
@@ -3324,18 +3416,18 @@
                     currentUser.credits = currentCredits - generationCost;
                     localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
                 }
-                
+
                 // 调用API生成图像（增加等待时间到30秒）
                 const imageSize = document.getElementById('imageSize').value;
                 const steps = document.getElementById('stepsSlider').value; // Changed from guidanceScale
-                
+
                 console.log('调用图像生成API...', { prompt, imageSize, steps }); // Changed guidanceScale to steps
-                
+
                 // 模拟更长的等待时间
                 await new Promise(resolve => setTimeout(resolve, 5000));
-                
+
                 const result = await callImageGenerationAPI(prompt, imageSize, steps); // Changed guidanceScale to steps
-                
+
                 if (result && result.imageUrl) {
                     // 显示成功结果
                     resultArea.innerHTML = `
@@ -3356,15 +3448,15 @@
                             </div>
                         </div>
                     `;
-                    
+
                     console.log('✅ 图像生成成功');
                 } else {
                     throw new Error('生成失败，请重试');
                 }
-                
+
             } catch (error) {
                 console.error('❌ 图像生成失败:', error);
-                
+
                 // 显示错误状态
                 resultArea.innerHTML = `
                     <div class="result-error">
@@ -3376,7 +3468,7 @@
                         </button>
                     </div>
                 `;
-                
+
                 // 退还积分
                 if (creditsManager) {
                     await creditsManager.addCredits(generationCost, '生成失败退还');
@@ -3384,7 +3476,7 @@
                     currentUser.credits = currentCredits;
                     localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
                 }
-                
+
             } finally {
                 // 恢复按钮
                 generateBtn.disabled = false;
@@ -3397,37 +3489,37 @@
                 `;
             }
         }
-            
-            // 检查积分
-            const currentCredits = creditsManager?.credits || 0;
-            const generationCost = systemSettings?.generation_cost || 10;
-            
-            if (currentCredits < generationCost) {
-                alert(`积分不足！当前积分: ${currentCredits}，需要: ${generationCost}`);
-                return;
-            }
-            
-            const prompt = document.getElementById('promptInput').value.trim();
-            if (!prompt) {
-                alert('请输入图像描述');
-                return;
-            }
-            
-            const resultArea = document.getElementById('resultArea');
-            const generateBtn = document.getElementById('generateBtn');
-            
-            try {
-                // 禁用按钮
-                generateBtn.disabled = true;
-                generateBtn.innerHTML = `
+
+        // 检查积分
+        const currentCredits = creditsManager?.credits || 0;
+        const generationCost = systemSettings?.generation_cost || 10;
+
+        if (currentCredits < generationCost) {
+            alert(`积分不足！当前积分: ${currentCredits}，需要: ${generationCost}`);
+            return;
+        }
+
+        const prompt = document.getElementById('promptInput').value.trim();
+        if (!prompt) {
+            alert('请输入图像描述');
+            return;
+        }
+
+        const resultArea = document.getElementById('resultArea');
+        const generateBtn = document.getElementById('generateBtn');
+
+        try {
+            // 禁用按钮
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = `
                     <span class="btn-content">
                         <div class="loading-spinner"></div>
                         Generating...
                     </span>
                 `;
-                
-                // 显示生成状态
-                resultArea.innerHTML = `
+
+            // 显示生成状态
+            resultArea.innerHTML = `
                     <div class="generating-status">
                         <div class="loading-spinner"></div>
                         <h3>正在生成图像...</h3>
@@ -3440,32 +3532,32 @@
                         </div>
                     </div>
                 `;
-                
-                // 添加进度动画
-                setTimeout(() => {
-                    const progressFill = document.querySelector('.progress-fill');
-                    if (progressFill) {
-                        progressFill.style.width = '100%';
-                    }
-                }, 100);
-                
-                // 扣除积分
-                await creditsManager.deductCredits(generationCost, 'AI图像生成');
-                
-                // 调用API生成图像（增加等待时间）
-                const imageSize = document.getElementById('imageSize').value;
-                const guidanceScale = document.getElementById('guidanceScale').value;
-                
-                console.log('调用图像生成API...', { prompt, imageSize, guidanceScale });
-                
-                // 模拟更长的等待时间
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                const result = await callImageGenerationAPI(prompt, imageSize, guidanceScale);
-                
-                if (result && result.imageUrl) {
-                    // 显示成功结果
-                    resultArea.innerHTML = `
+
+            // 添加进度动画
+            setTimeout(() => {
+                const progressFill = document.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = '100%';
+                }
+            }, 100);
+
+            // 扣除积分
+            await creditsManager.deductCredits(generationCost, 'AI图像生成');
+
+            // 调用API生成图像（增加等待时间）
+            const imageSize = document.getElementById('imageSize').value;
+            const guidanceScale = document.getElementById('guidanceScale').value;
+
+            console.log('调用图像生成API...', { prompt, imageSize, guidanceScale });
+
+            // 模拟更长的等待时间
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const result = await callImageGenerationAPI(prompt, imageSize, guidanceScale);
+
+            if (result && result.imageUrl) {
+                // 显示成功结果
+                resultArea.innerHTML = `
                         <div class="result-success">
                             <img src="${result.imageUrl}" alt="Generated Image" class="generated-image" />
                             <div class="result-actions">
@@ -3483,17 +3575,17 @@
                             </div>
                         </div>
                     `;
-                    
-                    console.log('✅ 图像生成成功');
-                } else {
-                    throw new Error('生成失败，请重试');
-                }
-                
-            } catch (error) {
-                console.error('❌ 图像生成失败:', error);
-                
-                // 显示错误状态
-                resultArea.innerHTML = `
+
+                console.log('✅ 图像生成成功');
+            } else {
+                throw new Error('生成失败，请重试');
+            }
+
+        } catch (error) {
+            console.error('❌ 图像生成失败:', error);
+
+            // 显示错误状态
+            resultArea.innerHTML = `
                     <div class="result-error">
                         <i class="fas fa-exclamation-triangle"></i>
                         <h3>生成失败</h3>
@@ -3503,61 +3595,61 @@
                         </button>
                     </div>
                 `;
-                
-                // 退还积分
-                await creditsManager.addCredits(generationCost, '生成失败退还');
-                
-            } finally {
-                // 恢复按钮
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = `
+
+            // 退还积分
+            await creditsManager.addCredits(generationCost, '生成失败退还');
+
+        } finally {
+            // 恢复按钮
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = `
                     <span class="btn-content">
                         <i class="fas fa-bolt"></i>
                         Generate
                     </span>
                     <span class="credits-cost">-${generationCost} credits</span>
                 `;
-            }
         }
-        
+        }
+
         // 模拟图像生成（本地测试使用）
         async function simulateImageGeneration(prompt, imageSize, steps) {
             // 模拟生成时间
             await new Promise(resolve => setTimeout(resolve, 3000));
-            
+
             // 创建一个模拟的base64图片 (彩色渐变)
             const canvas = document.createElement('canvas');
             const [width, height] = imageSize.split('x').map(Number);
             canvas.width = width;
             canvas.height = height;
             const ctx = canvas.getContext('2d');
-            
+
             // 创建渐变背景
             const gradient = ctx.createLinearGradient(0, 0, width, height);
             gradient.addColorStop(0, '#667eea');
             gradient.addColorStop(1, '#764ba2');
             ctx.fillStyle = gradient;
             ctx.fillRect(0, 0, width, height);
-            
+
             // 添加提示词文本
             ctx.fillStyle = 'white';
             ctx.font = '24px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('✨ 模拟生成', width/2, height/2 - 40);
+            ctx.fillText('✨ 模拟生成', width / 2, height / 2 - 40);
             ctx.font = '16px Arial';
-            ctx.fillText(prompt.substring(0, 50) + (prompt.length > 50 ? '...' : ''), width/2, height/2);
-            ctx.fillText(`尺寸: ${imageSize} | 步数: ${steps}`, width/2, height/2 + 40);
-            
+            ctx.fillText(prompt.substring(0, 50) + (prompt.length > 50 ? '...' : ''), width / 2, height / 2);
+            ctx.fillText(`尺寸: ${imageSize} | 步数: ${steps}`, width / 2, height / 2 + 40);
+
             return {
                 imageUrl: canvas.toDataURL('image/png'),
                 generationTime: 3000
             };
         }
-        
+
         // 调用图像生成API（生产环境使用）
         async function callImageGenerationAPI(prompt, imageSize, steps) {
             const startTime = Date.now();
-            
+
             try {
                 // 使用Replicate API
                 const response = await fetch('/api/generate', {
@@ -3572,15 +3664,15 @@
                         steps: steps
                     })
                 });
-                
+
                 if (!response.ok) {
                     const errorData = await response.json().catch(() => ({}));
                     throw new Error(`API调用失败: ${response.status} ${response.statusText} - ${errorData.error || 'Unknown error'}`);
                 }
-                
+
                 const data = await response.json();
                 const generationTime = Date.now() - startTime;
-                
+
                 return {
                     imageUrl: data.image || data.image_url || data.url,
                     generationTime: generationTime
@@ -3590,7 +3682,7 @@
                 throw error;
             }
         }
-        
+
         // 显示生成结果的统一函数
         function displayGenerationResult(imageUrl, generationTime, isSimulation, prompt, imageSize, steps) {
             const resultArea = document.getElementById('resultArea');
@@ -3599,7 +3691,7 @@
                     🧪 Admin test mode - Simulation
                 </p>
             ` : '';
-            
+
             // 显示结果
             resultArea.innerHTML = `
                 <div class="result-success">
@@ -3614,7 +3706,7 @@
                 </div>
             `;
         }
-        
+
         // 辅助函数
         function downloadImage(imageUrl, filename) {
             const a = document.createElement('a');
@@ -3624,7 +3716,7 @@
             a.click();
             document.body.removeChild(a);
         }
-        
+
         function shareImage(imageUrl) {
             if (navigator.share) {
                 navigator.share({
@@ -3639,35 +3731,35 @@
                 });
             }
         }
-        
+
         function scrollToGenerator() {
             document.getElementById('generator').scrollIntoView({ behavior: 'smooth' });
         }
-        
+
         // Demo generation function
         function demoGenerate(demoPrompt) {
             document.getElementById('prompt').value = demoPrompt;
             document.getElementById('prompt').scrollIntoView({ behavior: 'smooth' });
         }
-        
+
         // 滑块更新事件监听器
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             // 初始化滑块事件
             const stepsSlider = document.getElementById('stepsSlider');
             if (stepsSlider) {
-                stepsSlider.addEventListener('input', function() {
+                stepsSlider.addEventListener('input', function () {
                     document.getElementById('stepsValue').textContent = this.value;
                 });
             }
         });
-        
+
         // 显示认证弹窗（未登录用户点击生成时）
         function showAuthenticationModal() {
             const modal = document.getElementById('creditsModal');
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-        
+
         // 处理登录按钮点击（统一使用 Supabase OAuth）
         async function handleSignInClick() {
             if (!window.supabaseClient?.auth) {
@@ -3692,7 +3784,7 @@
                 alert('此功能仅管理员可用');
                 return;
             }
-            
+
             const actions = [
                 '1. 重新初始化用户状态',
                 '2. 设置积分为0（测试余额不足）',
@@ -3704,10 +3796,10 @@
                 '8. 测试积分保持功能',
                 '9. 测试指纹查找功能'
             ];
-            
+
             const choice = prompt('管理员调试菜单:\n\n' + actions.join('\n') + '\n\n请输入选项数字 (1-6):');
-            
-            switch(choice) {
+
+            switch (choice) {
                 case '1':
                     reinitializeUser();
                     break;
@@ -3741,12 +3833,12 @@
                     }
             }
         }
-        
+
         // 设置用户积分为0（仅管理员可用）
         async function setCreditsToZero() {
             try {
                 console.log('🔧 设置积分为0进行测试...');
-                
+
                 // 更新数据库
                 if (!currentUser.is_local_mode) {
                     await supabaseClient
@@ -3754,11 +3846,11 @@
                         .update({ credits: 0 })
                         .eq('uuid', currentUser.uuid);
                 }
-                
+
                 // 更新本地状态
                 creditsManager.credits = 0;
                 creditsManager.updateCreditsDisplay();
-                
+
                 console.log('✅ 积分已设置为0');
                 alert('积分已设置为0，可以测试余额不足的情况');
             } catch (error) {
@@ -3766,27 +3858,27 @@
                 alert('设置积分失败：' + error.message);
             }
         }
-        
+
         // 添加调试积分
         async function addDebugCredits() {
             try {
                 console.log('🔧 添加100积分...');
-                
+
                 // 更新数据库
                 if (!currentUser.is_local_mode) {
                     await supabaseClient
                         .from('users')
-                        .update({ 
+                        .update({
                             credits: (currentUser.credits || 0) + 100,
                             total_credits_earned: (currentUser.total_credits_earned || 0) + 100
                         })
                         .eq('uuid', currentUser.uuid);
                 }
-                
+
                 // 更新本地状态
                 creditsManager.credits += 100;
                 creditsManager.updateCreditsDisplay();
-                
+
                 console.log('✅ 已添加100积分');
                 alert('已添加100积分');
             } catch (error) {
@@ -3794,13 +3886,13 @@
                 alert('添加积分失败：' + error.message);
             }
         }
-        
+
         // 测试API连接
         async function testAPIConnection() {
             try {
                 console.log('🔧 测试API连接...');
                 alert('正在测试API连接，请稍候...');
-                
+
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: {
@@ -3813,9 +3905,9 @@
                         steps: 1
                     })
                 });
-                
+
                 const data = await response.json();
-                
+
                 if (response.ok) {
                     console.log('✅ API连接成功:', data);
                     alert('API连接成功！\n\n响应数据:\n' + JSON.stringify(data, null, 2));
@@ -3828,19 +3920,19 @@
                 alert('API测试失败：' + error.message);
             }
         }
-        
+
         // 测试真实API生成（管理员强制测试）
         async function testRealAPIGeneration() {
             const prompt = document.getElementById('prompt').value.trim() || 'a beautiful sunset over mountains';
-            
+
             try {
                 console.log('🔧 管理员强制测试真实API生成...');
                 alert('正在使用真实API生成图片，请稍候...');
-                
+
                 const result = await callImageGenerationAPI(prompt, '512x512', 4);
-                
+
                 console.log('✅ 真实API生成成功:', result);
-                
+
                 // 显示结果
                 const resultArea = document.getElementById('resultArea');
                 resultArea.innerHTML = `
@@ -3857,14 +3949,14 @@
                         </p>
                     </div>
                 `;
-                
+
                 alert('真实API生成成功！图片已显示在结果区域。');
             } catch (error) {
                 console.error('❌ 真实API生成失败:', error);
                 alert('真实API生成失败：' + error.message);
             }
         }
-        
+
         // 显示用户状态
         function showUserStatus() {
             const status = {
@@ -3873,25 +3965,25 @@
                 systemSettings: systemSettings,
                 isAdmin: isAdminUser()
             };
-            
+
             console.log('👤 当前用户状态:', status);
-            alert('用户状态信息已输出到控制台，请按F12查看详细信息。\n\n简要信息:\n' + 
-                  `邮箱: ${currentUser?.email || '未登录'}\n` +
-                  `积分: ${creditsManager.credits}\n` +
-                  `管理员: ${isAdminUser() ? '是' : '否'}`);
+            alert('用户状态信息已输出到控制台，请按F12查看详细信息。\n\n简要信息:\n' +
+                `邮箱: ${currentUser?.email || '未登录'}\n` +
+                `积分: ${creditsManager.credits}\n` +
+                `管理员: ${isAdminUser() ? '是' : '否'}`);
         }
-        
+
         // 重新初始化用户状态
         async function reinitializeUser() {
             try {
                 console.log('🔄 重新初始化用户状态...');
-                
+
                 // 重新加载系统设置
                 await loadSystemSettings();
-                
+
                 // 重新初始化积分管理器
                 await creditsManager.initialize(currentUser);
-                
+
                 console.log('✅ 用户状态重新初始化完成');
                 alert('用户状态已重新初始化');
             } catch (error) {
@@ -3899,16 +3991,16 @@
                 alert('重新初始化失败：' + error.message);
             }
         }
-        
+
         // 检查匿名用户防刷机制
         async function checkAnonymousUsers() {
             try {
                 console.log('🔍 检查匿名用户防刷机制...');
-                
+
                 const fingerprint = generateUserFingerprint();
                 const ip = await getUserIP();
                 const uuid = getUserUUID();
-                
+
                 // 查询相似的匿名用户
                 const { data: similarUsers, error } = await supabaseClient
                     .from('users')
@@ -3917,11 +4009,11 @@
                     .or(`fingerprint.eq.${fingerprint},ip_address.eq.${ip}`)
                     .order('created_at', { ascending: false })
                     .limit(10);
-                
+
                 if (error) throw error;
-                
+
                 console.log('🔍 相似匿名用户查询结果:', similarUsers);
-                
+
                 const report = {
                     当前设备指纹: fingerprint,
                     当前IP: ip,
@@ -3937,14 +4029,14 @@
                         匹配类型: user.fingerprint === fingerprint ? '指纹匹配' : 'IP匹配'
                     }))
                 };
-                
+
                 console.log('📊 防刷机制检查报告:', report);
-                
+
                 // 检查是否有积分异常（多个相似用户都有20积分）
                 const highCreditUsers = similarUsers.filter(user => user.credits >= 15);
-                const warningMessage = highCreditUsers.length > 1 ? 
+                const warningMessage = highCreditUsers.length > 1 ?
                     `\n⚠️ 警告：发现${highCreditUsers.length}个相似用户都有较高积分，可能存在刷积分行为！` : '';
-                
+
                 const summary = `防刷机制检查报告:
                 
 当前设备指纹: ${fingerprint.substring(0, 16)}...
@@ -3955,77 +4047,77 @@
 ${similarUsers.length > 0 ? '⚠️ 发现相似用户，防刷机制正常工作' : '✅ 未发现相似用户'}${warningMessage}
 
 详细信息已输出到控制台`;
-                
+
                 alert(summary);
-                
+
             } catch (error) {
                 console.error('❌ 检查防刷机制失败:', error);
                 alert('检查失败：' + error.message);
             }
         }
-        
+
         // 测试积分保持功能（管理员专用）
         async function testCreditsPersistence() {
             if (!currentUser || currentUser.email !== 'sunwei7482@gmail.com') {
                 alert('此功能仅管理员可用');
                 return;
             }
-            
+
             try {
                 console.log('🧪 测试积分保持功能...');
-                
+
                 const beforeCredits = creditsManager.credits;
                 console.log('测试前积分:', beforeCredits);
-                
+
                 // 模拟刷新页面的过程
                 console.log('模拟页面刷新...');
                 userManager.isInitialized = false;
                 await userManager.initialize();
                 await creditsManager.initialize(currentUser);
-                
+
                 const afterCredits = creditsManager.credits;
                 console.log('测试后积分:', afterCredits);
-                
+
                 const result = beforeCredits === afterCredits ? '✅ 通过' : '❌ 失败';
                 const message = `积分保持测试 ${result}
                 
 测试前积分: ${beforeCredits}
 测试后积分: ${afterCredits}
 积分是否保持: ${beforeCredits === afterCredits ? '是' : '否'}`;
-                
+
                 console.log('🧪 积分保持测试结果:', { beforeCredits, afterCredits, passed: beforeCredits === afterCredits });
                 alert(message);
-                
+
             } catch (error) {
                 console.error('❌ 积分保持测试失败:', error);
                 alert('测试失败：' + error.message);
             }
         }
-        
+
         // 测试指纹查找功能（管理员专用）
         async function testFingerprintLookup() {
             if (!currentUser || currentUser.email !== 'sunwei7482@gmail.com') {
                 alert('此功能仅管理员可用');
                 return;
             }
-            
+
             try {
                 console.log('🔍 测试指纹查找功能...');
-                
+
                 const fingerprint = generateUserFingerprint();
                 console.log('当前指纹:', fingerprint);
-                
+
                 // 查找相同指纹的用户
                 const { data: users, error } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('fingerprint', fingerprint)
                     .eq('is_signed_in', false);
-                
+
                 if (error) throw error;
-                
+
                 console.log('🔍 指纹查找结果:', users);
-                
+
                 const message = `指纹查找测试结果:
                 
 当前指纹: ${fingerprint.substring(0, 30)}...
@@ -4039,21 +4131,21 @@ ${users.length > 0 ? `
 ` : '未找到匹配用户'}
 
 ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用户，可能是新用户'}`;
-                
+
                 alert(message);
-                
+
             } catch (error) {
                 console.error('❌ 指纹查找测试失败:', error);
                 alert('测试失败：' + error.message);
             }
         }
-        
+
         // 显示当前用户状态（临时调试功能）
         async function showCurrentUserStatus() {
             const isAdmin = currentUser && currentUser.email === 'sunwei7482@gmail.com';
             const fingerprint = generateUserFingerprint();
             const ip = await getUserIP();
-            
+
             const statusInfo = {
                 用户邮箱: currentUser?.email || '未登录',
                 是否管理员: isAdmin ? '是' : '否',
@@ -4065,7 +4157,7 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                 生成模式: isAdmin ? '测试模式（模拟生成）' : '正式模式（真实API）',
                 用户标识: currentUser?.user_identifier || '无'
             };
-            
+
             console.log('👤 当前用户完整状态:', {
                 currentUser,
                 creditsManager,
@@ -4079,18 +4171,18 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
                 }
             });
-            
+
             const statusText = Object.entries(statusInfo)
                 .map(([key, value]) => `${key}: ${value}`)
                 .join('\n');
-            
+
             alert('当前用户状态:\n\n' + statusText + '\n\n详细信息已输出到控制台（按F12查看）');
         }
-        
+
         // 快速API测试功能
         async function testAPIFromHere() {
             const resultArea = document.getElementById('resultArea');
-            
+
             try {
                 resultArea.innerHTML = `
                     <div class="generating-status">
@@ -4099,13 +4191,13 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                         <p>使用简单提示词测试API是否正常工作</p>
                     </div>
                 `;
-                
+
                 console.log('🧪 开始快速API测试...');
-                
+
                 const testResult = await callImageGenerationAPI('a simple red apple', '512x512', 4);
-                
+
                 console.log('✅ API测试成功:', testResult);
-                
+
                 resultArea.innerHTML = `
                     <div class="result-success">
                         <img src="${testResult.imageUrl}" alt="API Test Image" class="generated-image" />
@@ -4120,12 +4212,12 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                         </p>
                     </div>
                 `;
-                
+
                 alert('API测试成功！您的API连接正常，可以正常使用生成功能。');
-                
+
             } catch (error) {
                 console.error('❌ API测试失败:', error);
-                
+
                 resultArea.innerHTML = `
                     <div class="result-error">
                         <i class="fas fa-exclamation-triangle"></i>
@@ -4136,50 +4228,50 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                         </p>
                     </div>
                 `;
-                
+
                 alert('API测试失败：' + error.message);
             }
         }
-        
+
         // 重新初始化用户状态（调试用）
         async function reinitializeUser() {
             console.log('=== 重新初始化用户状态 ===');
             try {
                 // 清除本地缓存的用户信息
                 currentUser = null;
-                
+
                 // 重新初始化用户管理器
                 await userManager.initialize();
-                
+
                 // 重新初始化积分管理器
                 await creditsManager.initialize(currentUser);
-                
+
                 console.log('用户状态重新初始化完成:', {
                     user: currentUser,
                     credits: creditsManager.credits
                 });
-                
+
                 alert(`用户状态已刷新！当前积分：${creditsManager.credits}`);
             } catch (error) {
                 console.error('重新初始化失败:', error);
                 alert('重新初始化失败：' + error.message);
             }
         }
-        
+
         // 显示退出登录确认弹窗
         function showSignoutModal() {
             const modal = document.getElementById('signoutModal');
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-        
+
         // 关闭退出登录确认弹窗
         function closeSignoutModal() {
             const modal = document.getElementById('signoutModal');
             modal.classList.remove('active');
             document.body.style.overflow = '';
         }
-        
+
         // 确认退出登录
         function confirmSignout() {
             closeSignoutModal();
@@ -4187,17 +4279,17 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                 userManager.signOut();
             }
         }
-        
+
         // 检查用户登录状态并显示积分不足弹窗
         function showCreditsModal(currentCredits, requiredCredits) {
             const modal = document.getElementById('creditsModal');
             const modalRequiredCredits = document.getElementById('modalRequiredCredits');
             const modalTitle = modal.querySelector('h3');
-            
+
             // 更新弹窗内容
             modalTitle.textContent = `Credits current is ${currentCredits}`;
             modalRequiredCredits.textContent = requiredCredits;
-            
+
             // 检查用户是否已登录
             if (currentUser && currentUser.is_signed_in) {
                 // 已登录用户，自动跳转到订阅页面
@@ -4207,43 +4299,43 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                 }, 1000);
                 return;
             }
-            
+
             // 未登录用户，显示登录提示弹窗
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-        
+
         // 点击弹窗背景关闭弹窗
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const signoutModal = document.getElementById('signoutModal');
             if (signoutModal) {
-                signoutModal.addEventListener('click', function(e) {
+                signoutModal.addEventListener('click', function (e) {
                     if (e.target === signoutModal) {
                         closeSignoutModal();
                     }
                 });
             }
-            
+
             const creditsModal = document.getElementById('creditsModal');
             if (creditsModal) {
-                creditsModal.addEventListener('click', function(e) {
+                creditsModal.addEventListener('click', function (e) {
                     if (e.target === creditsModal) {
                         closeCreditsModal();
                     }
                 });
             }
         });
-        
+
         // 显示积分不足弹窗 - 重新定义以集成登录验证
         function showCreditsModalDuplicate(currentCredits, requiredCredits) {
             const modal = document.getElementById('creditsModal');
             const modalRequiredCredits = document.getElementById('modalRequiredCredits');
             const modalTitle = modal.querySelector('h3');
-            
+
             // 更新弹窗内容
             modalTitle.textContent = `Credits current is ${currentCredits}`;
             modalRequiredCredits.textContent = requiredCredits;
-            
+
             // 检查用户是否已登录
             if (currentUser && currentUser.is_signed_in) {
                 // 已登录用户，自动跳转到订阅页面
@@ -4253,19 +4345,19 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                 }, 1000);
                 return;
             }
-            
+
             // 未登录用户，显示登录提示弹窗
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-        
+
         // 关闭积分不足弹窗
         function closeCreditsModal() {
             const modal = document.getElementById('creditsModal');
             modal.classList.remove('active');
             document.body.style.overflow = '';
         }
-        
+
         // 显示加载弹窗
         function showLoadingModal(message = '正在处理...') {
             const modal = document.getElementById('loadingModal');
@@ -4274,28 +4366,28 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
-        
+
         // 隐藏加载弹窗
         function hideLoadingModal() {
             const modal = document.getElementById('loadingModal');
             modal.classList.remove('active');
             document.body.style.overflow = '';
         }
-        
+
         // 从弹窗登录Google
         function signInFromModal() {
             closeCreditsModal();
-            
+
             // 设置登录后跳转到pricing页面
             localStorage.setItem('redirect_after_signin', 'pricing');
-            
+
             if (userManager) {
                 userManager.signInWithGoogle();
             } else {
                 alert('User system not initialized. Please refresh the page.');
             }
         }
-        
+
         // 在控制台暴露调试函数
         window.debugFunctions = {
             reinitializeUser,
@@ -4306,40 +4398,40 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
             getCreditsManager: () => creditsManager,
             getSystemSettings: () => systemSettings
         };
-    
-        
+
+
         // 用户状态同步增强版
         function syncUserStateAcrossPages() {
             try {
                 console.log('🔄 同步用户状态到其他页面...');
-                
+
                 if (currentUser) {
                     // 保存到localStorage
                     localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
-                    
+
                     // 触发跨页面同步事件
                     window.dispatchEvent(new CustomEvent('userStateUpdated', {
                         detail: { user: currentUser }
                     }));
-                    
+
                     console.log('✅ 用户状态已同步');
                 }
             } catch (error) {
                 console.error('❌ 同步用户状态失败:', error);
             }
         }
-        
+
         // 监听用户状态变化
-        window.addEventListener('userStateUpdated', function(event) {
+        window.addEventListener('userStateUpdated', function (event) {
             console.log('👤 用户状态已更新:', event.detail.user?.email);
             updateUIForAuthenticatedUser();
         });
-        
+
         // 页面可见性变化时同步状态
-        document.addEventListener('visibilitychange', function() {
+        document.addEventListener('visibilitychange', function () {
             if (!document.hidden) {
                 console.log('📄 页面重新可见，检查用户状态...');
-                
+
                 // 检查localStorage中的用户状态
                 const userData = localStorage.getItem('flux_krea_user');
                 if (userData && !currentUser) {
@@ -4353,48 +4445,47 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                 }
             }
         });
-        
-        // 修复Generate按钮逻辑
-        async function generateImage() {
-            console.log('=== 🎯 开始图像生成 ===');
-            
-            // 检查用户登录状态
-            if (!currentUser) {
-                console.log('用户未登录，显示登录弹窗');
-                showLoginModal();
-                return;
-            }
-            
-            // 检查积分
-            const currentCredits = creditsManager?.credits || currentUser?.credits || 0;
-            const generationCost = systemSettings?.generation_cost || 10;
-            
-            if (currentCredits < generationCost) {
-                alert(`积分不足！当前积分: ${currentCredits}，需要: ${generationCost}`);
-                return;
-            }
-            
-            const prompt = document.getElementById('prompt').value.trim();
-            if (!prompt) {
-                alert('请输入图像描述');
-                return;
-            }
-            
-            const resultArea = document.getElementById('resultArea');
-            const generateBtn = document.getElementById('generateBtn');
-            
-            try {
-                // 禁用按钮
-                generateBtn.disabled = true;
-                generateBtn.innerHTML = `
+
+        // 重复的generateImage函数已删除，使用上面的版本
+        console.log('=== 🎯 开始图像生成 ===');
+
+        // 检查用户登录状态
+        if (!currentUser) {
+            console.log('用户未登录，显示登录弹窗');
+            showLoginModal();
+            return;
+        }
+
+        // 检查积分
+        const currentCredits = creditsManager?.credits || currentUser?.credits || 0;
+        const generationCost = systemSettings?.generation_cost || 10;
+
+        if (currentCredits < generationCost) {
+            alert(`积分不足！当前积分: ${currentCredits}，需要: ${generationCost}`);
+            return;
+        }
+
+        const prompt = document.getElementById('prompt').value.trim();
+        if (!prompt) {
+            alert('请输入图像描述');
+            return;
+        }
+
+        const resultArea = document.getElementById('resultArea');
+        const generateBtn = document.getElementById('generateBtn');
+
+        try {
+            // 禁用按钮
+            generateBtn.disabled = true;
+            generateBtn.innerHTML = `
                     <span class="btn-content">
                         <div class="loading-spinner"></div>
                         Generating...
                     </span>
                 `;
-                
-                // 显示生成状态（增加等待时间）
-                resultArea.innerHTML = `
+
+            // 显示生成状态（增加等待时间）
+            resultArea.innerHTML = `
                     <div class="generating-status">
                         <div class="loading-spinner"></div>
                         <h3>正在生成图像...</h3>
@@ -4407,38 +4498,38 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                         </div>
                     </div>
                 `;
-                
-                // 添加进度动画
-                setTimeout(() => {
-                    const progressFill = document.querySelector('.progress-fill');
-                    if (progressFill) {
-                        progressFill.style.width = '100%';
-                    }
-                }, 100);
-                
-                // 扣除积分
-                if (creditsManager) {
-                    await creditsManager.deductCredits(generationCost, 'AI图像生成');
-                } else {
-                    // 直接更新用户积分
-                    currentUser.credits = currentCredits - generationCost;
-                    localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+
+            // 添加进度动画
+            setTimeout(() => {
+                const progressFill = document.querySelector('.progress-fill');
+                if (progressFill) {
+                    progressFill.style.width = '100%';
                 }
-                
-                // 调用API生成图像（增加等待时间到30秒）
-                const imageSize = document.getElementById('imageSize').value;
-                const guidanceScale = document.getElementById('stepsSlider').value; // Corrected to stepsSlider.value
-                
-                console.log('调用图像生成API...', { prompt, imageSize, guidanceScale });
-                
-                // 模拟更长的等待时间
-                await new Promise(resolve => setTimeout(resolve, 5000));
-                
-                const result = await callImageGenerationAPI(prompt, imageSize, guidanceScale);
-                
-                if (result && result.imageUrl) {
-                    // 显示成功结果
-                    resultArea.innerHTML = `
+            }, 100);
+
+            // 扣除积分
+            if (creditsManager) {
+                await creditsManager.deductCredits(generationCost, 'AI图像生成');
+            } else {
+                // 直接更新用户积分
+                currentUser.credits = currentCredits - generationCost;
+                localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+            }
+
+            // 调用API生成图像（增加等待时间到30秒）
+            const imageSize = document.getElementById('imageSize').value;
+            const guidanceScale = document.getElementById('stepsSlider').value; // Corrected to stepsSlider.value
+
+            console.log('调用图像生成API...', { prompt, imageSize, guidanceScale });
+
+            // 模拟更长的等待时间
+            await new Promise(resolve => setTimeout(resolve, 5000));
+
+            const result = await callImageGenerationAPI(prompt, imageSize, guidanceScale);
+
+            if (result && result.imageUrl) {
+                // 显示成功结果
+                resultArea.innerHTML = `
                         <div class="result-success">
                             <img src="${result.imageUrl}" alt="Generated Image" class="generated-image" />
                             <div class="result-actions">
@@ -4456,17 +4547,17 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                             </div>
                         </div>
                     `;
-                    
-                    console.log('✅ 图像生成成功');
-                } else {
-                    throw new Error('生成失败，请重试');
-                }
-                
-            } catch (error) {
-                console.error('❌ 图像生成失败:', error);
-                
-                // 显示错误状态
-                resultArea.innerHTML = `
+
+                console.log('✅ 图像生成成功');
+            } else {
+                throw new Error('生成失败，请重试');
+            }
+
+        } catch (error) {
+            console.error('❌ 图像生成失败:', error);
+
+            // 显示错误状态
+            resultArea.innerHTML = `
                     <div class="result-error">
                         <i class="fas fa-exclamation-triangle"></i>
                         <h3>生成失败</h3>
@@ -4476,28 +4567,28 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                         </button>
                     </div>
                 `;
-                
-                // 退还积分
-                if (creditsManager) {
-                    await creditsManager.addCredits(generationCost, '生成失败退还');
-                } else {
-                    currentUser.credits = currentCredits;
-                    localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
-                }
-                
-            } finally {
-                // 恢复按钮
-                generateBtn.disabled = false;
-                generateBtn.innerHTML = `
+
+            // 退还积分
+            if (creditsManager) {
+                await creditsManager.addCredits(generationCost, '生成失败退还');
+            } else {
+                currentUser.credits = currentCredits;
+                localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+            }
+
+        } finally {
+            // 恢复按钮
+            generateBtn.disabled = false;
+            generateBtn.innerHTML = `
                     <span class="btn-content">
                         <i class="fas fa-bolt"></i>
                         Generate
                     </span>
                     <span class="credits-cost">-${generationCost} credits</span>
                 `;
-            }
         }
-        
+        }
+
         // 登录弹窗函数
         function showLoginModal() {
             const modal = document.getElementById('loginRequiredModal');
@@ -4507,12 +4598,12 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                 if (creditsTitle) {
                     creditsTitle.textContent = `Credits Balance is ${currentUser?.credits || '--'}`;
                 }
-                
+
                 modal.classList.add('active');
                 document.body.style.overflow = 'hidden';
             }
         }
-        
+
         function closeLoginModal() {
             const modal = document.getElementById('loginRequiredModal');
             if (modal) {
@@ -4520,7 +4611,7 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                 document.body.style.overflow = 'auto';
             }
         }
-        </script>
+    </script>
 
     <!-- Login Required Modal -->
     <div id="loginRequiredModal" class="login-modal">
@@ -4529,12 +4620,12 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
             <button class="modal-close" onclick="closeLoginModal()">
                 <i class="fas fa-times"></i>
             </button>
-            
+
             <div class="modal-header">
                 <h2>Credits Balance is <span id="modalCreditsAmount">--</span></h2>
                 <p>Sign in to continue generating amazing AI images</p>
             </div>
-            
+
             <div class="login-benefits">
                 <div class="benefit-item">
                     <i class="fas fa-bolt"></i>
@@ -4549,7 +4640,7 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
                     <span>Unlock premium features</span>
                 </div>
             </div>
-            
+
             <div class="modal-actions">
                 <button class="google-signin-btn" onclick="signInWithGoogle()">
                     <div class="google-icon"></div>
@@ -4562,5 +4653,6 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
         </div>
     </div>
     <script src="/js/auth-bootstrap.js" defer></script>
-    </body>
+</body>
+
 </html>
