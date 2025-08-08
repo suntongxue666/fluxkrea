@@ -1,90 +1,91 @@
-// 获取用户积分的API - 支持跨页面同步
+// /api/get-user-credits.js
 const { createClient } = require('@supabase/supabase-js');
 
-const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI';
+function parseCookies(cookieHeader = '') {
+  return Object.fromEntries(
+    cookieHeader.split(';').map(v => v.trim()).filter(Boolean).map(v => {
+      const idx = v.indexOf('=');
+      return [decodeURIComponent(v.slice(0, idx)), decodeURIComponent(v.slice(idx + 1))];
+    })
+  );
+}
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+function extractAccessToken(req) {
+  const auth = req.headers?.authorization || '';
+  if (auth.toLowerCase().startsWith('bearer ')) return auth.slice(7).trim();
+  const cookies = parseCookies(req.headers?.cookie || '');
+  if (cookies['sb-access-token']) return cookies['sb-access-token'];
+  if (cookies['supabase-auth-token']) {
+    try {
+      const parsed = JSON.parse(cookies['supabase-auth-token']);
+      const t = parsed?.currentSession?.access_token || parsed?.access_token;
+      if (t) return t;
+    } catch (_) {}
+  }
+  return null;
+}
+
+async function trySelectFirst(supabase, table, selectors, filters) {
+  try {
+    const sel = selectors.join(', ');
+    let q = supabase.from(table).select(sel);
+    for (const [col, val] of filters) q = q.eq(col, val);
+    const { data, error } = await q.maybeSingle();
+    if (error) return null;
+    return data || null;
+  } catch (_) {
+    return null;
+  }
+}
 
 module.exports = async (req, res) => {
-    // 设置CORS头
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-    if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+  // 环境自检：缺配置直接返回 JSON，避免 500 HTML
+  if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
+    return res.status(500).json({ ok: false, code: 'ENV_MISSING' });
+  }
+
+  const token = extractAccessToken(req);
+  if (!token) {
+    return res.status(401).json({ ok: false, code: 'UNAUTHENTICATED' });
+  }
+
+  const supabase = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_ANON_KEY,
+    { global: { headers: { Authorization: `Bearer ${token}` } } }
+  );
+
+  try {
+    const { data: userResp, error: userErr } = await supabase.auth.getUser();
+    if (userErr || !userResp?.user) {
+      return res.status(401).json({ ok: false, code: 'INVALID_TOKEN' });
     }
-    
-    if (req.method !== 'POST') {
-        return res.status(405).json({ error: 'Method not allowed' });
+
+    const user = userResp.user;
+    let credits = 0;
+
+    const candidates = [
+      () => trySelectFirst(supabase, 'users', ['credits', 'balance'], [['id', user.id]]),
+      () => trySelectFirst(supabase, 'users', ['credits', 'balance'], [['email', user.email || '']]),
+      () => trySelectFirst(supabase, 'users', ['credits', 'balance'], [['uuid', user.id]]),
+      () => trySelectFirst(supabase, 'profiles', ['credits', 'balance'], [['id', user.id]]),
+      () => trySelectFirst(supabase, 'profiles', ['credits', 'balance'], [['email', user.email || '']]),
+      () => trySelectFirst(supabase, 'user_credits', ['balance'], [['user_id', user.id]]),
+    ];
+
+    for (const get of candidates) {
+      const row = await get();
+      if (row && (row.credits != null || row.balance != null)) {
+        credits = Number(row.credits ?? row.balance ?? 0) || 0;
+        break;
+      }
     }
-    
-    try {
-        const { userIdentifier } = req.body;
-        
-        if (!userIdentifier || userIdentifier === 'anonymous') {
-            return res.status(200).json({ 
-                success: true, 
-                credits: 0,
-                user_type: 'anonymous'
-            });
-        }
-        
-        console.log('🔍 查询用户积分:', userIdentifier);
-        
-        // 支持多种查找方式：UUID或邮箱
-        let user = null;
-        
-        // 1. 先尝试通过UUID查找
-        const { data: uuidUser, error: uuidError } = await supabase
-            .from('users')
-            .select('uuid, email, credits, subscription_status')
-            .eq('uuid', userIdentifier)
-            .single();
-        
-        if (!uuidError && uuidUser) {
-            user = uuidUser;
-            console.log(`✅ 通过UUID找到用户: ${user.email}, 积分: ${user.credits}`);
-        } else {
-            // 2. 如果UUID查找失败，尝试通过邮箱查找
-            const { data: emailUser, error: emailError } = await supabase
-                .from('users')
-                .select('uuid, email, credits, subscription_status')
-                .eq('email', userIdentifier)
-                .single();
-            
-            if (!emailError && emailUser) {
-                user = emailUser;
-                console.log(`✅ 通过邮箱找到用户: ${user.email}, 积分: ${user.credits}`);
-            } else {
-                console.log('❌ 未找到用户:', userIdentifier);
-                return res.status(200).json({ 
-                    success: true, 
-                    credits: 0,
-                    user_type: 'not_found'
-                });
-            }
-        }
-        
-        // 返回用户积分信息
-        res.status(200).json({
-            success: true,
-            credits: user.credits || 0,
-            user_type: 'registered',
-            user_info: {
-                uuid: user.uuid,
-                email: user.email,
-                subscription_status: user.subscription_status
-            }
-        });
-        
-    } catch (error) {
-        console.error('❌ 获取用户积分失败:', error);
-        res.status(500).json({ 
-            success: false, 
-            error: 'Internal server error',
-            credits: 0
-        });
-    }
+
+    return res.status(200).json({ ok: true, user: { id: user.id, email: user.email || null }, credits });
+  } catch (err) {
+    return res.status(200).json({ ok: false, code: 'INTERNAL_ERROR', message: err?.message || 'unknown_error' });
+  }
 };
+
+// 强制使用 Node 运行时（避免 Edge 环境崩溃）
+module.exports.config = { runtime: 'nodejs18.x' };

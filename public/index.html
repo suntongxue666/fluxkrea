@@ -1698,7 +1698,6 @@
     <meta http-equiv="Expires" content="0">
     </head>
 <body>
-    <!-- Signout Confirmation Modal -->
     <div class="signout-modal" id="signoutModal">
         <div class="signout-modal-content">
             <h3>Are you sure sign out?</h3>
@@ -2858,7 +2857,7 @@
                     console.error('Google登录失败:', error);
                     
                     if (error.message && error.message.includes('provider is not enabled')) {
-                        alert('请检查Supabase中的Google OAuth配置：\n1. Authentication > Providers > Google\n2. 确保“Enable sign in with Google”已开启\n3. 检查Client ID和Client Secret是否正确填入');
+                        alert('请检查Supabase中的Google OAuth配置：\n1. Authentication > Providers > Google\n2. 确保"Enable sign in with Google"已开启\n3. 检查Client ID和Client Secret是否正确填入');
                     } else {
                         alert('登录失败，请稍后重试：' + (error.message || error));
                     }
@@ -4610,5 +4609,6 @@ ${users.length > 0 ? '✅ 指纹查找正常工作' : '⚠️ 未找到匹配用
             </div>
         </div>
     </div>
+    <script src="/js/auth-bootstrap.js" defer></script>
     </body>
 </html>
