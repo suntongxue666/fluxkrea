@@ -2298,8 +2298,7 @@
             }
         }
         
-        // 高级用户管理系统
-        // 改进的用户管理器 - 减少UI闪烁
+        /* DISABLED: Legacy UserManager (replaced by supabase-init + auth-bootstrap)
         class UserManager {
             constructor() {
                 this.currentUser = window.preloadedUser || null;
@@ -2438,7 +2437,7 @@
             }
         }
             
-            // 初始化用户管理器
+            /* LEGACY USER MANAGER DISABLED
             async initialize() {
                 if (this.isInitialized) return;
                 
@@ -2895,6 +2894,8 @@
                 }
             }
         }
+        */
+        // LEGACY BLOCK ENDS
         
         // 检查是否为管理员用户
         function isAdminUser() {
@@ -3897,9 +3898,7 @@
                 // 重新加载系统设置
                 await loadSystemSettings();
                 
-                // 重新初始化用户管理器
-                userManager.isInitialized = false;
-                await userManager.initialize();
+                        // 重新初始化用户管理器 (disabled)
                 
                 // 重新初始化积分管理器
                 await creditsManager.initialize(currentUser);
