@@ -60,51 +60,50 @@ module.exports = async (req, res) => {
   const token = extractAccessToken(req);
   if (!token) return res.status(401).json({ ok: false, code: 'UNAUTHENTICATED' });
 
-  // 4) 动态导入 ESM 版 supabase-js
-  let createClient;
-  try {
-    ({ createClient } = await import('@supabase/supabase-js'));
-  } catch (e) {
-    return res.status(500).json({ ok: false, code: 'IMPORT_FAIL', message: e?.message || 'import_failed' });
+  // —— 用 REST API，不再导入 supabase-js ——
+
+  // 4) 基础 headers
+  const base = SUPABASE_URL;
+  const key = SUPABASE_ANON_KEY;
+  const headers = { apikey: key, Authorization: `Bearer ${token}`, Accept: 'application/json' };
+
+  async function fetchJson(url) {
+    const r = await fetch(url, { headers });
+    if (!r.ok) return null;
+    try { return await r.json(); } catch { return null; }
   }
-
-  // 5) 初始化客户端
-  let supabase;
-  try {
-    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { fetch } });
-  } catch (e) {
-    return res.status(500).json({ ok: false, code: 'CLIENT_INIT_FAIL', message: e?.message || 'client_init_failed' });
+  async function firstRow(url) {
+    const data = await fetchJson(url);
+    return Array.isArray(data) && data.length ? data[0] : null;
   }
+  function enc(v) { return encodeURIComponent(v ?? ''); }
 
-  // 6) 获取用户（直接把 token 传给 SDK，避免 headers 方式带来的兼容问题）
-  let userResp, userErr;
-  try {
-    ({ data: userResp, error: userErr } = await supabase.auth.getUser(token));
-  } catch (e) {
-    return res.status(500).json({ ok: false, code: 'GET_USER_THROW', message: e?.message || 'get_user_failed' });
-  }
-  if (userErr || !userResp?.user) return res.status(401).json({ ok: false, code: 'INVALID_TOKEN' });
+  // 5) 验证用户（Auth API）
+  const uRes = await fetch(`${base}/auth/v1/user`, { headers });
+  if (!uRes.ok) return res.status(401).json({ ok: false, code: 'INVALID_TOKEN' });
+  const user = await uRes.json();
 
-  const user = userResp.user;
-
-  // 7) 兼容式积分查询（查不到就 0）
+  // 6) 兼容式积分查询（按多表多列尝试）
   let credits = 0;
-  const candidates = [
-    () => trySelectFirst(supabase, 'users', ['credits', 'balance'], [['id', user.id]]),
-    () => trySelectFirst(supabase, 'users', ['credits', 'balance'], [['email', user.email || '']]),
-    () => trySelectFirst(supabase, 'users', ['credits', 'balance'], [['uuid', user.id]]),
-    () => trySelectFirst(supabase, 'profiles', ['credits', 'balance'], [['id', user.id]]),
-    () => trySelectFirst(supabase, 'profiles', ['credits', 'balance'], [['email', user.email || '']]),
-    () => trySelectFirst(supabase, 'user_credits', ['balance'], [['user_id', user.id]])
+
+  const tries = [
+    () => firstRow(`${base}/rest/v1/users?select=credits,balance&id=eq.${enc(user.id)}&limit=1`),
+    () => firstRow(`${base}/rest/v1/users?select=credits,balance&email=eq.${enc(user.email)}&limit=1`),
+    () => firstRow(`${base}/rest/v1/users?select=credits,balance&uuid=eq.${enc(user.id)}&limit=1`),
+    () => firstRow(`${base}/rest/v1/profiles?select=credits,balance&id=eq.${enc(user.id)}&limit=1`),
+    () => firstRow(`${base}/rest/v1/profiles?select=credits,balance&email=eq.${enc(user.email)}&limit=1`),
+    () => firstRow(`${base}/rest/v1/user_credits?select=balance&user_id=eq.${enc(user.id)}&limit=1`),
   ];
-  for (const get of candidates) {
-    const row = await get();
+
+  for (const fn of tries) {
+    const row = await fn();
     if (row && (row.credits != null || row.balance != null)) {
       credits = Number(row.credits ?? row.balance ?? 0) || 0;
       break;
     }
   }
 
+  // 7) 返回
   return res.status(200).json({ ok: true, user: { id: user.id, email: user.email || null }, credits });
 };
 
