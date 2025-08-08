@@ -1,5 +1,9 @@
 // /api/get-user-credits.js
 
+// 强制把可选依赖打进 Serverless 包，避免 IMPORT_FAIL
+try { require('@supabase/node-fetch'); } catch (_) {}
+try { require('whatwg-url'); } catch (_) {}
+
 function parseCookies(cookieHeader = '') {
   return Object.fromEntries(
     cookieHeader.split(';').map(v => v.trim()).filter(Boolean).map(v => {
