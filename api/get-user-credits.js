@@ -1,5 +1,4 @@
 // /api/get-user-credits.js
-const { createClient } = require('@supabase/supabase-js');
 
 function parseCookies(cookieHeader = '') {
   return Object.fromEntries(
@@ -43,6 +42,8 @@ module.exports = async (req, res) => {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_ANON_KEY) {
     return res.status(500).json({ ok: false, code: 'ENV_MISSING' });
   }
+
+  const { createClient } = await import('@supabase/supabase-js');
 
   const token = extractAccessToken(req);
   if (!token) {
