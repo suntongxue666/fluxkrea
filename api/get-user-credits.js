@@ -42,23 +42,39 @@ async function trySelectFirst(supabase, table, selectors, filters) {
 }
 
 module.exports = async (req, res) => {
+  // 设置CORS头
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
   // 1) 环境自检（缺就直接返回 JSON）
   const { SUPABASE_URL, SUPABASE_ANON_KEY } = process.env || {};
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    return res.status(500).json({ ok: false, code: 'ENV_MISSING', have: { url: !!SUPABASE_URL, key: !!SUPABASE_ANON_KEY } });
+    return res.status(500).json({ success: false, error: 'Environment configuration missing', code: 'ENV_MISSING' });
   }
 
   // 2) 健康检查：在浏览器访问 ?debug=1 确认函数能跑
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     if (url.searchParams.get('debug') === '1') {
-      return res.status(200).json({ ok: true, code: 'HEALTH_OK', node: process.versions.node });
+      return res.status(200).json({ success: true, message: 'API is healthy', node: process.versions.node });
     }
   } catch (_) {}
 
-  // 3) 取 token（没有就 401）
+  // 3) 取 token（没有就返回匿名用户状态）
   const token = extractAccessToken(req);
-  if (!token) return res.status(401).json({ ok: false, code: 'UNAUTHENTICATED' });
+  if (!token) {
+    return res.status(200).json({ 
+      success: true, 
+      credits: 0, 
+      user_type: 'anonymous',
+      message: 'No authentication token provided'
+    });
+  }
 
   // —— 用 REST API，不再导入 supabase-js ——
 
@@ -80,7 +96,14 @@ module.exports = async (req, res) => {
 
   // 5) 验证用户（Auth API）
   const uRes = await fetch(`${base}/auth/v1/user`, { headers });
-  if (!uRes.ok) return res.status(401).json({ ok: false, code: 'INVALID_TOKEN' });
+  if (!uRes.ok) {
+    return res.status(200).json({ 
+      success: true, 
+      credits: 0, 
+      user_type: 'unauthenticated',
+      message: 'Invalid or expired token'
+    });
+  }
   const user = await uRes.json();
 
   // 6) 兼容式积分查询（按多表多列尝试）
@@ -103,8 +126,16 @@ module.exports = async (req, res) => {
     }
   }
 
-  // 7) 返回
-  return res.status(200).json({ ok: true, user: { id: user.id, email: user.email || null }, credits });
+  // 7) 返回标准格式（兼容前端期望的格式）
+  return res.status(200).json({ 
+    success: true, 
+    credits: credits,
+    user_type: 'registered',
+    user_info: { 
+      id: user.id, 
+      email: user.email || null 
+    }
+  });
 };
 
 // 运行时：Node 22
