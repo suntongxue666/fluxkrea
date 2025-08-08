@@ -1592,19 +1592,10 @@
             margin: 0;
         }
         
-        /* 防闪烁CSS */
+        /* 确保按钮和积分显示可见 */
         .signin-btn, #creditsDisplay {
-            opacity: 0;
+            opacity: 1;
             transition: opacity 0.3s ease;
-        }
-        
-        .signin-btn.loaded, #creditsDisplay.loaded {
-            opacity: 1;
-        }
-        
-        /* 预加载状态指示 */
-        .signin-btn.preloaded, #creditsDisplay.preloaded {
-            opacity: 1;
         }
         </style>
 
