@@ -88,4 +88,4 @@ module.exports = async (req, res) => {
 };
 
 // 强制使用 Node 运行时（避免 Edge 环境崩溃）
-module.exports.config = { runtime: 'nodejs18.x' };
+module.exports.config = { runtime: 'nodejs22.x' };
