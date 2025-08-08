@@ -59,7 +59,7 @@ module.exports = async (req, res) => {
   // 4) 动态导入 ESM 版 supabase-js
   let createClient;
   try {
-    ({ createClient } = await import('@supabase/supabase-js/dist/module/index.js'));
+    ({ createClient } = await import('@supabase/supabase-js'));
   } catch (e) {
     return res.status(500).json({ ok: false, code: 'IMPORT_FAIL', message: e?.message || 'import_failed' });
   }
@@ -67,7 +67,7 @@ module.exports = async (req, res) => {
   // 5) 初始化客户端
   let supabase;
   try {
-    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { fetch } });
   } catch (e) {
     return res.status(500).json({ ok: false, code: 'CLIENT_INIT_FAIL', message: e?.message || 'client_init_failed' });
   }
