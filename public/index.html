@@ -142,7 +142,35 @@
             }
         };
 
+        // 简单的测试函数
+        window.testClick = function () {
+            alert('按钮点击测试成功！');
+            console.log('✅ 按钮点击事件正常工作');
+        };
+
+        // 简化版的generateImage函数用于调试
+        window.generateImageDebug = function () {
+            console.log('🔧 调试版generateImage被调用');
+
+            const prompt = document.getElementById('prompt');
+            const resultArea = document.getElementById('resultArea');
+            const generateBtn = document.getElementById('generateBtn');
+
+            console.log('DOM元素检查:');
+            console.log('- prompt元素:', prompt ? '存在' : '不存在');
+            console.log('- resultArea元素:', resultArea ? '存在' : '不存在');
+            console.log('- generateBtn元素:', generateBtn ? '存在' : '不存在');
+            console.log('- currentUser:', window.currentUser ? '已登录' : '未登录');
+
+            if (resultArea) {
+                resultArea.innerHTML = '<div style="color: green; padding: 20px;">调试：Generate函数被成功调用！</div>';
+            }
+
+            alert('调试：Generate函数执行完成');
+        };
+
         console.log('✅ generateImage函数已定义在页面顶部');
+        console.log('✅ testClick测试函数已定义');
     </script>
 
     <!-- Supabase SDK and init (must load before auth-bootstrap) -->
@@ -1940,12 +1968,12 @@
                         </div>
                     </div>
 
-                    <button class="generate-btn" id="generateBtn">
-                        <span class="btn-content">
-                            <i class="fas fa-bolt"></i>
-                            Generate
-                        </span>
-                        <span class="credits-cost">-10 Credits</span>
+                    <button class="generate-btn" id="generateBtn" onclick="window.generateImageDebug();"></button>
+                    <span class="btn-content">
+                        <i class="fas fa-bolt"></i>
+                        Generate
+                    </span>
+                    <span class="credits-cost">-10 Credits</span>
                     </button>
 
                     <!-- H5 Pricing Entry Button -->
