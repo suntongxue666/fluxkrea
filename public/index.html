@@ -1843,7 +1843,7 @@
                         </div>
                     </div>
 
-                    <button class="generate-btn" id="generateBtn" onclick="generateImage()">
+                    <button class="generate-btn" id="generateBtn">
                         <span class="btn-content">
                             <i class="fas fa-bolt"></i>
                             Generate
@@ -2292,7 +2292,7 @@
         });
 
         // 积分显示修复函数
-        function updateCreditsDisplay() {
+        window.updateCreditsDisplay = function () {
             const creditsElement = document.getElementById('creditsAmount');
             if (creditsElement && window.currentUser) {
                 const credits = window.currentUser.credits || 0;
@@ -2305,10 +2305,33 @@
         document.addEventListener('DOMContentLoaded', function () {
             setTimeout(updateCreditsDisplay, 1000); // 延迟1秒确保用户数据加载完成
             setInterval(updateCreditsDisplay, 5000); // 每5秒检查一次积分更新
+
+            // 调试：确认函数已定义
+            console.log('🔧 调试信息:');
+            console.log('generateImage函数是否存在:', typeof window.generateImage);
+            console.log('updateCreditsDisplay函数是否存在:', typeof window.updateCreditsDisplay);
+            console.log('downloadImage函数是否存在:', typeof window.downloadImage);
+
+            // 直接绑定Generate按钮事件
+            const generateBtn = document.getElementById('generateBtn');
+            if (generateBtn) {
+                generateBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log('🎯 Generate按钮被点击');
+                    if (typeof window.generateImage === 'function') {
+                        window.generateImage();
+                    } else {
+                        console.error('❌ generateImage函数未定义');
+                    }
+                });
+                console.log('✅ Generate按钮事件已绑定');
+            } else {
+                console.error('❌ 找不到Generate按钮元素');
+            }
         });
 
         // 下载图片函数
-        function downloadImage(imageUrl) {
+        window.downloadImage = function (imageUrl) {
             const a = document.createElement('a');
             a.href = imageUrl;
             a.download = 'generated-image.png';
@@ -2317,8 +2340,19 @@
             document.body.removeChild(a);
         }
 
-        // Generate图像函数 - 放在早期位置确保全局可访问
-        async function generateImage() {
+        // 调试函数 - 可以在控制台手动调用
+        window.testGenerate = function () {
+            console.log('🧪 测试Generate函数...');
+            if (typeof window.generateImage === 'function') {
+                console.log('✅ generateImage函数存在，开始调用...');
+                window.generateImage();
+            } else {
+                console.error('❌ generateImage函数不存在');
+            }
+        }
+
+        // Generate图像函数 - 确保全局可访问
+        window.generateImage = async function () {
             console.log('=== 🎯 开始图像生成 ===');
 
             // 检查用户登录状态
