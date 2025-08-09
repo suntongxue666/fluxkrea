@@ -53,28 +53,41 @@
         // 立即定义generateImage函数，确保全局可访问
         window.generateImage = async function () {
             console.log('=== 🎯 开始图像生成 ===');
+            console.log('✅ generateImage函数被正确调用！');
+            console.log('当前用户状态:', window.currentUser);
 
             // 检查用户登录状态
             if (!window.currentUser) {
-                console.log('用户未登录，显示登录弹窗');
+                console.log('❌ 用户未登录，显示登录弹窗');
                 alert('请先登录');
                 return;
             }
 
+            console.log('✅ 用户已登录:', window.currentUser.email);
+
             // 检查积分
-            const currentCredits = window.currentUser?.credits || 0;
+            const currentCredits = window.creditsSync?.credits || window.currentUser?.credits || 0;
             const generationCost = 10;
+            console.log(`💰 积分检查: 当前${currentCredits}, 需要${generationCost}`);
 
             if (currentCredits < generationCost) {
+                console.log('❌ 积分不足');
                 alert(`积分不足！当前积分: ${currentCredits}，需要: ${generationCost}`);
                 return;
             }
 
+            console.log('✅ 积分充足');
+
             const prompt = document.getElementById('prompt')?.value?.trim();
+            console.log('📝 提示词检查:', prompt);
+
             if (!prompt) {
+                console.log('❌ 提示词为空');
                 alert('请输入图像描述');
                 return;
             }
+
+            console.log('✅ 提示词有效:', prompt);
 
             const resultArea = document.getElementById('resultArea');
             const generateBtn = document.getElementById('generateBtn');
@@ -92,6 +105,7 @@
                 }
 
                 // 调用生成API
+                console.log('🚀 开始调用API...');
                 const response = await fetch('/api/generate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -108,7 +122,9 @@
 
                     if (result.success && result.image) {
                         // 扣除积分
-                        if (window.currentUser) {
+                        if (window.creditsSync && window.creditsSync.deductCredits) {
+                            await window.creditsSync.deductCredits(generationCost, '图像生成');
+                        } else if (window.currentUser) {
                             window.currentUser.credits = Math.max(0, window.currentUser.credits - generationCost);
                         }
 
@@ -148,28 +164,10 @@
             console.log('✅ 按钮点击事件正常工作');
         };
 
-        // 简化版的generateImage函数用于调试
-        window.generateImageDebug = function () {
-            console.log('🔧 调试版generateImage被调用');
-
-            const prompt = document.getElementById('prompt');
-            const resultArea = document.getElementById('resultArea');
-            const generateBtn = document.getElementById('generateBtn');
-
-            console.log('DOM元素检查:');
-            console.log('- prompt元素:', prompt ? '存在' : '不存在');
-            console.log('- resultArea元素:', resultArea ? '存在' : '不存在');
-            console.log('- generateBtn元素:', generateBtn ? '存在' : '不存在');
-            console.log('- currentUser:', window.currentUser ? '已登录' : '未登录');
-
-            if (resultArea) {
-                resultArea.innerHTML = '<div style="color: green; padding: 20px;">调试：Generate函数被成功调用！</div>';
-            }
-
-            alert('调试：Generate函数执行完成');
-        };
+        // 调试函数已删除，使用真正的generateImage函数
 
         console.log('✅ generateImage函数已定义在页面顶部');
+        console.log('🔧 版本时间戳:', new Date().toISOString());
         console.log('✅ testClick测试函数已定义');
     </script>
 
@@ -1968,12 +1966,12 @@
                         </div>
                     </div>
 
-                    <button class="generate-btn" id="generateBtn" onclick="window.generateImageDebug();"></button>
-                    <span class="btn-content">
-                        <i class="fas fa-bolt"></i>
-                        Generate
-                    </span>
-                    <span class="credits-cost">-10 Credits</span>
+                    <button class="generate-btn" id="generateBtn">
+                        <span class="btn-content">
+                            <i class="fas fa-bolt"></i>
+                            Generate
+                        </span>
+                        <span class="credits-cost">-10 Credits</span>
                     </button>
 
                     <!-- H5 Pricing Entry Button -->
@@ -2416,6 +2414,76 @@
             });
         });
 
+        // 创建统一的积分管理器
+        window.CreditsManager = class {
+            constructor() {
+                this.credits = 0;
+                this.listeners = [];
+            }
+
+            setCredits(amount) {
+                const oldCredits = this.credits;
+                this.credits = Math.max(0, amount);
+                
+                // 更新UI显示
+                this.updateDisplay();
+                
+                // 通知监听器
+                this.notifyListeners(oldCredits, this.credits);
+                
+                console.log(`✅ 积分已更新: ${oldCredits} → ${this.credits}`);
+            }
+
+            updateDisplay() {
+                const creditsElement = document.getElementById('creditsAmount');
+                if (creditsElement) {
+                    creditsElement.textContent = this.credits;
+                    
+                    // 添加更新动画效果
+                    creditsElement.style.transition = 'all 0.3s ease';
+                    creditsElement.style.color = '#10b981';
+                    setTimeout(() => {
+                        creditsElement.style.color = '';
+                    }, 500);
+                }
+            }
+
+            addListener(callback) {
+                this.listeners.push(callback);
+            }
+
+            notifyListeners(oldCredits, newCredits) {
+                this.listeners.forEach(callback => {
+                    try {
+                        callback(oldCredits, newCredits);
+                    } catch (error) {
+                        console.error('❌ 积分监听器执行失败:', error);
+                    }
+                });
+            }
+
+            async deductCredits(amount, reason = '消费') {
+                if (this.credits >= amount) {
+                    this.setCredits(this.credits - amount);
+                    console.log(`💰 积分扣除: ${amount} (${reason})`);
+                    
+                    // 同步到用户数据
+                    if (window.currentUser) {
+                        window.currentUser.credits = this.credits;
+                        localStorage.setItem('flux_krea_user', JSON.stringify(window.currentUser));
+                    }
+                    
+                    return true;
+                } else {
+                    console.warn(`❌ 积分不足: 需要${amount}, 当前${this.credits}`);
+                    return false;
+                }
+            }
+        };
+
+        // 初始化积分管理器
+        window.creditsSync = new window.CreditsManager();
+
         // 积分显示修复函数 - 增强版
         window.updateCreditsDisplay = function () {
             const creditsElement = document.getElementById('creditsAmount');
@@ -2433,10 +2501,10 @@
                 credits = window.currentUser.credits;
                 source = 'window.currentUser';
             }
-            // 数据源2: window.creditsManager
-            else if (window.creditsManager && typeof window.creditsManager.credits === 'number') {
-                credits = window.creditsManager.credits;
-                source = 'window.creditsManager';
+            // 数据源2: window.creditsSync
+            else if (window.creditsSync && typeof window.creditsSync.credits === 'number') {
+                credits = window.creditsSync.credits;
+                source = 'window.creditsSync';
             }
             // 数据源3: localStorage
             else {
@@ -2454,33 +2522,45 @@
                 }
             }
 
-            // 更新显示
-            creditsElement.textContent = credits;
-            console.log(`✅ 积分显示已更新: ${credits} (来源: ${source})`);
+            // 同步到积分管理器
+            if (window.creditsSync) {
+                window.creditsSync.setCredits(credits);
+            }
 
-            // 调试信息
-            console.log('🔧 积分数据源状态:');
-            console.log('- window.currentUser:', window.currentUser);
-            console.log('- window.creditsManager:', window.creditsManager);
-            console.log('- localStorage用户数据:', localStorage.getItem('flux_krea_user'));
+            console.log(`✅ 积分显示已更新: ${credits} (来源: ${source})`);
         }
 
-        // 页面加载后立即尝试更新积分显示
+        // 强化积分同步机制
         document.addEventListener('DOMContentLoaded', function () {
+            console.log('📄 页面加载完成，开始积分同步...');
+            
             // 立即尝试更新积分显示
-            setTimeout(updateCreditsDisplay, 500);
+            updateCreditsDisplay();
+            
+            // 多次尝试从API获取积分，确保同步成功
+            const syncAttempts = [500, 1000, 2000, 3000, 5000]; // 0.5s, 1s, 2s, 3s, 5s
+            
+            syncAttempts.forEach((delay, index) => {
+                setTimeout(function () {
+                    console.log(`🔄 第${index + 1}次积分同步尝试 (${delay}ms后)...`);
+                    
+                    // 检查是否有用户数据
+                    const hasUser = window.currentUser || localStorage.getItem('flux_krea_user');
+                    
+                    if (hasUser) {
+                        console.log('✅ 发现用户数据，开始从API获取积分...');
+                        fetchCreditsFromAPI();
+                    } else {
+                        console.log('⚠️ 暂未发现用户数据，跳过此次同步');
+                        updateCreditsDisplay(); // 仍然尝试更新显示
+                    }
+                }, delay);
+            });
 
-            // 延迟2秒后从API获取积分（确保用户登录状态已加载）
-            setTimeout(function () {
-                if (window.currentUser || localStorage.getItem('flux_krea_user')) {
-                    console.log('🔄 页面加载完成，从API获取最新积分...');
-                    fetchCreditsFromAPI();
-                }
-            }, 2000);
-
-            // 每30秒检查一次积分更新
+            // 每30秒定期同步积分
             setInterval(function () {
                 if (window.currentUser || localStorage.getItem('flux_krea_user')) {
+                    console.log('⏰ 定期积分同步...');
                     fetchCreditsFromAPI();
                 }
             }, 30000);
@@ -2567,8 +2647,10 @@
                         if (window.currentUser) {
                             window.currentUser.credits = data.credits;
                         }
-                        if (window.creditsManager) {
-                            window.creditsManager.credits = data.credits;
+                        
+                        // 使用新的积分管理器
+                        if (window.creditsSync) {
+                            window.creditsSync.setCredits(data.credits);
                         }
 
                         // 更新localStorage
@@ -2579,7 +2661,7 @@
                             localStorage.setItem('flux_krea_user', JSON.stringify(user));
                         }
 
-                        // 更新显示
+                        // 确保显示更新
                         updateCreditsDisplay();
                         return data.credits;
                     } else {
@@ -2608,6 +2690,21 @@
         window.refreshCredits = function () {
             console.log('🔄 手动刷新积分...');
             fetchCreditsFromAPI();
+        }
+
+        // 积分管理器测试函数
+        window.testCreditsManager = function () {
+            console.log('🧪 测试积分管理器...');
+            console.log('- creditsSync对象:', window.creditsSync);
+            console.log('- 当前积分:', window.creditsSync?.credits);
+            console.log('- creditsAmount元素:', document.getElementById('creditsAmount'));
+            console.log('- currentUser:', window.currentUser);
+            
+            // 测试设置积分
+            if (window.creditsSync) {
+                console.log('🔧 测试设置积分为100...');
+                window.creditsSync.setCredits(100);
+            }
         }
 
         // 重复的generateImage函数已删除，使用页面顶部的版本
@@ -2680,8 +2777,14 @@
 
                 if (result.success && result.image) {
                     // 扣除积分
-                    if (window.creditsManager && window.creditsManager.deductCredits) {
-                        await window.creditsManager.deductCredits(generationCost, '图像生成');
+                    if (window.creditsSync && window.creditsSync.deductCredits) {
+                        await window.creditsSync.deductCredits(generationCost, '图像生成');
+                    } else if (window.currentUser) {
+                        // 备用方案：直接更新用户积分
+                        window.currentUser.credits = Math.max(0, window.currentUser.credits - generationCost);
+                        if (window.creditsSync) {
+                            window.creditsSync.setCredits(window.currentUser.credits);
+                        }
                     }
 
                     // 显示生成结果
@@ -3038,6 +3141,19 @@
                     }
                     
                     this.updateUIForAuthenticatedUser();
+                    
+                    // 立即同步积分显示
+                    if (window.creditsSync && this.currentUser.credits !== undefined) {
+                        window.creditsSync.setCredits(this.currentUser.credits);
+                        console.log('✅ 登录后积分已同步:', this.currentUser.credits);
+                    }
+                    
+                    // 从API获取最新积分
+                    setTimeout(() => {
+                        if (window.fetchCreditsFromAPI) {
+                            window.fetchCreditsFromAPI();
+                        }
+                    }, 500);
                     
                     console.log('用户认证完成:', this.currentUser);
                     
