@@ -51,6 +51,8 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <!-- Initialize Supabase client before auth-bootstrap -->
     <script src="/js/supabase-init.js" defer></script>
+    <!-- 统一状态同步模块 -->
+    <script src="/js/modules/unified-state-sync.js"></script>
 
     <!-- PayPal SDK -->
     <script
@@ -928,7 +930,7 @@
             <div class="nav-actions">
                 <div class="credits-display" id="creditsDisplay">
                     <i class="fas fa-coins"></i>
-                    <span id="creditsAmount">20</span>
+                    <span id="creditsAmount">--</span>
                 </div>
                 <a href="#" class="signin-btn" id="pricingSignInBtn">
                     <div class="google-icon"></div>
@@ -1277,34 +1279,19 @@
             document.body.style.overflow = 'auto';
         }
 
-        // 复用首页的Google登录逻辑
+        // 复用首页的Google登录逻辑（使用统一状态管理器）
         async function redirectToLogin() {
             try {
                 console.log('开始Google登录...');
-
-                const { data, error } = await supabaseClient.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: {
-                        redirectTo: `${window.location.origin}/pricing.html?plan=${currentPlan || 'pro'}`,
-                        queryParams: {
-                            access_type: 'offline',
-                            prompt: 'consent',
-                        },
-                    }
-                });
-
-                if (error) {
-                    console.error('Google登录错误:', error);
-
-                    if (error.message && error.message.includes('provider is not enabled')) {
-                        alert('请检查Supabase中的Google OAuth配置：\n1. Authentication > Providers > Google\n2. 确保"Enable sign in with Google"已开启\n3. 检查Client ID和Client Secret是否正确填入');
-                    } else {
-                        alert('登录失败，请稍后重试：' + (error.message || error));
-                    }
+                
+                if (window.UnifiedStateSync) {
+                    await window.UnifiedStateSync.signIn();
+                } else {
+                    throw new Error('统一状态同步器未加载');
                 }
             } catch (error) {
-                console.error('登录过程中发生错误:', error);
-                alert('登录失败，请稍后重试');
+                console.error('Google登录失败:', error);
+                alert('登录失败，请稍后重试：' + (error.message || error));
             }
         }
 
@@ -1316,17 +1303,21 @@
             try {
                 console.log('Opening subscription modal for plan:', planType);
 
-                // 异步检查用户认证状态
-                const isAuthenticated = await checkSupabaseSession();
+                // 使用统一状态管理器检查用户认证状态
+                if (!window.UnifiedStateSync) {
+                    console.error('❌ 统一状态同步器未加载');
+                    alert('系统初始化中，请稍后重试...');
+                    return;
+                }
 
-                if (!isAuthenticated) {
+                const currentUser = window.UnifiedStateSync.getCurrentUser();
+                if (!currentUser) {
                     console.log('User not authenticated, showing login modal');
-                    // 显示更友好的登录提示
                     showLoginRequiredModal();
                     return;
                 }
 
-                console.log('User authenticated, proceeding with subscription modal');
+                console.log('User authenticated, proceeding with subscription modal:', currentUser.email);
             } catch (error) {
                 console.error('Error in openSubscriptionModal:', error);
                 alert('无法打开订阅界面，请刷新页面重试。');
@@ -1535,38 +1526,37 @@
 
         // 页面加载时检查URL参数和用户状态
         document.addEventListener('DOMContentLoaded', async function () {
-            // 初始化Supabase认证状态监听
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                console.log('认证状态变化:', event, session);
+            console.log('🚀 Pricing页面初始化...');
+            
+            // 等待统一状态管理器加载完成
+            let maxWait = 50; // 最多等待5秒
+            while (!window.UnifiedStateSync && maxWait > 0) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                maxWait--;
+            }
+            
+            if (!window.UnifiedStateSync) {
+                console.error('❌ 统一状态管理器加载超时');
+                return;
+            }
 
-                if (event === 'SIGNED_IN' && session) {
-                    // 更新全局用户状态
-                    currentUser = {
-                        uuid: session.user.id,
-                        email: session.user.email,
-                        name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || '',
-                        avatar_url: session.user.user_metadata?.avatar_url || '',
-                        ...session.user.user_metadata
-                    };
-                    console.log('用户已登录:', currentUser);
-                } else if (event === 'SIGNED_OUT') {
-                    currentUser = null;
-                    console.log('用户已登出');
+            // 添加状态变更监听器
+            window.UnifiedStateSync.addListener((event, data) => {
+                console.log('🔔 Pricing页面收到状态变更:', event, data);
+                
+                if (event === 'userChanged' || event === 'creditsChanged') {
+                    updateNavigationDisplay();
                 }
             });
 
-            // 检查初始认证状态
-            await checkSupabaseSession();
-
-            // 如果用户已登录，显示用户状态和余额
-            if (currentUser) {
-                await updateUserStatusDisplay();
-            }
+            // 更新导航栏显示
+            updateNavigationDisplay();
 
             const urlParams = new URLSearchParams(window.location.search);
             const planParam = urlParams.get('plan');
 
             // 如果URL中有plan参数且用户已登录，自动打开订阅模态框
+            const currentUser = window.UnifiedStateSync.getCurrentUser();
             if (planParam && currentUser) {
                 setTimeout(() => {
                     createSubscription(planParam);
@@ -2110,6 +2100,10 @@
                 // 立即更新localStorage中的用户数据
                 if (currentUser) {
                     localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+                    
+                    // 广播状态变化到其他页面
+                    localStorage.setItem('flux_krea_state_change', Date.now().toString());
+                    console.log('✅ 积分更新已同步到其他页面:', currentUser.credits);
                 }
 
                 // 触发跨页面状态同步事件
@@ -2271,6 +2265,10 @@
 
                     // 更新localStorage
                     localStorage.setItem('flux_krea_user', JSON.stringify(currentUser));
+                    
+                    // 广播状态变化到其他页面
+                    localStorage.setItem('flux_krea_state_change', Date.now().toString());
+                    console.log('✅ 积分同步已广播到其他页面:', newCredits);
 
                     // 使用统一积分同步系统
                     if (window.creditsSync) {
@@ -2284,35 +2282,46 @@
 
         // 更新导航栏显示
         function updateNavigationDisplay() {
+            if (!window.UnifiedStateSync) return;
+            
+            const currentUser = window.UnifiedStateSync.getCurrentUser();
+            const credits = window.UnifiedStateSync.getCredits();
+            
             const creditsDisplay = document.getElementById('creditsDisplay');
+            const creditsAmount = document.getElementById('creditsAmount');
             const signinBtn = document.querySelector('.signin-btn');
 
-            if (currentUser && currentUser.email) {
-                // 已登录状态
-                if (creditsDisplay) {
-                    creditsDisplay.style.display = 'flex';
-                }
+            // 更新积分显示
+            if (creditsDisplay) {
+                creditsDisplay.style.display = 'flex';
+            }
+            
+            if (creditsAmount) {
+                creditsAmount.textContent = credits;
+            }
 
-                if (signinBtn) {
+            // 更新登录按钮
+            if (signinBtn) {
+                if (currentUser && currentUser.email) {
+                    // 已登录状态
                     signinBtn.innerHTML = `
                         <img src="${currentUser.avatar_url || 'https://via.placeholder.com/18'}" 
                              style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
                         <span>${currentUser.email.split('@')[0]}</span>
                     `;
-                }
-            } else {
-                // 未登录状态
-                if (creditsDisplay) {
-                    creditsDisplay.style.display = 'flex';
-                }
-
-                if (signinBtn) {
+                } else {
+                    // 未登录状态
                     signinBtn.innerHTML = `
                         <div class="google-icon"></div>
                         <span>Sign in</span>
                     `;
                 }
             }
+            
+            console.log('✅ Pricing页面导航栏已更新:', { 
+                user: currentUser?.email || '未登录', 
+                credits 
+            });
         }
 
         // 让导航栏 Sign in 直接触发 Google 登录并回到本页
@@ -2321,29 +2330,21 @@
             if (!btn) return;
             btn.addEventListener('click', async (e) => {
                 e.preventDefault();
-                if (typeof redirectToLogin === 'function') {
-                    return redirectToLogin();
-                }
-                if (window.supabaseClient?.auth) {
+                
+                // 使用统一状态管理器进行登录
+                if (window.UnifiedStateSync) {
                     try {
-                        const { error } = await supabaseClient.auth.signInWithOAuth({
-                            provider: 'google',
-                            options: {
-                                redirectTo: `${window.location.origin}/pricing.html`,
-                                queryParams: { access_type: 'offline', prompt: 'consent' }
-                            }
-                        });
-                        if (error) alert('Login failed: ' + error.message);
-                    } catch (_) {
-                        alert('Login error, please retry.');
+                        await window.UnifiedStateSync.signIn();
+                    } catch (error) {
+                        console.error('登录失败:', error);
+                        alert('登录失败: ' + error.message);
                     }
                 } else {
-                    alert('Auth not ready. Please refresh and try again.');
+                    alert('系统初始化中，请稍后重试...');
                 }
             });
         });
     </script>
-    <script src="/js/auth-bootstrap.js" defer></script>
 </body>
 
 </html>

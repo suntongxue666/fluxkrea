@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>状态同步测试页面</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .status-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .user-info {
+            background: #e0f2fe;
+            border-left: 4px solid #0891b2;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .credits-info {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 5px;
+            background: #6366f1;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .btn:hover {
+            background: #5b5bd6;
+        }
+        
+        .btn.secondary {
+            background: #64748b;
+        }
+        
+        .btn.secondary:hover {
+            background: #475569;
+        }
+        
+        .log-area {
+            background: #1a1a1a;
+            color: #ffffff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+        
+        .nav-links {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+        
+        .nav-links a {
+            color: #6366f1;
+            text-decoration: none;
+            margin-right: 15px;
+            font-weight: 500;
+        }
+        
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <!-- Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <!-- Supabase初始化 -->
+    <script src="/js/supabase-init.js"></script>
+    <!-- 统一状态同步模块 -->
+    <script src="/js/modules/unified-state-sync.js"></script>
+
+    <h1>🔄 跨页面状态同步测试</h1>
+    
+    <div class="nav-links">
+        <strong>导航链接：</strong>
+        <a href="/">首页</a>
+        <a href="/pricing.html">Pricing页面</a>
+        <a href="/test-sync.html">当前测试页</a>
+    </div>
+
+    <div class="status-card">
+        <h2>📊 当前状态</h2>
+        
+        <div class="user-info" id="userInfo">
+            <strong>用户状态：</strong>加载中...
+        </div>
+        
+        <div class="credits-info" id="creditsInfo">
+            <strong>积分状态：</strong>加载中...
+        </div>
+    </div>
+
+    <div class="status-card">
+        <h2>🧪 测试操作</h2>
+        
+        <button class="btn" onclick="simulateLogin()">🔐 模拟登录</button>
+        <button class="btn secondary" onclick="simulateLogout()">🔓 模拟登出</button>
+        <button class="btn" onclick="simulateCreditsUpdate()">💰 模拟积分更新</button>
+        <button class="btn" onclick="testDeductCredits()">➖ 扣除10积分</button>
+        <button class="btn secondary" onclick="refreshStatus()">🔄 刷新状态</button>
+        <button class="btn secondary" onclick="debugLocalStorage()">🔍 调试存储</button>
+        
+        <div style="margin-top: 15px; padding: 10px; background: #fef3c7; border-radius: 6px; font-size: 12px;">
+            <strong>说明：</strong>这些是模拟操作，用于测试跨页面状态同步功能。请在多个页面间切换查看同步效果。
+        </div>
+    </div>
+
+    <div class="status-card">
+        <h2>📋 实时日志</h2>
+        <div class="log-area" id="logArea"></div>
+        <button class="btn secondary" onclick="clearLog()">清除日志</button>
+    </div>
+
+    <div class="status-card">
+        <h2>🎯 跨页面同步测试指南</h2>
+        <ol style="line-height: 2; color: #374151;">
+            <li><strong>打开多个页面：</strong>
+                <br>• 在新标签页中打开 <a href="/" target="_blank">首页</a>
+                <br>• 在新标签页中打开 <a href="/pricing.html" target="_blank">Pricing页面</a>
+                <br>• 保持当前测试页面打开
+            </li>
+            <li><strong>测试登录同步：</strong>
+                <br>• 在此页面点击"模拟登录"
+                <br>• 切换到其他页面，观察导航栏是否显示用户信息
+                <br>• 观察积分是否同步显示
+            </li>
+            <li><strong>测试积分同步：</strong>
+                <br>• 在此页面点击"模拟积分更新"或"扣除10积分"
+                <br>• 切换到其他页面，观察积分数值是否实时更新
+            </li>
+            <li><strong>测试登出同步：</strong>
+                <br>• 在此页面点击"模拟登出"
+                <br>• 切换到其他页面，观察导航栏是否恢复到未登录状态
+            </li>
+        </ol>
+        
+        <div style="margin-top: 15px; padding: 10px; background: #e0f2fe; border-radius: 6px; font-size: 14px;">
+            <strong>💡 预期效果：</strong>在任何页面进行的操作，应该立即在其他所有打开的页面中反映出来，无需刷新。
+        </div>
+    </div>
+
+    <script>
+        // 日志函数
+        function log(message) {
+            const logArea = document.getElementById('logArea');
+            const timestamp = new Date().toLocaleTimeString();
+            logArea.innerHTML += `[${timestamp}] ${message}\n`;
+            logArea.scrollTop = logArea.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLog() {
+            document.getElementById('logArea').innerHTML = '';
+        }
+
+        // 更新状态显示
+        function updateStatusDisplay() {
+            if (!window.UnifiedStateSync) {
+                log('❌ UnifiedStateSync未加载');
+                return;
+            }
+
+            const user = window.UnifiedStateSync.getCurrentUser();
+            const credits = window.UnifiedStateSync.getCredits();
+
+            const userInfo = document.getElementById('userInfo');
+            const creditsInfo = document.getElementById('creditsInfo');
+
+            if (user) {
+                userInfo.innerHTML = `
+                    <strong>用户状态：</strong>✅ 已登录<br>
+                    <strong>邮箱：</strong>${user.email}<br>
+                    <strong>姓名：</strong>${user.name || '未设置'}<br>
+                    <strong>UUID：</strong>${user.uuid}
+                `;
+            } else {
+                userInfo.innerHTML = '<strong>用户状态：</strong>❌ 未登录';
+            }
+
+            creditsInfo.innerHTML = `
+                <strong>积分状态：</strong>${credits} 积分<br>
+                <strong>更新时间：</strong>${new Date().toLocaleString()}
+            `;
+
+            log(`✅ 状态已更新 - 用户: ${user?.email || '未登录'}, 积分: ${credits}`);
+        }
+
+        // 模拟登录
+        async function simulateLogin() {
+            try {
+                log('🔐 开始模拟登录...');
+                
+                if (!window.UnifiedStateSync) {
+                    throw new Error('UnifiedStateSync未加载');
+                }
+
+                // 创建模拟用户数据
+                const simulatedUser = {
+                    uuid: 'test-user-' + Date.now(),
+                    email: 'test@example.com',
+                    name: '测试用户',
+                    avatar_url: 'https://via.placeholder.com/32',
+                    credits: 100,
+                    access_token: 'simulated_token_' + Date.now(),
+                    refresh_token: 'simulated_refresh_token',
+                    is_signed_in: true
+                };
+
+                // 直接调用状态管理器的内部方法
+                await window.UnifiedStateSync.setUser(simulatedUser, true);
+                window.UnifiedStateSync.setCredits(simulatedUser.credits, true);
+                
+                log('✅ 模拟登录成功');
+                log(`👤 用户: ${simulatedUser.email}, 积分: ${simulatedUser.credits}`);
+                updateStatusDisplay();
+                
+            } catch (error) {
+                log(`❌ 模拟登录失败: ${error.message}`);
+            }
+        }
+
+        // 模拟登出
+        async function simulateLogout() {
+            try {
+                log('🔓 开始模拟登出...');
+                
+                if (!window.UnifiedStateSync) {
+                    throw new Error('UnifiedStateSync未加载');
+                }
+
+                // 清除用户状态
+                await window.UnifiedStateSync.setUser(null, true);
+                
+                log('✅ 模拟登出成功');
+                updateStatusDisplay();
+                
+            } catch (error) {
+                log(`❌ 模拟登出失败: ${error.message}`);
+            }
+        }
+
+        // 模拟积分更新
+        async function simulateCreditsUpdate() {
+            try {
+                log('💰 开始模拟积分更新...');
+                
+                if (!window.UnifiedStateSync) {
+                    throw new Error('UnifiedStateSync未加载');
+                }
+
+                const currentUser = window.UnifiedStateSync.getCurrentUser();
+                if (!currentUser) {
+                    log('❌ 请先模拟登录');
+                    return;
+                }
+
+                // 随机增加积分
+                const newCredits = window.UnifiedStateSync.getCredits() + Math.floor(Math.random() * 50) + 10;
+                window.UnifiedStateSync.setCredits(newCredits, true);
+                
+                log(`✅ 积分更新成功: ${newCredits}`);
+                updateStatusDisplay();
+                
+            } catch (error) {
+                log(`❌ 积分更新失败: ${error.message}`);
+            }
+        }
+
+        // 测试扣除积分
+        async function testDeductCredits() {
+            try {
+                log('➖ 开始测试扣除10积分...');
+                
+                if (!window.UnifiedStateSync) {
+                    throw new Error('UnifiedStateSync未加载');
+                }
+
+                const success = await window.UnifiedStateSync.deductCredits(10);
+                if (success) {
+                    log('✅ 积分扣除成功');
+                } else {
+                    log('❌ 积分扣除失败 - 积分不足');
+                }
+                updateStatusDisplay();
+                
+            } catch (error) {
+                log(`❌ 积分扣除失败: ${error.message}`);
+            }
+        }
+
+        // 刷新状态
+        function refreshStatus() {
+            log('🔄 刷新状态显示...');
+            updateStatusDisplay();
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', async function() {
+            log('🚀 测试页面初始化...');
+            
+            // 等待UnifiedStateSync加载
+            let maxWait = 50;
+            while (!window.UnifiedStateSync && maxWait > 0) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                maxWait--;
+            }
+            
+            if (window.UnifiedStateSync) {
+                log('✅ UnifiedStateSync已加载');
+                
+                // 添加状态监听器
+                window.UnifiedStateSync.addListener((event, data) => {
+                    log(`🔔 收到状态变更事件: ${event}`);
+                    if (event === 'userChanged') {
+                        log(`👤 用户状态变更: ${data.newUser?.email || '已登出'}`);
+                    } else if (event === 'creditsChanged') {
+                        log(`💰 积分变更: ${data.oldCredits} → ${data.newCredits}`);
+                    }
+                    updateStatusDisplay();
+                });
+                
+                // 初始状态显示
+                updateStatusDisplay();
+                
+                log('✅ 初始化完成，可以开始测试');
+            } else {
+                log('❌ UnifiedStateSync加载超时');
+            }
+        });
+
+        // 监听跨页面状态变更
+        window.addEventListener('unifiedStateChanged', function(event) {
+            log('📡 收到跨页面状态变更通知');
+            updateStatusDisplay();
+        });
+
+        // 调试localStorage函数
+        function debugLocalStorage() {
+            log('🔍 调试localStorage存储状态:');
+            log('----------------------------------');
+            
+            // 检查所有相关的localStorage键
+            const keys = ['flux_krea_user', 'flux_krea_credits', 'flux_krea_state_change'];
+            
+            keys.forEach(key => {
+                const value = localStorage.getItem(key);
+                if (value) {
+                    try {
+                        const parsed = JSON.parse(value);
+                        log(`📦 ${key}: ${JSON.stringify(parsed, null, 2)}`);
+                    } catch (e) {
+                        log(`📦 ${key}: ${value} (原始字符串)`);
+                    }
+                } else {
+                    log(`📦 ${key}: (不存在)`);
+                }
+            });
+            
+            log('----------------------------------');
+            
+            // 检查UnifiedStateSync状态
+            if (window.UnifiedStateSync) {
+                const currentUser = window.UnifiedStateSync.getCurrentUser();
+                const credits = window.UnifiedStateSync.getCredits();
+                log(`🔄 UnifiedStateSync状态:`);
+                log(`   用户: ${currentUser?.email || '未登录'}`);
+                log(`   积分: ${credits}`);
+            } else {
+                log('❌ UnifiedStateSync未加载');
+            }
+            
+            // 手动触发状态同步
+            log('🔄 手动触发状态同步...');
+            if (window.UnifiedStateSync) {
+                window.UnifiedStateSync.broadcastStateChange();
+                log('✅ 状态同步信号已发送');
+            }
+        }
+
+        // 监听localStorage变化
+        window.addEventListener('storage', function(event) {
+            if (event.key === 'flux_krea_user' || event.key === 'flux_krea_state_change') {
+                log('📦 检测到localStorage变化');
+                setTimeout(updateStatusDisplay, 100);
+            }
+        });
+    </script>
+</body>
+</html>

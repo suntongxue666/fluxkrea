@@ -4,9 +4,10 @@
   "description": "AI Image Generator with FLUX model",
   "main": "index.js",
   "scripts": {
-    "dev": "vercel dev",
+    "dev": "echo \"Use vercel dev instead\"",
     "build": "echo \"no build step\"",
-    "start": "vercel dev",
+    "start": "echo \"Use vercel dev instead\"",
+    "python-server": "python3 -m http.server 8000 --directory public",
     "test-api": "node test_local_api.js",
     "check-env": "node check_env.js"
   },

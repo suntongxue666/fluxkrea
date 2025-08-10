@@ -54,29 +54,46 @@
         window.generateImage = async function () {
             console.log('=== 🎯 开始图像生成 ===');
             console.log('✅ generateImage函数被正确调用！');
-            console.log('当前用户状态:', window.currentUser);
 
-            // 检查用户登录状态
-            if (!window.currentUser) {
-                console.log('❌ 用户未登录，显示登录弹窗');
-                alert('请先登录');
+            // 使用统一状态管理器检查用户状态
+            const stateSync = window.UnifiedStateSync;
+            if (!stateSync) {
+                console.error('❌ 统一状态同步器未加载');
+                alert('系统初始化中，请稍后重试...');
                 return;
             }
 
-            console.log('✅ 用户已登录:', window.currentUser.email);
-
-            // 检查积分
-            const currentCredits = window.creditsSync?.credits || window.currentUser?.credits || 0;
+            const currentUser = stateSync.getCurrentUser();
+            const currentCredits = stateSync.getCredits();
             const generationCost = 10;
+            
+            console.log('当前用户状态:', currentUser?.email || '未登录');
             console.log(`💰 积分检查: 当前${currentCredits}, 需要${generationCost}`);
+            
+            if (!currentUser) {
+                console.log('❌ 用户未登录，需要登录才能生成');
+                
+                // 显示登录提示
+                if (confirm('需要登录才能生成图片。点击确定进行Google登录。')) {
+                    try {
+                        await stateSync.signIn();
+                    } catch (error) {
+                        console.error('登录失败:', error);
+                        alert('登录失败，请重试');
+                    }
+                }
+                return;
+            }
+            
+            console.log('✅ 用户已登录:', currentUser.email);
 
             if (currentCredits < generationCost) {
                 console.log('❌ 积分不足');
-                alert(`积分不足！当前积分: ${currentCredits}，需要: ${generationCost}`);
+                alert(`积分不足！当前积分: ${currentCredits}，需要: ${generationCost}。请前往Pricing页面购买积分。`);
                 return;
             }
 
-            console.log('✅ 积分充足');
+            console.log('✅ 积分充足，开始生成');
 
             const prompt = document.getElementById('prompt')?.value?.trim();
             console.log('📝 提示词检查:', prompt);
@@ -121,12 +138,14 @@
                     const result = await response.json();
 
                     if (result.success && result.image) {
-                        // 扣除积分
-                        if (window.creditsSync && window.creditsSync.deductCredits) {
-                            await window.creditsSync.deductCredits(generationCost, '图像生成');
-                        } else if (window.currentUser) {
-                            window.currentUser.credits = Math.max(0, window.currentUser.credits - generationCost);
+                        // 使用统一状态管理器扣除积分
+                        const deductSuccess = await stateSync.deductCredits(generationCost);
+                        if (!deductSuccess) {
+                            console.error('❌ 积分扣除失败');
+                            throw new Error('积分扣除失败，请重试');
                         }
+                        
+                        console.log('✅ 积分扣除成功');
 
                         // 显示生成结果
                         if (resultArea) {
@@ -158,6 +177,63 @@
             }
         };
 
+        // 测试生图API函数
+        window.testGenerateAPI = async function() {
+            console.log('🔧 测试生图API...');
+            const prompt = document.getElementById('prompt')?.value?.trim() || '测试提示词';
+            
+            try {
+                const response = await fetch('/api/generate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        prompt: prompt,
+                        width: 1024,
+                        height: 1024,
+                        steps: 4
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('🎯 API响应:', result);
+                alert('生图API测试成功！查看控制台了解详情。');
+            } catch (error) {
+                console.error('❌ 生图API测试失败:', error);
+                if (error.message.includes('Unexpected token')) {
+                    alert(`⚠️ 生图API无法工作:\n\n` +
+                          `原因: 当前使用Python静态服务器\n\n` +
+                          `需要切换到Vercel开发服务器:\n` +
+                          `1. 停止当前服务器 (Ctrl+C)\n` +
+                          `2. 运行: vercel dev\n` +
+                          `3. 访问: http://localhost:3000`);
+                } else {
+                    alert('生图API测试失败: ' + error.message);
+                }
+            }
+        };
+
+        // 检查用户状态函数（调试用）
+        window.checkUserState = function() {
+            const currentUser = window.currentUser || window.UserStateManager?.currentUser;
+            const localStorageUser = localStorage.getItem('flux_krea_user');
+            
+            console.log('=== 用户状态检查 ===');
+            console.log('window.currentUser:', currentUser);
+            console.log('UserStateManager.currentUser:', window.UserStateManager?.currentUser);
+            console.log('localStorage用户数据:', localStorageUser);
+            
+            if (localStorageUser) {
+                try {
+                    const parsedUser = JSON.parse(localStorageUser);
+                    console.log('解析后的localStorage用户:', parsedUser);
+                } catch (e) {
+                    console.error('localStorage用户数据解析失败:', e);
+                }
+            }
+            
+            alert(`用户状态检查完成，请查看控制台。\n\n当前用户: ${currentUser ? currentUser.email : '未登录'}\n积分: ${currentUser ? currentUser.credits : '未知'}`);
+        };
+
         // 简单的测试函数
         window.testClick = function () {
             alert('按钮点击测试成功！');
@@ -168,12 +244,286 @@
 
         console.log('✅ generateImage函数已定义在页面顶部');
         console.log('🔧 版本时间戳:', new Date().toISOString());
+
+        // 立即初始化用户状态管理器
+        (function() {
+            console.log('🚀 立即初始化用户状态管理器...');
+            
+            // 如果页面已加载完成，立即初始化
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initUserState);
+            } else {
+                initUserState();
+            }
+            
+            function initUserState() {
+                if (window.UserStateManager) {
+                    window.UserStateManager.initialize();
+                    console.log('✅ 用户状态管理器已初始化');
+                }
+            }
+        })();
+
+        // 统一的用户状态管理器
+        window.UserStateManager = {
+            currentUser: null,
+            
+            // 初始化用户状态
+            async initialize() {
+                console.log('🔧 初始化用户状态管理器...');
+                
+                // 从localStorage恢复用户状态
+                const savedUser = localStorage.getItem('flux_krea_user');
+                if (savedUser) {
+                    try {
+                        this.currentUser = JSON.parse(savedUser);
+                        window.currentUser = this.currentUser;
+                        console.log('✅ 从localStorage恢复用户状态:', this.currentUser.email);
+                    } catch (error) {
+                        console.error('❌ 解析用户数据失败:', error);
+                        localStorage.removeItem('flux_krea_user');
+                    }
+                }
+                
+                // 更新UI
+                this.updateUI();
+                
+                // 如果有用户，同步积分
+                if (this.currentUser) {
+                    await this.syncCredits();
+                }
+            },
+            
+            // 设置用户状态
+            setUser(user) {
+                this.currentUser = user;
+                window.currentUser = user;
+                
+                if (user) {
+                    localStorage.setItem('flux_krea_user', JSON.stringify(user));
+                    console.log('✅ 用户状态已保存:', user.email);
+                } else {
+                    localStorage.removeItem('flux_krea_user');
+                    console.log('✅ 用户状态已清除');
+                }
+                
+                this.updateUI();
+                this.broadcastStateChange();
+            },
+            
+            // 更新UI显示
+            updateUI() {
+                const signinBtn = document.querySelector('.signin-btn');
+                const creditsDisplay = document.getElementById('creditsDisplay');
+                const creditsAmount = document.getElementById('creditsAmount');
+                
+                if (this.currentUser) {
+                    // 已登录状态
+                    if (signinBtn) {
+                        signinBtn.innerHTML = `
+                            <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/24'}" 
+                                 alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px;">
+                            <span>${this.currentUser.name || this.currentUser.email}</span>
+                        `;
+                        signinBtn.onclick = () => this.signOut();
+                    }
+                    
+                    if (creditsDisplay) {
+                        creditsDisplay.style.display = 'flex';
+                    }
+                    
+                    if (creditsAmount) {
+                        creditsAmount.textContent = this.currentUser.credits || 0;
+                    }
+                } else {
+                    // 未登录状态
+                    if (signinBtn) {
+                        signinBtn.innerHTML = `
+                            <div class="google-icon"></div>
+                            <span>Sign in</span>
+                        `;
+                        signinBtn.onclick = () => this.signIn();
+                    }
+                    
+                    if (creditsDisplay) {
+                        creditsDisplay.style.display = 'flex';
+                    }
+                    
+                    if (creditsAmount) {
+                        creditsAmount.textContent = '20'; // 未登录显示20积分
+                    }
+                }
+            },
+            
+            // Google登录
+            async signIn() {
+                try {
+                    console.log('🔑 开始Google登录...');
+                    
+                    if (!window.supabaseClient) {
+                        throw new Error('Supabase客户端未初始化');
+                    }
+                    
+                    const { data, error } = await window.supabaseClient.auth.signInWithOAuth({
+                        provider: 'google',
+                        options: {
+                            redirectTo: window.location.origin
+                        }
+                    });
+                    
+                    if (error) {
+                        throw error;
+                    }
+                    
+                    console.log('✅ Google登录成功');
+                } catch (error) {
+                    console.error('❌ Google登录失败:', error);
+                    alert('登录失败: ' + error.message);
+                }
+            },
+            
+            // 登出
+            async signOut() {
+                try {
+                    if (window.supabaseClient) {
+                        await window.supabaseClient.auth.signOut();
+                    }
+                    this.setUser(null);
+                    console.log('✅ 用户已登出');
+                } catch (error) {
+                    console.error('❌ 登出失败:', error);
+                }
+            },
+            
+            // 同步积分
+            async syncCredits() {
+                if (!this.currentUser) return;
+                
+                try {
+                    const response = await fetch('/api/get-user-credits', {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${this.currentUser.access_token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.credits !== undefined) {
+                            this.currentUser.credits = data.credits;
+                            this.setUser(this.currentUser);
+                            console.log('✅ 积分同步成功:', data.credits);
+                        }
+                    }
+                } catch (error) {
+                    console.error('❌ 积分同步失败:', error);
+                }
+            },
+            
+            // 扣除积分
+            async deductCredits(amount) {
+                if (!this.currentUser) return false;
+                
+                if (this.currentUser.credits < amount) {
+                    return false;
+                }
+                
+                // 先本地扣除
+                this.currentUser.credits -= amount;
+                this.setUser(this.currentUser);
+                
+                // 然后同步到服务器
+                await this.syncCredits();
+                
+                return true;
+            },
+            
+            // 广播状态变化（用于跨页面同步）
+            broadcastStateChange() {
+                // 触发storage事件，通知其他页面
+                localStorage.setItem('flux_krea_state_change', Date.now().toString());
+                
+                // 也触发自定义事件
+                window.dispatchEvent(new CustomEvent('userStateChanged', {
+                    detail: { user: this.currentUser }
+                }));
+            }
+        };
+
+        // 监听跨页面状态同步
+        window.addEventListener('storage', function(e) {
+            console.log('🔄 检测到localStorage变化:', e.key);
+            
+            if (e.key === 'flux_krea_user') {
+                // 用户状态发生变化
+                console.log('👤 用户状态变化，重新初始化...');
+                
+                if (window.UserStateManager) {
+                    // 延迟一点时间确保数据已写入
+                    setTimeout(() => {
+                        window.UserStateManager.initialize();
+                    }, 100);
+                }
+            } else if (e.key === 'flux_krea_state_change') {
+                // 其他页面触发的状态变化
+                console.log('🔄 其他页面状态变化，同步中...');
+                
+                if (window.UserStateManager) {
+                    setTimeout(() => {
+                        window.UserStateManager.initialize();
+                    }, 100);
+                }
+            }
+        });
+
+        // 监听页面可见性变化，当页面重新可见时同步状态
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden && window.UserStateManager) {
+                console.log('👁️ 页面重新可见，检查状态同步...');
+                setTimeout(() => {
+                    window.UserStateManager.initialize();
+                }, 200);
+            }
+        });
+
+        // 测试API配置函数
+        window.testAPIConfig = async function() {
+            console.log('🧪 测试API配置...');
+            try {
+                const response = await fetch('/api/test-config');
+                const config = await response.json();
+                console.log('📋 API配置信息:', config);
+                alert(`API配置检查结果:\n\n` +
+                      `Replicate Token: ${config.hasReplicateToken ? '✅ 已配置' : '❌ 未配置'}\n` +
+                      `Token长度: ${config.tokenLength}\n` +
+                      `环境: ${config.environment}\n` +
+                      `时间: ${config.timestamp}`);
+            } catch (error) {
+                console.error('❌ API配置检查失败:', error);
+                
+                // 检查是否是因为使用了Python服务器
+                if (error.message.includes('Unexpected token')) {
+                    alert(`⚠️ 检测到问题:\n\n` +
+                          `当前使用的是Python静态服务器，无法运行API。\n\n` +
+                          `解决方案:\n` +
+                          `1. 停止当前服务器 (Ctrl+C)\n` +
+                          `2. 运行: vercel dev\n` +
+                          `3. 访问: http://localhost:3000\n\n` +
+                          `这样API功能才能正常工作！`);
+                } else {
+                    alert('API配置检查失败: ' + error.message);
+                }
+            }
+        };
         console.log('✅ testClick测试函数已定义');
     </script>
 
     <!-- Supabase SDK and init (must load before auth-bootstrap) -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <script src="js/supabase-init.js" defer></script>
+    <!-- 统一状态同步模块 -->
+    <script src="js/modules/unified-state-sync.js"></script>
 
     <!-- External Resources -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -1221,8 +1571,83 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            /* 移动端导航栏样式 */
+            .nav {
+                position: relative;
+            }
+            
             .nav-links {
-                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(10px);
+                flex-direction: column;
+                gap: 16px;
+                padding: 24px;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: all 0.3s ease;
+                border-radius: 0 0 12px 12px;
+            }
+            
+            .nav-links.active {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            .nav-links li {
+                width: 100%;
+                text-align: center;
+            }
+            
+            .nav-links a {
+                display: block;
+                padding: 12px 16px;
+                border-radius: 8px;
+                transition: background-color 0.2s;
+            }
+            
+            .nav-links a:hover {
+                background-color: rgba(99, 102, 241, 0.1);
+            }
+            
+                                /* 汉堡菜单按钮 */
+            .hamburger-menu {
+                display: flex; /* 移动端显示 */
+                flex-direction: column;
+                gap: 3px;
+                cursor: pointer;
+                padding: 8px;
+                border-radius: 6px;
+                transition: background-color 0.2s;
+            }
+            
+            .hamburger-menu:hover {
+                background-color: rgba(0, 0, 0, 0.05);
+            }
+            
+            .hamburger-menu span {
+                width: 20px;
+                height: 2px;
+                background-color: #64748b;
+                transition: all 0.3s ease;
+            }
+            
+            .hamburger-menu.active span:nth-child(1) {
+                transform: rotate(45deg) translate(5px, 5px);
+            }
+            
+            .hamburger-menu.active span:nth-child(2) {
+                opacity: 0;
+            }
+            
+            .hamburger-menu.active span:nth-child(3) {
+                transform: rotate(-45deg) translate(7px, -6px);
             }
 
             /* 移动端登录按钮样式 */
@@ -1880,6 +2305,14 @@
                 <li><a href="pricing.html">Pricing</a></li>
                 <li><a href="#faq">FAQ</a></li>
             </ul>
+            
+            <!-- 汉堡菜单按钮 - 移动端显示 -->
+            <div class="hamburger-menu" onclick="toggleMobileMenu()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            
             <div class="nav-actions">
                 <div class="credits-display" id="creditsDisplay">
                     <i class="fas fa-coins"></i>
@@ -1966,12 +2399,25 @@
                         </div>
                     </div>
 
-                    <button class="generate-btn" id="generateBtn">
+                    <button class="generate-btn" id="generateBtn" onclick="generateImage()">
                         <span class="btn-content">
                             <i class="fas fa-bolt"></i>
                             Generate
                         </span>
                         <span class="credits-cost">-10 Credits</span>
+                    </button>
+                    
+                    <!-- 临时测试按钮 -->
+                    <button onclick="testAPIConfig()" style="margin-top: 10px; padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        🧪 测试API配置
+                    </button>
+                    
+                    <button onclick="testGenerateAPI()" style="margin-top: 10px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        🔧 测试生图API
+                    </button>
+                    
+                    <button onclick="checkUserState()" style="margin-top: 10px; padding: 10px; background: #6f42c1; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        👤 检查用户状态
                     </button>
 
                     <!-- H5 Pricing Entry Button -->
@@ -2400,6 +2846,29 @@
                 faqItem.classList.add('active');
             }
         }
+        
+        // 移动端菜单控制函数
+        function toggleMobileMenu() {
+            const navLinks = document.querySelector('.nav-links');
+            const hamburger = document.querySelector('.hamburger-menu');
+            
+            navLinks.classList.toggle('active');
+            hamburger.classList.toggle('active');
+        }
+        
+        // 点击导航链接后自动关闭移动端菜单
+        document.addEventListener('DOMContentLoaded', function() {
+            const navLinks = document.querySelectorAll('.nav-links a');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    const navLinks = document.querySelector('.nav-links');
+                    const hamburger = document.querySelector('.hamburger-menu');
+                    
+                    navLinks.classList.remove('active');
+                    hamburger.classList.remove('active');
+                });
+            });
+        });
 
         // Smooth scrolling for navigation links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -2534,6 +3003,11 @@
         document.addEventListener('DOMContentLoaded', function () {
             console.log('📄 页面加载完成，开始积分同步...');
             
+            // 强制初始化基本功能
+            setTimeout(() => {
+                window.forceInitialize();
+            }, 100);
+            
             // 立即尝试更新积分显示
             updateCreditsDisplay();
             
@@ -2572,22 +3046,8 @@
             console.log('downloadImage函数是否存在:', typeof window.downloadImage);
             console.log('fetchCreditsFromAPI函数是否存在:', typeof window.fetchCreditsFromAPI);
 
-            // 直接绑定Generate按钮事件
-            const generateBtn = document.getElementById('generateBtn');
-            if (generateBtn) {
-                generateBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    console.log('🎯 Generate按钮被点击');
-                    if (typeof window.generateImage === 'function') {
-                        window.generateImage();
-                    } else {
-                        console.error('❌ generateImage函数未定义');
-                    }
-                });
-                console.log('✅ Generate按钮事件已绑定');
-            } else {
-                console.error('❌ 找不到Generate按钮元素');
-            }
+            // Generate按钮已通过onclick属性绑定，无需重复绑定
+            console.log('✅ Generate按钮通过onclick属性绑定');
         });
 
         // 下载图片函数
@@ -2705,6 +3165,69 @@
                 console.log('🔧 测试设置积分为100...');
                 window.creditsSync.setCredits(100);
             }
+        }
+
+        // 修复用户状态同步的函数
+        window.fixUserState = function () {
+            console.log('🔧 修复用户状态同步...');
+            
+            // 尝试从localStorage恢复用户状态
+            try {
+                const userData = localStorage.getItem('flux_krea_user');
+                if (userData) {
+                    const user = JSON.parse(userData);
+                    window.currentUser = user;
+                    console.log('✅ 从localStorage恢复用户状态:', user.email);
+                    
+                    // 同步积分
+                    if (window.creditsSync && user.credits !== undefined) {
+                        window.creditsSync.setCredits(user.credits);
+                    }
+                    
+                    return true;
+                }
+            } catch (error) {
+                console.error('❌ 恢复用户状态失败:', error);
+            }
+            
+            // 如果没有用户数据，创建匿名用户
+            console.log('⚠️ 未找到用户数据，创建匿名用户状态');
+            window.currentUser = {
+                uuid: 'anonymous-' + Date.now(),
+                email: 'anonymous@example.com',
+                credits: 20,
+                is_anonymous: true
+            };
+            
+            if (window.creditsSync) {
+                window.creditsSync.setCredits(20);
+            }
+            
+            return false;
+        }
+
+        // 强制初始化函数 - 确保基本功能可用
+        window.forceInitialize = function () {
+            console.log('🚀 强制初始化页面功能...');
+            
+            // 1. 修复用户状态
+            window.fixUserState();
+            
+            // 2. 确保积分管理器存在
+            if (!window.creditsSync) {
+                window.creditsSync = new window.CreditsManager();
+                console.log('✅ 创建积分管理器');
+            }
+            
+            // 3. Generate按钮已通过onclick属性绑定，无需重复绑定
+            console.log('✅ Generate按钮已通过onclick绑定');
+            
+            // 4. 更新积分显示
+            if (window.updateCreditsDisplay) {
+                window.updateCreditsDisplay();
+            }
+            
+            console.log('✅ 强制初始化完成');
         }
 
         // 重复的generateImage函数已删除，使用页面顶部的版本
@@ -2834,7 +3357,6 @@
                     </span>
                     <span class="credits-cost">-${generationCost} credits</span>
                 `;
-        }
         }
 
         // 积分系统和用户管理 - Supabase集成
@@ -3944,7 +4466,18 @@
             document.body.style.overflow = 'hidden';
         }
 
-        // 处理登录按钮点击（统一使用 Supabase OAuth）
+        // 处理登录按钮点击（统一使用 UnifiedStateSync）
         async function handleSignInClick() {
-            if (!window.supabaseClient?.auth) {
-                alert('Auth not ready. Please refresh and try again.');
+            try {
+                console.log('🔐 开始Google登录...');
+                
+                if (window.UnifiedStateSync) {
+                    await window.UnifiedStateSync.signIn();
+                } else {
+                    throw new Error('统一状态同步器未加载');
+                }
+            } catch (error) {
+                console.error('❌ Google登录失败:', error);
+                alert('登录失败: ' + error.message);
+            }
+        }

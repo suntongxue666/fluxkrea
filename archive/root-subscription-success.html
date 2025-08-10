@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,9 +51,17 @@
         }
 
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-            100% { transform: scale(1); }
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
         }
 
         .success-title {
@@ -119,8 +128,13 @@
         }
 
         @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         .processing-text {
@@ -182,19 +196,20 @@
             .success-container {
                 padding: 32px 24px;
             }
-            
+
             .action-buttons {
                 flex-direction: column;
             }
         }
     </style>
 </head>
+
 <body>
     <div class="success-container">
         <div class="success-icon">
             <i class="fas fa-check"></i>
         </div>
-        
+
         <h1 class="success-title">Subscription Successful!</h1>
         <p class="success-subtitle">Thank you for subscribing to Flux Krea AI. Your subscription is being processed.</p>
 
@@ -224,7 +239,8 @@
 
         <div class="credits-info">
             <h3><i class="fas fa-coins"></i> Credits Coming Soon!</h3>
-            <p>Your credits will be automatically added to your account within a few minutes. You'll receive an email confirmation once processing is complete.</p>
+            <p>Your credits will be automatically added to your account within a few minutes. You'll receive an email
+                confirmation once processing is complete.</p>
         </div>
 
         <div class="action-buttons">
@@ -252,7 +268,7 @@
         };
 
         // 更新页面信息
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             if (subscriptionId) {
                 document.getElementById('subscriptionId').textContent = subscriptionId;
             }
@@ -277,4 +293,5 @@
         });
     </script>
 </body>
+
 </html>
