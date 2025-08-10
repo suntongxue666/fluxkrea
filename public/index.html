@@ -55,32 +55,32 @@
             console.log('=== 🎯 开始图像生成 ===');
             console.log('✅ generateImage函数被正确调用！');
 
-            // 使用统一状态管理器检查用户状态
-            const stateSync = window.UnifiedStateSync;
-            if (!stateSync) {
-                console.error('❌ 统一状态同步器未加载');
-                alert('系统初始化中，请稍后重试...');
-                return;
-            }
-
-            const currentUser = stateSync.getCurrentUser();
-            const currentCredits = stateSync.getCredits();
+            // 简化用户状态检查
+            const currentUser = window.currentUser;
             const generationCost = 10;
             
             console.log('当前用户状态:', currentUser?.email || '未登录');
-            console.log(`💰 积分检查: 当前${currentCredits}, 需要${generationCost}`);
             
+            // 检查用户登录状态
             if (!currentUser) {
-                console.log('❌ 用户未登录，需要登录才能生成');
+                console.log('❌ 用户未登录，显示登录弹窗');
                 showCreditsModal();
                 return;
             }
             
             console.log('✅ 用户已登录:', currentUser.email);
 
+            // 检查积分
+            const currentCredits = currentUser.credits || 0;
+            console.log(`💰 积分检查: 当前${currentCredits}, 需要${generationCost}`);
+
             if (currentCredits < generationCost) {
-                console.log('❌ 积分不足');
-                showCreditsModal(currentCredits, generationCost);
+                console.log('❌ 积分不足，跳转到Pricing页面');
+                
+                // 已登录用户积分不足，直接跳转到Pricing页面
+                if (confirm(`积分不足！当前积分: ${currentCredits}，需要: ${generationCost}。\n\n点击确定跳转到Pricing页面购买积分。`)) {
+                    window.location.href = 'pricing.html';
+                }
                 return;
             }
 
@@ -129,14 +129,19 @@
                     const result = await response.json();
 
                     if (result.success && result.image) {
-                        // 使用统一状态管理器扣除积分
-                        const deductSuccess = await stateSync.deductCredits(generationCost);
-                        if (!deductSuccess) {
-                            console.error('❌ 积分扣除失败');
-                            throw new Error('积分扣除失败，请重试');
+                        // 简化积分扣除逻辑
+                        if (window.currentUser) {
+                            window.currentUser.credits = Math.max(0, window.currentUser.credits - generationCost);
+                            console.log('✅ 积分扣除成功，剩余积分:', window.currentUser.credits);
+                            
+                            // 更新localStorage
+                            localStorage.setItem('flux_krea_user', JSON.stringify(window.currentUser));
+                            
+                            // 更新积分显示
+                            if (window.updateCreditsDisplay) {
+                                window.updateCreditsDisplay();
+                            }
                         }
-                        
-                        console.log('✅ 积分扣除成功');
 
                         // 显示生成结果
                         if (resultArea) {
@@ -231,6 +236,78 @@
             console.log('✅ 按钮点击事件正常工作');
         };
 
+        // 显示积分弹窗（统一函数）- 移到页面顶部确保早期加载
+        window.showCreditsModal = function(currentCredits = null, requiredCredits = null) {
+            const modal = document.getElementById('creditsModal');
+            const title = document.getElementById('creditsModalTitle');
+            const content = document.getElementById('creditsModalContent');
+            
+            if (!modal || !title || !content) {
+                console.error('❌ 弹窗元素未找到');
+                return;
+            }
+            
+            if (currentCredits === null) {
+                // 未登录用户
+                title.textContent = 'Credits balance is 20';
+                content.textContent = 'Sign in with Google to Gain Free 20 Credits.';
+                console.log('📱 显示未登录弹窗');
+            } else {
+                // 已登录但积分不足
+                title.textContent = `Credits balance is ${currentCredits}`;
+                content.textContent = `You need ${requiredCredits} credits to generate an image. Please purchase more credits.`;
+                console.log(`📱 显示积分不足弹窗: ${currentCredits}/${requiredCredits}`);
+            }
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        };
+
+        // 关闭积分弹窗
+        window.closeCreditsModal = function() {
+            const modal = document.getElementById('creditsModal');
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+                console.log('📱 弹窗已关闭');
+            }
+        };
+
+        // 从弹窗登录
+        window.signInFromModal = async function() {
+            try {
+                console.log('🔐 从弹窗开始Google登录...');
+                
+                // 直接点击页面上的登录按钮
+                const signinBtn = document.querySelector('.signin-btn');
+                if (signinBtn) {
+                    signinBtn.click();
+                    window.closeCreditsModal(); // 关闭弹窗
+                } else {
+                    throw new Error('找不到登录按钮');
+                }
+            } catch (error) {
+                console.error('❌ Google登录失败:', error);
+                alert('登录失败: ' + error.message);
+            }
+        };
+
+        // 调试Generate按钮
+        window.debugGenerate = function() {
+            console.log('🔧 调试Generate按钮...');
+            console.log('- currentUser:', window.currentUser);
+            console.log('- generateImage函数:', typeof window.generateImage);
+            console.log('- showCreditsModal函数:', typeof window.showCreditsModal);
+            
+            // 强制显示弹窗测试
+            if (typeof window.showCreditsModal === 'function') {
+                console.log('✅ 强制显示弹窗测试');
+                window.showCreditsModal();
+            } else {
+                console.error('❌ showCreditsModal函数未定义');
+            }
+        };
+
         // 调试函数已删除，使用真正的generateImage函数
 
         console.log('✅ generateImage函数已定义在页面顶部');
@@ -302,47 +379,51 @@
                 this.broadcastStateChange();
             },
             
-            // 更新UI显示
+            // 更新UI显示（分离登录按钮和积分显示）
             updateUI() {
+                // 更新登录按钮
+                this.updateSignInButton();
+                
+                // 使用全局的updateCreditsDisplay，它已经有防抖机制
+                if (window.updateCreditsDisplay) {
+                    window.updateCreditsDisplay();
+                }
+            },
+            
+            // 更新登录按钮显示（分离出来，避免与积分显示冲突）
+            updateSignInButton() {
                 const signinBtn = document.querySelector('.signin-btn');
-                const creditsDisplay = document.getElementById('creditsDisplay');
-                const creditsAmount = document.getElementById('creditsAmount');
+                if (!signinBtn) return;
                 
                 if (this.currentUser) {
                     // 已登录状态
-                    if (signinBtn) {
-                        signinBtn.innerHTML = `
-                            <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/24'}" 
-                                 alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px;">
-                            <span>${this.currentUser.name || this.currentUser.email}</span>
-                        `;
+                    const newHTML = `
+                        <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/24'}" 
+                             alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px;">
+                        <span>${this.currentUser.name || this.currentUser.email}</span>
+                    `;
+                    // 只有内容不同时才更新
+                    if (signinBtn.innerHTML.trim() !== newHTML.trim()) {
+                        signinBtn.innerHTML = newHTML;
                         signinBtn.onclick = () => this.signOut();
-                    }
-                    
-                    if (creditsDisplay) {
-                        creditsDisplay.style.display = 'flex';
-                    }
-                    
-                    if (creditsAmount) {
-                        creditsAmount.textContent = this.currentUser.credits || 0;
                     }
                 } else {
                     // 未登录状态
-                    if (signinBtn) {
-                        signinBtn.innerHTML = `
-                            <div class="google-icon"></div>
-                            <span>Sign in</span>
-                        `;
+                    const newHTML = `
+                        <div class="google-icon"></div>
+                        <span>Sign in</span>
+                    `;
+                    // 只有内容不同时才更新
+                    if (signinBtn.innerHTML.trim() !== newHTML.trim()) {
+                        signinBtn.innerHTML = newHTML;
                         signinBtn.onclick = () => this.signIn();
                     }
-                    
-                    if (creditsDisplay) {
-                        creditsDisplay.style.display = 'flex';
-                    }
-                    
-                    if (creditsAmount) {
-                        creditsAmount.textContent = '20'; // 未登录显示20积分
-                    }
+                }
+                
+                // 确保积分显示可见
+                const creditsDisplay = document.getElementById('creditsDisplay');
+                if (creditsDisplay) {
+                    creditsDisplay.style.display = 'flex';
                 }
             },
             
@@ -2262,7 +2343,7 @@
             <p id="creditsModalContent">Sign in with Google to Gain Free 20 Credits.</p>
             <div class="credits-modal-actions">
                 <button class="credits-modal-btn primary" onclick="signInFromModal()">
-                    <div class="google-icon-modal"></div>
+                    <div class="google-icon"></div>
                     <span>Sign in</span>
                 </button>
                 <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
@@ -2398,17 +2479,14 @@
                         <span class="credits-cost">-10 Credits</span>
                     </button>
                     
-                    <!-- 临时测试按钮 -->
-                    <button onclick="testAPIConfig()" style="margin-top: 10px; padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                        🧪 测试API配置
-                    </button>
-                    
-                    <button onclick="testGenerateAPI()" style="margin-top: 10px; padding: 10px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                        🔧 测试生图API
-                    </button>
+
                     
                     <button onclick="checkUserState()" style="margin-top: 10px; padding: 10px; background: #6f42c1; color: white; border: none; border-radius: 8px; cursor: pointer;">
                         👤 检查用户状态
+                    </button>
+                    
+                    <button onclick="debugGenerate()" style="margin-top: 10px; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                        🐛 调试Generate
                     </button>
 
                     <!-- H5 Pricing Entry Button -->
@@ -2944,8 +3022,23 @@
         // 初始化积分管理器
         window.creditsSync = new window.CreditsManager();
 
-        // 积分显示修复函数 - 增强版
+        // 全局UI更新防抖器
+        let uiUpdateTimeout = null;
+        let lastUIState = null;
+
+        // 积分显示修复函数 - 增强版（带防抖）
         window.updateCreditsDisplay = function () {
+            // 防抖机制，避免频繁更新
+            if (uiUpdateTimeout) {
+                clearTimeout(uiUpdateTimeout);
+            }
+            
+            uiUpdateTimeout = setTimeout(() => {
+                _doUpdateCreditsDisplay();
+            }, 100); // 100ms防抖
+        };
+
+        function _doUpdateCreditsDisplay() {
             const creditsElement = document.getElementById('creditsAmount');
             if (!creditsElement) {
                 console.error('❌ 找不到积分显示元素');
@@ -2982,12 +3075,36 @@
                 }
             }
 
+            // 检查是否需要更新UI（避免不必要的DOM操作）
+            const currentUIState = {
+                credits: credits,
+                hasUser: !!window.currentUser,
+                userEmail: window.currentUser?.email || null
+            };
+
+            // 如果状态没有变化，跳过更新
+            if (lastUIState && 
+                lastUIState.credits === currentUIState.credits && 
+                lastUIState.hasUser === currentUIState.hasUser &&
+                lastUIState.userEmail === currentUIState.userEmail) {
+                return; // 状态未变化，跳过更新
+            }
+
+            // 更新积分显示
+            const displayCredits = window.currentUser ? credits : 20; // 未登录显示20
+            if (creditsElement.textContent !== displayCredits.toString()) {
+                creditsElement.textContent = displayCredits.toString();
+            }
+
             // 同步到积分管理器
-            if (window.creditsSync) {
+            if (window.creditsSync && window.creditsSync.credits !== credits) {
                 window.creditsSync.setCredits(credits);
             }
 
-            console.log(`✅ 积分显示已更新: ${credits} (来源: ${source})`);
+            // 保存当前状态
+            lastUIState = currentUIState;
+
+            console.log(`✅ 积分显示已更新: ${displayCredits} (来源: ${source})`);
         }
 
         // 强化积分同步机制
@@ -2999,8 +3116,10 @@
                 window.forceInitialize();
             }, 100);
             
-            // 立即尝试更新积分显示
-            updateCreditsDisplay();
+            // 延迟更新积分显示，避免页面加载时的闪烁
+            setTimeout(() => {
+                updateCreditsDisplay();
+            }, 200);
             
             // 设置跨页面状态同步
             setupCrossPageSync();
@@ -4453,53 +4572,9 @@
             }
         });
 
-        // 显示积分弹窗（统一函数）
-        function showCreditsModal(currentCredits = null, requiredCredits = null) {
-            const modal = document.getElementById('creditsModal');
-            const title = document.getElementById('creditsModalTitle');
-            const content = document.getElementById('creditsModalContent');
-            
-            if (currentCredits === null) {
-                // 未登录用户
-                title.textContent = 'Credits balance is 20';
-                content.textContent = 'Sign in with Google to Gain Free 20 Credits.';
-            } else {
-                // 已登录但积分不足
-                title.textContent = `Credits balance is ${currentCredits}`;
-                content.textContent = `You need ${requiredCredits} credits to generate an image. Please purchase more credits.`;
-            }
-            
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
-
         // 显示认证弹窗（未登录用户点击生成时）- 保持兼容性
         function showAuthenticationModal() {
-            showCreditsModal();
-        }
-
-        // 关闭积分弹窗
-        function closeCreditsModal() {
-            const modal = document.getElementById('creditsModal');
-            modal.classList.remove('active');
-            document.body.style.overflow = 'auto';
-        }
-
-        // 从弹窗登录
-        async function signInFromModal() {
-            try {
-                console.log('🔐 从弹窗开始Google登录...');
-                
-                if (window.UnifiedStateSync) {
-                    await window.UnifiedStateSync.signIn();
-                    closeCreditsModal(); // 登录成功后关闭弹窗
-                } else {
-                    throw new Error('统一状态同步器未加载');
-                }
-            } catch (error) {
-                console.error('❌ Google登录失败:', error);
-                alert('登录失败: ' + error.message);
-            }
+            window.showCreditsModal();
         }
 
         // 处理登录按钮点击（统一使用 UnifiedStateSync）

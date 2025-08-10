@@ -2297,7 +2297,8 @@
             }
             
             if (creditsAmount) {
-                creditsAmount.textContent = credits;
+                // 未登录用户显示20积分，已登录用户显示实际积分
+                creditsAmount.textContent = currentUser ? credits : '20';
             }
 
             // 更新登录按钮

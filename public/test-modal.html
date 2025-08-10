@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试弹窗功能</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-btn { padding: 15px 30px; background: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; margin: 10px; }
+        .test-btn:hover { background: #0056b3; }
+        
+        /* 复制弹窗样式 */
+        .credits-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .credits-modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .credits-modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+
+        .credits-modal.active .credits-modal-content {
+            transform: scale(1);
+        }
+
+        .credits-modal-icon {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 24px;
+            color: white;
+            font-size: 36px;
+        }
+
+        .credits-modal h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            color: #1a202c;
+        }
+
+        .credits-modal p {
+            color: #64748b;
+            font-size: 16px;
+            margin-bottom: 24px;
+        }
+
+        .credits-modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .credits-modal-btn {
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .credits-modal-btn.primary {
+            background: #ffffff;
+            border: 1px solid #dadce0;
+            color: #3c4043;
+        }
+
+        .google-icon {
+            width: 18px;
+            height: 18px;
+            background: url('https://www.gstatic.com/marketing-cms/assets/images/76/76/c79495454250aaacab1867bdcda4/about-10things-g.png') no-repeat center;
+            background-size: contain;
+        }
+
+        .credits-modal-btn.primary:hover {
+            background: #f8f9fa;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .credits-modal-btn.secondary {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .credits-modal-btn.secondary:hover {
+            background: #e2e8f0;
+        }
+    </style>
+</head>
+<body>
+    <h1>弹窗功能测试</h1>
+    
+    <button class="test-btn" onclick="testUnloggedModal()">测试未登录弹窗</button>
+    <button class="test-btn" onclick="testInsufficientCreditsModal()">测试积分不足弹窗</button>
+    <button class="test-btn" onclick="testGenerateFunction()">测试Generate函数</button>
+    
+    <div id="status" style="margin-top: 20px; padding: 10px; background: #f0f0f0; border-radius: 5px;">
+        状态：等待测试
+    </div>
+
+    <!-- 弹窗HTML -->
+    <div class="credits-modal" id="creditsModal">
+        <div class="credits-modal-content">
+            <div class="credits-modal-icon">
+                <i class="fas fa-coins">💰</i>
+            </div>
+            <h3 id="creditsModalTitle">Credits balance is 20</h3>
+            <p id="creditsModalContent">Sign in with Google to Gain Free 20 Credits.</p>
+            <div class="credits-modal-actions">
+                <button class="credits-modal-btn primary" onclick="signInFromModal()">
+                    <div class="google-icon"></div>
+                    <span>Sign in</span>
+                </button>
+                <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
+                    <span>Close</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟用户状态
+        window.currentUser = null; // 未登录状态
+
+        // 状态更新函数
+        function updateStatus(message) {
+            document.getElementById('status').textContent = '状态：' + message;
+            console.log('📊', message);
+        }
+
+        // 显示积分弹窗（统一函数）
+        function showCreditsModal(currentCredits = null, requiredCredits = null) {
+            const modal = document.getElementById('creditsModal');
+            const title = document.getElementById('creditsModalTitle');
+            const content = document.getElementById('creditsModalContent');
+            
+            if (currentCredits === null) {
+                // 未登录用户
+                title.textContent = 'Credits balance is 20';
+                content.textContent = 'Sign in with Google to Gain Free 20 Credits.';
+                updateStatus('显示未登录弹窗');
+            } else {
+                // 已登录但积分不足
+                title.textContent = `Credits balance is ${currentCredits}`;
+                content.textContent = `You need ${requiredCredits} credits to generate an image. Please purchase more credits.`;
+                updateStatus(`显示积分不足弹窗 (${currentCredits}/${requiredCredits})`);
+            }
+            
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 关闭积分弹窗
+        function closeCreditsModal() {
+            const modal = document.getElementById('creditsModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+            updateStatus('弹窗已关闭');
+        }
+
+        // 从弹窗登录
+        async function signInFromModal() {
+            updateStatus('模拟登录中...');
+            
+            // 模拟登录过程
+            setTimeout(() => {
+                window.currentUser = { email: 'test@example.com', credits: 50 };
+                closeCreditsModal();
+                updateStatus('登录成功！用户积分：50');
+            }, 1000);
+        }
+
+        // 测试函数
+        function testUnloggedModal() {
+            window.currentUser = null;
+            showCreditsModal();
+        }
+
+        function testInsufficientCreditsModal() {
+            window.currentUser = { email: 'test@example.com', credits: 5 };
+            showCreditsModal(5, 10);
+        }
+
+        function testGenerateFunction() {
+            updateStatus('测试Generate函数...');
+            
+            // 模拟generateImage函数
+            const currentUser = window.currentUser;
+            const generationCost = 10;
+            
+            if (!currentUser) {
+                updateStatus('用户未登录，显示弹窗');
+                showCreditsModal();
+                return;
+            }
+            
+            const currentCredits = currentUser.credits || 0;
+            if (currentCredits < generationCost) {
+                updateStatus('积分不足，显示弹窗');
+                showCreditsModal(currentCredits, generationCost);
+                return;
+            }
+            
+            updateStatus('积分充足，可以生成图片！');
+        }
+
+        // 页面加载完成
+        updateStatus('页面加载完成，可以开始测试');
+    </script>
+</body>
+</html>
