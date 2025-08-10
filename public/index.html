@@ -72,16 +72,7 @@
             
             if (!currentUser) {
                 console.log('❌ 用户未登录，需要登录才能生成');
-                
-                // 显示登录提示
-                if (confirm('需要登录才能生成图片。点击确定进行Google登录。')) {
-                    try {
-                        await stateSync.signIn();
-                    } catch (error) {
-                        console.error('登录失败:', error);
-                        alert('登录失败，请重试');
-                    }
-                }
+                showCreditsModal();
                 return;
             }
             
@@ -89,7 +80,7 @@
 
             if (currentCredits < generationCost) {
                 console.log('❌ 积分不足');
-                alert(`积分不足！当前积分: ${currentCredits}，需要: ${generationCost}。请前往Pricing页面购买积分。`);
+                showCreditsModal(currentCredits, generationCost);
                 return;
             }
 
@@ -2267,8 +2258,8 @@
             <div class="credits-modal-icon">
                 <i class="fas fa-coins"></i>
             </div>
-            <h3>Credits Balance is Low</h3>
-            <p>Please sign in with Google to gain credits in order to record your AI Creations.</p>
+            <h3 id="creditsModalTitle">Credits balance is 20</h3>
+            <p id="creditsModalContent">Sign in with Google to Gain Free 20 Credits.</p>
             <div class="credits-modal-actions">
                 <button class="credits-modal-btn primary" onclick="signInFromModal()">
                     <div class="google-icon-modal"></div>
@@ -3010,6 +3001,9 @@
             
             // 立即尝试更新积分显示
             updateCreditsDisplay();
+            
+            // 设置跨页面状态同步
+            setupCrossPageSync();
             
             // 多次尝试从API获取积分，确保同步成功
             const syncAttempts = [500, 1000, 2000, 3000, 5000]; // 0.5s, 1s, 2s, 3s, 5s
@@ -4459,11 +4453,53 @@
             }
         });
 
-        // 显示认证弹窗（未登录用户点击生成时）
-        function showAuthenticationModal() {
+        // 显示积分弹窗（统一函数）
+        function showCreditsModal(currentCredits = null, requiredCredits = null) {
             const modal = document.getElementById('creditsModal');
+            const title = document.getElementById('creditsModalTitle');
+            const content = document.getElementById('creditsModalContent');
+            
+            if (currentCredits === null) {
+                // 未登录用户
+                title.textContent = 'Credits balance is 20';
+                content.textContent = 'Sign in with Google to Gain Free 20 Credits.';
+            } else {
+                // 已登录但积分不足
+                title.textContent = `Credits balance is ${currentCredits}`;
+                content.textContent = `You need ${requiredCredits} credits to generate an image. Please purchase more credits.`;
+            }
+            
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
+        }
+
+        // 显示认证弹窗（未登录用户点击生成时）- 保持兼容性
+        function showAuthenticationModal() {
+            showCreditsModal();
+        }
+
+        // 关闭积分弹窗
+        function closeCreditsModal() {
+            const modal = document.getElementById('creditsModal');
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 从弹窗登录
+        async function signInFromModal() {
+            try {
+                console.log('🔐 从弹窗开始Google登录...');
+                
+                if (window.UnifiedStateSync) {
+                    await window.UnifiedStateSync.signIn();
+                    closeCreditsModal(); // 登录成功后关闭弹窗
+                } else {
+                    throw new Error('统一状态同步器未加载');
+                }
+            } catch (error) {
+                console.error('❌ Google登录失败:', error);
+                alert('登录失败: ' + error.message);
+            }
         }
 
         // 处理登录按钮点击（统一使用 UnifiedStateSync）
@@ -4481,3 +4517,76 @@
                 alert('登录失败: ' + error.message);
             }
         }
+
+        // 设置跨页面状态同步
+        function setupCrossPageSync() {
+            // 监听localStorage变化（跨页面同步）
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'flux_krea_state_change') {
+                    console.log('🔄 检测到跨页面状态变化，重新同步...');
+                    
+                    // 重新加载用户数据
+                    const userData = localStorage.getItem('flux_krea_user');
+                    if (userData) {
+                        try {
+                            const user = JSON.parse(userData);
+                            console.log('📥 从localStorage同步用户数据:', user);
+                            
+                            // 更新全局用户状态
+                            window.currentUser = user;
+                            
+                            // 更新统一状态管理器
+                            if (window.UnifiedStateSync) {
+                                window.UnifiedStateSync.updateUserData(user);
+                            }
+                            
+                            // 更新积分管理器
+                            if (window.creditsSync) {
+                                window.creditsSync.setCredits(user.credits || 0);
+                            }
+                            
+                            // 更新积分显示
+                            if (window.updateCreditsDisplay) {
+                                window.updateCreditsDisplay();
+                            }
+                            
+                            console.log('✅ 跨页面状态同步完成，新积分:', user.credits);
+                        } catch (error) {
+                            console.error('❌ 跨页面状态同步失败:', error);
+                        }
+                    }
+                }
+            });
+
+            // 监听自定义事件（同页面内同步）
+            window.addEventListener('userStateUpdated', function(e) {
+                console.log('🔄 检测到用户状态更新事件:', e.detail);
+                
+                if (e.detail.user) {
+                    // 更新全局用户状态
+                    window.currentUser = e.detail.user;
+                    
+                    // 更新统一状态管理器
+                    if (window.UnifiedStateSync) {
+                        window.UnifiedStateSync.updateUserData(e.detail.user);
+                    }
+                    
+                    // 更新积分管理器
+                    if (window.creditsSync) {
+                        window.creditsSync.setCredits(e.detail.user.credits || 0);
+                    }
+                }
+                
+                // 更新积分显示
+                if (window.updateCreditsDisplay) {
+                    window.updateCreditsDisplay();
+                }
+                
+                console.log('✅ 用户状态更新完成');
+            });
+
+            console.log('✅ 跨页面状态同步监听器已设置');
+        }
+    </script>
+</body>
+</html>
