@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录UI更新测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #results { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .signin-btn { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 8px 16px; 
+            background: white; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 10px 0;
+        }
+        .google-icon {
+            width: 18px;
+            height: 18px;
+            background: url('https://www.gstatic.com/marketing-cms/assets/images/76/76/c79495454250aaacab1867bdcda4/about-10things-g.png') no-repeat center;
+            background-size: contain;
+        }
+        .credits-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 10px 0;
+            padding: 8px;
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔄 登录UI更新测试</h1>
+    
+    <div class="test-section">
+        <h3>1. 当前UI状态</h3>
+        <div class="signin-btn" onclick="handleSignInClick()">
+            <div class="google-icon"></div>
+            <span>Sign in</span>
+        </div>
+        <div class="credits-display">
+            <span>积分: </span>
+            <span id="creditsAmount">0</span>
+        </div>
+        <button onclick="checkCurrentUIState()">检查当前UI状态</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. 模拟登录状态更新</h3>
+        <button onclick="simulateLogin()">模拟登录成功</button>
+        <button onclick="simulateLogout()">模拟登出</button>
+        <button onclick="testUIUpdateMethods()">测试UI更新方法</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 积分显示测试</h3>
+        <button onclick="testCreditsUpdate()">测试积分更新</button>
+        <button onclick="testCreditsSync()">测试积分同步</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. 状态同步测试</h3>
+        <button onclick="testStateSync()">测试状态同步</button>
+        <button onclick="testCrossPageSync()">测试跨页面同步</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <!-- 加载必要的脚本 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-init.js"></script>
+    <script src="js/modules/unified-state-sync.js"></script>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            results.innerHTML += `<div class="${className}">[${new Date().toLocaleTimeString()}] ${message}</div>`;
+            console.log(message);
+        }
+
+        // 从主页复制的handleSignInClick函数
+        async function handleSignInClick() {
+            try {
+                if (!window.UnifiedStateSync) {
+                    throw new Error('统一状态同步器未加载');
+                }
+                
+                const currentUser = window.UnifiedStateSync.getCurrentUser();
+                
+                if (currentUser) {
+                    log('🔓 开始登出...', 'info');
+                    await window.UnifiedStateSync.signOut();
+                    log('✅ 登出成功', 'success');
+                } else {
+                    log('🔐 开始Google登录...', 'info');
+                    // 这里不实际执行登录，只是测试
+                    log('ℹ️ 实际登录需要在真实环境中测试', 'info');
+                }
+            } catch (error) {
+                log(`❌ 登录/登出操作失败: ${error.message}`, 'error');
+            }
+        }
+
+        function checkCurrentUIState() {
+            log('=== 检查当前UI状态 ===');
+            
+            const signinBtn = document.querySelector('.signin-btn');
+            const creditsAmount = document.getElementById('creditsAmount');
+            
+            if (signinBtn) {
+                log(`登录按钮HTML: ${signinBtn.innerHTML}`, 'info');
+                
+                const hasAvatar = signinBtn.querySelector('img');
+                const hasGoogleIcon = signinBtn.querySelector('.google-icon');
+                
+                if (hasAvatar) {
+                    log('✅ 显示用户头像 (已登录状态)', 'success');
+                } else if (hasGoogleIcon) {
+                    log('✅ 显示Google图标 (未登录状态)', 'success');
+                } else {
+                    log('❌ 按钮状态异常', 'error');
+                }
+            } else {
+                log('❌ 未找到登录按钮', 'error');
+            }
+            
+            if (creditsAmount) {
+                log(`积分显示: ${creditsAmount.textContent}`, 'info');
+            } else {
+                log('❌ 未找到积分显示元素', 'error');
+            }
+            
+            // 检查全局状态
+            if (window.UnifiedStateSync) {
+                const currentUser = window.UnifiedStateSync.getCurrentUser();
+                const credits = window.UnifiedStateSync.getCredits();
+                log(`UnifiedStateSync用户: ${currentUser ? currentUser.email : '未登录'}`, 'info');
+                log(`UnifiedStateSync积分: ${credits}`, 'info');
+            }
+        }
+
+        function simulateLogin() {
+            log('=== 模拟登录成功 ===');
+            
+            if (!window.UnifiedStateSync) {
+                log('❌ UnifiedStateSync未加载', 'error');
+                return;
+            }
+            
+            // 创建模拟用户数据
+            const mockUser = {
+                uuid: 'test-uuid-123',
+                email: 'test@example.com',
+                name: 'Test User',
+                avatar_url: 'https://via.placeholder.com/32',
+                credits: 50,
+                is_signed_in: true
+            };
+            
+            try {
+                // 模拟设置用户
+                window.UnifiedStateSync.setUser(mockUser, false);
+                window.UnifiedStateSync.setCredits(50, false);
+                
+                // 手动触发UI更新
+                window.UnifiedStateSync.updateUI();
+                
+                log('✅ 模拟登录成功，UI应该已更新', 'success');
+                
+                // 检查UI更新结果
+                setTimeout(() => {
+                    checkCurrentUIState();
+                }, 100);
+                
+            } catch (error) {
+                log(`❌ 模拟登录失败: ${error.message}`, 'error');
+            }
+        }
+
+        function simulateLogout() {
+            log('=== 模拟登出 ===');
+            
+            if (!window.UnifiedStateSync) {
+                log('❌ UnifiedStateSync未加载', 'error');
+                return;
+            }
+            
+            try {
+                // 模拟登出
+                window.UnifiedStateSync.setUser(null, false);
+                window.UnifiedStateSync.setCredits(0, false);
+                
+                // 手动触发UI更新
+                window.UnifiedStateSync.updateUI();
+                
+                log('✅ 模拟登出成功，UI应该已更新', 'success');
+                
+                // 检查UI更新结果
+                setTimeout(() => {
+                    checkCurrentUIState();
+                }, 100);
+                
+            } catch (error) {
+                log(`❌ 模拟登出失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testUIUpdateMethods() {
+            log('=== 测试UI更新方法 ===');
+            
+            if (!window.UnifiedStateSync) {
+                log('❌ UnifiedStateSync未加载', 'error');
+                return;
+            }
+            
+            const sync = window.UnifiedStateSync;
+            
+            // 测试方法是否存在
+            const methods = ['updateUI', 'updateUserDisplay', 'updateCreditsDisplay'];
+            methods.forEach(method => {
+                if (typeof sync[method] === 'function') {
+                    log(`✅ ${method}方法存在`, 'success');
+                    
+                    try {
+                        sync[method]();
+                        log(`✅ ${method}方法调用成功`, 'success');
+                    } catch (error) {
+                        log(`❌ ${method}方法调用失败: ${error.message}`, 'error');
+                    }
+                } else {
+                    log(`❌ ${method}方法不存在`, 'error');
+                }
+            });
+        }
+
+        function testCreditsUpdate() {
+            log('=== 测试积分更新 ===');
+            
+            if (!window.UnifiedStateSync) {
+                log('❌ UnifiedStateSync未加载', 'error');
+                return;
+            }
+            
+            const testCredits = [100, 75, 50, 25, 0];
+            let index = 0;
+            
+            const updateNext = () => {
+                if (index < testCredits.length) {
+                    const credits = testCredits[index];
+                    log(`设置积分为: ${credits}`, 'info');
+                    
+                    window.UnifiedStateSync.setCredits(credits, false);
+                    window.UnifiedStateSync.updateCreditsDisplay();
+                    
+                    index++;
+                    setTimeout(updateNext, 1000);
+                } else {
+                    log('✅ 积分更新测试完成', 'success');
+                }
+            };
+            
+            updateNext();
+        }
+
+        function testCreditsSync() {
+            log('=== 测试积分同步 ===');
+            
+            if (!window.UnifiedStateSync) {
+                log('❌ UnifiedStateSync未加载', 'error');
+                return;
+            }
+            
+            // 测试积分同步方法
+            if (typeof window.UnifiedStateSync.syncCreditsFromAPI === 'function') {
+                log('✅ syncCreditsFromAPI方法存在', 'success');
+                
+                // 这里不实际调用API，只是测试方法存在
+                log('ℹ️ 积分同步需要在有用户登录的情况下测试', 'info');
+            } else {
+                log('❌ syncCreditsFromAPI方法不存在', 'error');
+            }
+        }
+
+        function testStateSync() {
+            log('=== 测试状态同步 ===');
+            
+            if (!window.UnifiedStateSync) {
+                log('❌ UnifiedStateSync未加载', 'error');
+                return;
+            }
+            
+            // 测试广播方法
+            if (typeof window.UnifiedStateSync.broadcastStateChange === 'function') {
+                log('✅ broadcastStateChange方法存在', 'success');
+                
+                try {
+                    window.UnifiedStateSync.broadcastStateChange();
+                    log('✅ 状态广播成功', 'success');
+                } catch (error) {
+                    log(`❌ 状态广播失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ broadcastStateChange方法不存在', 'error');
+            }
+        }
+
+        function testCrossPageSync() {
+            log('=== 测试跨页面同步 ===');
+            
+            // 模拟localStorage变化
+            const testData = {
+                uuid: 'test-uuid-456',
+                email: 'sync-test@example.com',
+                credits: 88
+            };
+            
+            log('模拟localStorage变化...', 'info');
+            localStorage.setItem('flux_krea_user', JSON.stringify(testData));
+            
+            // 触发storage事件
+            window.dispatchEvent(new StorageEvent('storage', {
+                key: 'flux_krea_user',
+                newValue: JSON.stringify(testData),
+                oldValue: null
+            }));
+            
+            log('✅ 跨页面同步事件已触发', 'success');
+            
+            // 检查是否同步
+            setTimeout(() => {
+                if (window.UnifiedStateSync) {
+                    const currentUser = window.UnifiedStateSync.getCurrentUser();
+                    if (currentUser && currentUser.email === testData.email) {
+                        log('✅ 跨页面同步成功', 'success');
+                    } else {
+                        log('❌ 跨页面同步失败', 'error');
+                    }
+                }
+            }, 200);
+        }
+
+        // 页面加载完成后自动运行基础检查
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🚀 页面加载完成，开始自动检查...');
+                checkCurrentUIState();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

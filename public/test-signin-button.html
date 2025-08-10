@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录按钮测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 8px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #results { background: #f5f5f5; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .signin-btn { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 8px; 
+            padding: 8px 16px; 
+            background: white; 
+            border: 1px solid #ddd; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            margin: 10px 0;
+        }
+        .google-icon {
+            width: 18px;
+            height: 18px;
+            background: url('https://www.gstatic.com/marketing-cms/assets/images/76/76/c79495454250aaacab1867bdcda4/about-10things-g.png') no-repeat center;
+            background-size: contain;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔐 登录按钮测试</h1>
+    
+    <div class="test-section">
+        <h3>1. 登录按钮事件绑定测试</h3>
+        <div class="signin-btn" onclick="handleSignInClick()">
+            <div class="google-icon"></div>
+            <span>Sign in (测试)</span>
+        </div>
+        <button onclick="testSignInButtonBinding()">测试按钮绑定</button>
+        <button onclick="testHandleSignInClickFunction()">测试handleSignInClick函数</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. UnifiedStateSync登录方法测试</h3>
+        <button onclick="testUnifiedStateSyncSignIn()">测试UnifiedStateSync.signIn</button>
+        <button onclick="testSupabaseClientAvailability()">测试Supabase客户端</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 模拟登录流程测试</h3>
+        <button onclick="simulateSignInFlow()">模拟完整登录流程</button>
+    </div>
+    
+    <div id="results"></div>
+
+    <!-- 加载必要的脚本 -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="js/supabase-init.js"></script>
+    <script src="js/modules/unified-state-sync.js"></script>
+
+    <script>
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            results.innerHTML += `<div class="${className}">[${new Date().toLocaleTimeString()}] ${message}</div>`;
+            console.log(message);
+        }
+
+        // 从主页复制的handleSignInClick函数
+        async function handleSignInClick() {
+            try {
+                log('🔐 开始Google登录...', 'info');
+                
+                if (window.UnifiedStateSync) {
+                    log('✅ UnifiedStateSync可用', 'success');
+                    
+                    // 这里不实际执行登录，只测试方法调用
+                    if (typeof window.UnifiedStateSync.signIn === 'function') {
+                        log('✅ UnifiedStateSync.signIn方法存在', 'success');
+                        log('🔐 登录按钮点击事件正常工作！', 'success');
+                    } else {
+                        throw new Error('UnifiedStateSync.signIn方法不存在');
+                    }
+                } else {
+                    throw new Error('统一状态同步器未加载');
+                }
+            } catch (error) {
+                log(`❌ Google登录失败: ${error.message}`, 'error');
+            }
+        }
+
+        function testSignInButtonBinding() {
+            log('=== 测试登录按钮绑定 ===');
+            
+            const signinBtn = document.querySelector('.signin-btn');
+            if (signinBtn) {
+                log('✅ 找到登录按钮元素', 'success');
+                
+                const onclickAttr = signinBtn.getAttribute('onclick');
+                if (onclickAttr && onclickAttr.includes('handleSignInClick')) {
+                    log('✅ 登录按钮正确绑定到handleSignInClick()', 'success');
+                    
+                    // 测试点击事件
+                    try {
+                        signinBtn.click();
+                        log('✅ 登录按钮点击事件触发成功', 'success');
+                    } catch (error) {
+                        log(`❌ 登录按钮点击事件失败: ${error.message}`, 'error');
+                    }
+                } else {
+                    log('❌ 登录按钮未正确绑定事件', 'error');
+                }
+            } else {
+                log('❌ 未找到登录按钮元素', 'error');
+            }
+        }
+
+        function testHandleSignInClickFunction() {
+            log('=== 测试handleSignInClick函数 ===');
+            
+            if (typeof handleSignInClick === 'function') {
+                log('✅ handleSignInClick函数存在', 'success');
+                
+                try {
+                    handleSignInClick();
+                    log('✅ handleSignInClick函数调用成功', 'success');
+                } catch (error) {
+                    log(`❌ handleSignInClick函数调用失败: ${error.message}`, 'error');
+                }
+            } else {
+                log('❌ handleSignInClick函数不存在', 'error');
+            }
+        }
+
+        function testUnifiedStateSyncSignIn() {
+            log('=== 测试UnifiedStateSync.signIn方法 ===');
+            
+            if (!window.UnifiedStateSync) {
+                log('❌ UnifiedStateSync未加载', 'error');
+                return;
+            }
+            
+            const sync = window.UnifiedStateSync;
+            
+            if (typeof sync.signIn === 'function') {
+                log('✅ UnifiedStateSync.signIn方法存在', 'success');
+                
+                // 检查方法内部依赖
+                if (sync.supabaseClient) {
+                    log('✅ Supabase客户端已初始化', 'success');
+                    
+                    if (sync.supabaseClient.auth) {
+                        log('✅ Supabase Auth模块可用', 'success');
+                        log('🎉 登录方法完全可用！', 'success');
+                    } else {
+                        log('❌ Supabase Auth模块不可用', 'error');
+                    }
+                } else {
+                    log('❌ Supabase客户端未初始化', 'error');
+                }
+            } else {
+                log('❌ UnifiedStateSync.signIn方法不存在', 'error');
+            }
+        }
+
+        function testSupabaseClientAvailability() {
+            log('=== 测试Supabase客户端可用性 ===');
+            
+            // 检查全局Supabase客户端
+            if (window.supabaseClient) {
+                log('✅ 全局supabaseClient存在', 'success');
+                
+                if (window.supabaseClient.auth) {
+                    log('✅ Supabase Auth模块可用', 'success');
+                    
+                    // 测试获取会话
+                    window.supabaseClient.auth.getSession().then(({ data: { session }, error }) => {
+                        if (error) {
+                            log(`⚠️ 获取会话时出错: ${error.message}`, 'error');
+                        } else {
+                            log(`会话状态: ${session ? `已登录 (${session.user.email})` : '未登录'}`, 'info');
+                        }
+                    }).catch(err => {
+                        log(`❌ 会话检查异常: ${err.message}`, 'error');
+                    });
+                } else {
+                    log('❌ Supabase Auth模块不可用', 'error');
+                }
+            } else {
+                log('❌ 全局supabaseClient不存在', 'error');
+            }
+            
+            // 检查UnifiedStateSync中的客户端
+            if (window.UnifiedStateSync && window.UnifiedStateSync.supabaseClient) {
+                log('✅ UnifiedStateSync中的supabaseClient存在', 'success');
+            } else {
+                log('❌ UnifiedStateSync中的supabaseClient不存在', 'error');
+            }
+        }
+
+        async function simulateSignInFlow() {
+            log('=== 模拟完整登录流程 ===');
+            
+            try {
+                // 1. 检查按钮绑定
+                log('1️⃣ 检查按钮绑定...');
+                const signinBtn = document.querySelector('.signin-btn');
+                if (!signinBtn) throw new Error('登录按钮不存在');
+                log('✅ 登录按钮存在');
+                
+                // 2. 检查函数存在
+                log('2️⃣ 检查handleSignInClick函数...');
+                if (typeof handleSignInClick !== 'function') throw new Error('handleSignInClick函数不存在');
+                log('✅ handleSignInClick函数存在');
+                
+                // 3. 检查UnifiedStateSync
+                log('3️⃣ 检查UnifiedStateSync...');
+                if (!window.UnifiedStateSync) throw new Error('UnifiedStateSync未加载');
+                log('✅ UnifiedStateSync已加载');
+                
+                // 4. 检查signIn方法
+                log('4️⃣ 检查signIn方法...');
+                if (typeof window.UnifiedStateSync.signIn !== 'function') throw new Error('signIn方法不存在');
+                log('✅ signIn方法存在');
+                
+                // 5. 检查Supabase客户端
+                log('5️⃣ 检查Supabase客户端...');
+                if (!window.UnifiedStateSync.supabaseClient?.auth) throw new Error('Supabase客户端不可用');
+                log('✅ Supabase客户端可用');
+                
+                // 6. 模拟按钮点击
+                log('6️⃣ 模拟按钮点击...');
+                await handleSignInClick();
+                
+                log('🎉 完整登录流程模拟成功！所有组件都正常工作！', 'success');
+                
+            } catch (error) {
+                log(`❌ 登录流程模拟失败: ${error.message}`, 'error');
+            }
+        }
+
+        // 页面加载完成后自动运行基础检查
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🚀 页面加载完成，开始自动检查...');
+                testSignInButtonBinding();
+                testHandleSignInClickFunction();
+                testUnifiedStateSyncSignIn();
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

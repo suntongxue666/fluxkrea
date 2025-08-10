@@ -419,19 +419,42 @@
             const signinBtn = document.querySelector('.signin-btn');
             
             if (signinBtn) {
+                // 保存原有的onclick属性
+                const originalOnclick = signinBtn.getAttribute('onclick');
+                
                 if (this.currentUser) {
                     // 已登录状态
-                    signinBtn.innerHTML = `
+                    const newHTML = `
                         <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/18'}" 
                              style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
                         <span>${this.currentUser.email?.split('@')[0] || 'User'}</span>
                     `;
+                    
+                    // 只有内容不同时才更新，避免不必要的DOM操作
+                    if (signinBtn.innerHTML.trim() !== newHTML.trim()) {
+                        signinBtn.innerHTML = newHTML;
+                        
+                        // 确保onclick属性保持不变
+                        if (originalOnclick && !signinBtn.getAttribute('onclick')) {
+                            signinBtn.setAttribute('onclick', originalOnclick);
+                        }
+                    }
                 } else {
                     // 未登录状态
-                    signinBtn.innerHTML = `
+                    const newHTML = `
                         <div class="google-icon"></div>
                         <span>Sign in</span>
                     `;
+                    
+                    // 只有内容不同时才更新
+                    if (signinBtn.innerHTML.trim() !== newHTML.trim()) {
+                        signinBtn.innerHTML = newHTML;
+                        
+                        // 确保onclick属性保持不变
+                        if (originalOnclick && !signinBtn.getAttribute('onclick')) {
+                            signinBtn.setAttribute('onclick', originalOnclick);
+                        }
+                    }
                 }
             }
         }
@@ -551,17 +574,128 @@
          * 扣除积分
          */
         async deductCredits(amount) {
-            if (this.credits < amount) {
+            if (!this.currentUser) {
+                console.error('❌ 用户未登录，无法扣除积分');
                 return false;
             }
 
-            // 先本地扣除
-            this.setCredits(this.credits - amount, true);
+            if (this.credits < amount) {
+                console.error('❌ 积分不足，无法扣除');
+                return false;
+            }
 
-            // TODO: 调用API更新数据库
-            // 这里可以添加API调用逻辑
+            const oldCredits = this.credits;
 
-            return true;
+            try {
+                // 先本地扣除
+                this.setCredits(this.credits - amount, true);
+
+                // 调用API更新数据库
+                await this.updateCreditsInDatabase(this.credits, amount, 'SPEND', '图像生成消费');
+
+                console.log(`✅ 积分扣除成功: ${oldCredits} → ${this.credits} (-${amount})`);
+                return true;
+
+            } catch (error) {
+                console.error('❌ 积分扣除失败，回滚本地积分:', error);
+                
+                // 回滚本地积分
+                this.setCredits(oldCredits, true);
+                return false;
+            }
+        }
+
+        /**
+         * 更新数据库中的积分
+         */
+        async updateCreditsInDatabase(newCredits, amount, type, description) {
+            if (!this.currentUser || !this.supabaseClient) {
+                throw new Error('用户未登录或Supabase客户端不可用');
+            }
+
+            // 获取访问令牌
+            let token = this.currentUser.access_token;
+            if (!token && this.supabaseClient?.auth) {
+                const { data: { session } } = await this.supabaseClient.auth.getSession();
+                token = session?.access_token;
+            }
+
+            if (!token) {
+                throw new Error('无法获取访问令牌');
+            }
+
+            // 更新用户积分
+            const { error: updateError } = await this.supabaseClient
+                .from('users')
+                .update({
+                    credits: newCredits,
+                    total_credits_used: (this.currentUser.total_credits_used || 0) + (type === 'SPEND' ? amount : 0),
+                    total_credits_earned: (this.currentUser.total_credits_earned || 0) + (type === 'EARN' ? amount : 0)
+                })
+                .eq('uuid', this.currentUser.uuid);
+
+            if (updateError) {
+                throw new Error(`更新用户积分失败: ${updateError.message}`);
+            }
+
+            // 记录积分交易
+            const { error: transactionError } = await this.supabaseClient
+                .from('credit_transactions')
+                .insert({
+                    user_id: this.currentUser.id,
+                    user_uuid: this.currentUser.uuid,
+                    type: type,
+                    amount: amount,
+                    description: description,
+                    transaction_type: type === 'SPEND' ? 'generation' : 'purchase'
+                });
+
+            if (transactionError) {
+                console.warn('⚠️ 记录积分交易失败:', transactionError.message);
+                // 不抛出错误，因为主要操作（更新积分）已成功
+            }
+
+            // 更新本地用户对象
+            if (type === 'SPEND') {
+                this.currentUser.total_credits_used = (this.currentUser.total_credits_used || 0) + amount;
+            } else {
+                this.currentUser.total_credits_earned = (this.currentUser.total_credits_earned || 0) + amount;
+            }
+        }
+
+        /**
+         * 增加积分
+         */
+        async addCredits(amount, description = '积分充值') {
+            if (!this.currentUser) {
+                console.error('❌ 用户未登录，无法增加积分');
+                return false;
+            }
+
+            if (amount <= 0) {
+                console.error('❌ 积分数量必须大于0');
+                return false;
+            }
+
+            const oldCredits = this.credits;
+
+            try {
+                // 先本地增加
+                this.setCredits(this.credits + amount, true);
+
+                // 调用API更新数据库
+                await this.updateCreditsInDatabase(this.credits, amount, 'EARN', description);
+
+                console.log(`✅ 积分增加成功: ${oldCredits} → ${this.credits} (+${amount})`);
+                return true;
+
+            } catch (error) {
+                console.error('❌ 积分增加失败，回滚本地积分:', error);
+                
+                // 回滚本地积分
+                this.setCredits(oldCredits, true);
+                return false;
+            }
         }
     }
 
