@@ -113,13 +113,13 @@
         
         .showcase-controls {
             position: fixed;
-            bottom: 80px;
+            bottom: 44px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
             z-index: 10;
         }
         
@@ -127,6 +127,7 @@
             display: flex;
             justify-content: center;
             gap: 12px;
+            transform: translateY(-48px);
         }
         
         .indicator {
@@ -148,6 +149,8 @@
             gap: 16px;
             flex-wrap: wrap;
             justify-content: center;
+            align-items: center;
+            width: 100%;
         }
         
         .action-btn {
@@ -158,6 +161,10 @@
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -258,7 +265,39 @@
             
             .action-btn {
                 width: 100%;
-                justify-content: center;
+            }
+            
+            /* H5端隐藏页码、X按钮和Pause按钮 */
+            .showcase-progress {
+                display: none !important;
+            }
+            
+            .close-btn {
+                display: none !important;
+            }
+            
+            .action-btn.secondary {
+                display: none !important;
+            }
+            
+            /* H5端Indicators调整位置（原上移120px，现下移64px，最终上移56px） */
+            .showcase-indicators {
+                transform: translateY(-56px);
+            }
+            
+            /* H5端Start Creating按钮屏幕居中 */
+            .showcase-actions {
+                justify-content: center !important;
+                align-items: center !important;
+                display: flex !important;
+                width: 100% !important;
+                margin: 0 auto !important;
+            }
+            
+            /* H5端Indicator圆点尺寸调整为6x6px */
+            .indicator {
+                width: 6px !important;
+                height: 6px !important;
             }
         }
     </style>
@@ -297,9 +336,7 @@
             </div>
         </div>
         
-        <div class="showcase-progress" id="progress">
-            <span id="currentIndex">1</span> / <span id="totalImages">16</span>
-        </div>
+
     </div>
 
     <script>
@@ -329,11 +366,7 @@
 
         // Initialize showcase
         function initializeShowcase() {
-            const totalImagesElement = document.getElementById('totalImages');
             const indicatorsContainer = document.getElementById('indicators');
-            
-            // Set total count
-            totalImagesElement.textContent = showcaseImages.length;
             
             // Create indicators
             indicatorsContainer.innerHTML = '';
@@ -404,9 +437,7 @@
                 indicator.classList.toggle('active', i === index);
             });
             
-            // Update progress
-            const currentIndexElement = document.getElementById('currentIndex');
-            currentIndexElement.textContent = index + 1;
+            // Progress elements removed - no need to update
         }
         
         // Go to specific image

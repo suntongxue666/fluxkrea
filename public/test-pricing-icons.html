@@ -1,0 +1,126 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing页面图标测试</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .credits-display {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            width: fit-content;
+            margin: 10px 0;
+        }
+
+        .credits-display i {
+            font-size: 16px;
+            color: #ffd700;
+        }
+        
+        .icon-test {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .icon-test i {
+            margin-right: 8px;
+            color: #6366f1;
+        }
+        
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Pricing页面图标测试</h1>
+        
+        <div class="icon-test">
+            <h3>积分显示测试</h3>
+            <div class="credits-display">
+                <i class="fas fa-coins"></i>
+                <span>25</span>
+            </div>
+            <p id="creditsResult">检测中...</p>
+        </div>
+        
+        <div class="icon-test">
+            <h3>其他图标测试</h3>
+            <p><i class="fas fa-check"></i> Check图标</p>
+            <p><i class="fas fa-chevron-down"></i> Chevron图标</p>
+            <p><i class="fas fa-times"></i> Times图标</p>
+            <p><i class="fas fa-shield-alt"></i> Shield图标</p>
+            <p id="otherIconsResult">检测中...</p>
+        </div>
+        
+        <div class="icon-test">
+            <h3>Font Awesome加载状态</h3>
+            <p id="fontAwesomeStatus">检测中...</p>
+        </div>
+    </div>
+
+    <script>
+        // 检测Font Awesome是否加载成功
+        function checkFontAwesome() {
+            const testElement = document.createElement('i');
+            testElement.className = 'fas fa-coins';
+            testElement.style.position = 'absolute';
+            testElement.style.left = '-9999px';
+            document.body.appendChild(testElement);
+            
+            const computedStyle = window.getComputedStyle(testElement);
+            const fontFamily = computedStyle.fontFamily;
+            
+            document.body.removeChild(testElement);
+            
+            return fontFamily.includes('Font Awesome') || fontFamily.includes('FontAwesome');
+        }
+        
+        // 页面加载完成后检测
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const fontAwesomeLoaded = checkFontAwesome();
+                const statusElement = document.getElementById('fontAwesomeStatus');
+                const creditsResult = document.getElementById('creditsResult');
+                const otherIconsResult = document.getElementById('otherIconsResult');
+                
+                if (fontAwesomeLoaded) {
+                    statusElement.innerHTML = '<span class="success">✅ Font Awesome加载成功</span>';
+                    creditsResult.innerHTML = '<span class="success">✅ 积分图标应该正常显示</span>';
+                    otherIconsResult.innerHTML = '<span class="success">✅ 其他图标应该正常显示</span>';
+                } else {
+                    statusElement.innerHTML = '<span class="error">❌ Font Awesome加载失败</span>';
+                    creditsResult.innerHTML = '<span class="error">❌ 积分图标无法显示</span>';
+                    otherIconsResult.innerHTML = '<span class="error">❌ 其他图标无法显示</span>';
+                }
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

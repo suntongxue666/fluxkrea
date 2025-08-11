@@ -47,6 +47,9 @@
         gtag('config', 'G-HRV45ZRFKT');
     </script>
 
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
     <!-- Supabase SDK -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <!-- Initialize Supabase client before auth-bootstrap -->
@@ -152,14 +155,18 @@
         .credits-display {
             display: flex;
             align-items: center;
-            gap: 8px;
-            color: #333;
+            gap: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            color: white;
             font-weight: 600;
             font-size: 14px;
         }
 
         .credits-display i {
-            color: #ff8c00;
+            font-size: 16px;
+            color: #ffd700;
         }
 
         .signin-btn {

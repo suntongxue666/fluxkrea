@@ -413,7 +413,7 @@
         }
 
         /**
-         * 更新用户显示
+         * 更新用户显示 - 优化版本
          */
         updateUserDisplay() {
             const signinBtn = document.querySelector('.signin-btn');
@@ -423,20 +423,29 @@
                 const originalOnclick = signinBtn.getAttribute('onclick');
                 
                 if (this.currentUser) {
-                    // 已登录状态
+                    // 已登录状态 - 只显示头像
                     const newHTML = `
-                        <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/18'}" 
-                             style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
-                        <span>${this.currentUser.email?.split('@')[0] || 'User'}</span>
+                        <div class="user-avatar">
+                            <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/32'}" 
+                                 alt="User Avatar">
+                        </div>
                     `;
                     
                     // 只有内容不同时才更新，避免不必要的DOM操作
                     if (signinBtn.innerHTML.trim() !== newHTML.trim()) {
                         signinBtn.innerHTML = newHTML;
+                        signinBtn.classList.add('logged-in');
                         
-                        // 确保onclick属性保持不变
-                        if (originalOnclick && !signinBtn.getAttribute('onclick')) {
-                            signinBtn.setAttribute('onclick', originalOnclick);
+                        // 检查是否为移动端，如果是则不改变点击事件
+                        const isMobile = window.innerWidth <= 768;
+                        if (!isMobile && window.toggleUserDropdown) {
+                            // 桌面端：更改点击事件为显示下拉菜单
+                            signinBtn.onclick = window.toggleUserDropdown;
+                        } else {
+                            // 移动端：保持原有的onclick属性
+                            if (originalOnclick) {
+                                signinBtn.setAttribute('onclick', originalOnclick);
+                            }
                         }
                     }
                 } else {
@@ -449,9 +458,10 @@
                     // 只有内容不同时才更新
                     if (signinBtn.innerHTML.trim() !== newHTML.trim()) {
                         signinBtn.innerHTML = newHTML;
+                        signinBtn.classList.remove('logged-in');
                         
-                        // 确保onclick属性保持不变
-                        if (originalOnclick && !signinBtn.getAttribute('onclick')) {
+                        // 恢复原有的onclick属性
+                        if (originalOnclick) {
                             signinBtn.setAttribute('onclick', originalOnclick);
                         }
                     }

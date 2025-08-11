@@ -128,26 +128,58 @@
         };
 
         // 显示积分弹窗（统一函数）- 移到页面顶部确保早期加载
-        window.showCreditsModal = function (currentCredits = null, requiredCredits = null) {
+        window.showCreditsModal = function (currentCredits = null, requiredCredits = 10) {
             const modal = document.getElementById('creditsModal');
             const title = document.getElementById('creditsModalTitle');
             const content = document.getElementById('creditsModalContent');
 
             if (!modal || !title || !content) {
-                console.error('❌ 弹窗元素未找到');
+                console.error('❌ Modal elements not found');
                 return;
             }
 
             if (currentCredits === null) {
-                // 未登录用户
-                title.textContent = 'Credits balance is 20';
-                content.textContent = 'Sign in with Google to Gain Free 20 Credits.';
-                console.log('📱 显示未登录弹窗');
+                // Not logged in user - emphasize first login bonus of 20 credits
+                title.textContent = '🎁 Get Free Credits';
+                content.innerHTML = `
+                    <div style="text-align: center; line-height: 1.6;">
+                        <p style="margin: 0 0 10px 0; font-size: 16px; color: #333;">
+                            <strong>Get 20 free credits on your first login!</strong>
+                        </p>
+                        <p style="margin: 0; font-size: 14px; color: #666;">
+                            Sign in with your Gmail account and start creating AI images
+                        </p>
+                    </div>
+                `;
+                console.log('📱 Showing not logged in modal - emphasizing first login 20 credits bonus');
+            } else if (currentCredits === 0) {
+                // Logged in user with 0 credits
+                title.textContent = '💳 Insufficient Credits';
+                content.innerHTML = `
+                    <div style="text-align: center; line-height: 1.6;">
+                        <p style="margin: 0 0 10px 0; font-size: 16px; color: #333;">
+                            You have run out of credits
+                        </p>
+                        <p style="margin: 0; font-size: 14px; color: #666;">
+                            Generating one image requires 10 credits. Please purchase more credits to continue creating
+                        </p>
+                    </div>
+                `;
+                console.log('📱 Showing 0 credits modal');
             } else {
-                // 已登录但积分不足
-                title.textContent = `Credits balance is ${currentCredits}`;
-                content.textContent = `You need ${requiredCredits} credits to generate an image. Please purchase more credits.`;
-                console.log(`📱 显示积分不足弹窗: ${currentCredits}/${requiredCredits}`);
+                // Logged in but insufficient credits (not 0)
+                title.textContent = '💳 Insufficient Credits';
+                content.innerHTML = `
+                    <div style="text-align: center; line-height: 1.6;">
+                        <p style="margin: 0 0 10px 0; font-size: 16px; color: #333;">
+                            Current credits: <strong>${currentCredits}</strong>
+                        </p>
+                        <p style="margin: 0; font-size: 14px; color: #666;">
+                            Generating images requires <strong>${requiredCredits}</strong> credits. Please purchase more credits
+                        </p>
+                    </div>
+                `;
+                console.log(`📱 Showing insufficient credits modal: ${currentCredits}/${requiredCredits}`);
             }
 
             modal.classList.add('active');
@@ -1822,6 +1854,18 @@
         /* Responsive Design */
         @media (max-width: 768px) {
 
+            /* H5端logo字号调整 */
+            .logo {
+                font-size: 16px;
+            }
+
+            /* H5端logo图标尺寸和间距调整 */
+            .logo-icon {
+                width: 32px;
+                height: 32px;
+                margin-right: 6px;
+            }
+
             /* 移动端导航栏样式 */
             .nav {
                 position: relative;
@@ -2416,7 +2460,164 @@
             opacity: 1;
             transition: opacity 0.3s ease;
         }
-    </style>
+    
+        /* 用户下拉菜单样式 */
+        .user-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            z-index: 1000;
+            min-width: 280px;
+            background: white;
+            border: 1px solid #e1e5e9;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            margin-top: 8px;
+        }
+
+        .user-dropdown-content {
+            padding: 16px;
+        }
+
+        .user-info-section {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .user-avatar-large {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .user-avatar-large img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .username {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+
+        .user-level {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 2px;
+        }
+
+        .user-valid-time {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #e1e5e9;
+            margin: 16px -16px;
+        }
+
+        .dropdown-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .dropdown-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 8px 12px;
+            background: none;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dropdown-btn:hover {
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .dropdown-btn i {
+            width: 16px;
+            text-align: center;
+        }
+
+        /* 登录按钮优化 - 只显示头像 */
+        .signin-btn.logged-in {
+            padding: 4px;
+            border: none;
+            background: none;
+            position: relative;
+        }
+
+        .signin-btn.logged-in:hover {
+            background: #f5f5f5;
+            border-radius: 50%;
+        }
+
+        .signin-btn .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+        }
+
+        .signin-btn .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* 积分显示优化 */
+        .credits-display {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .credits-display i {
+            font-size: 16px;
+            color: #ffd700;
+        }
+
+        /* 响应式优化 */
+        @media (max-width: 768px) {
+            /* H5页面隐藏用户下拉菜单 */
+            .user-dropdown {
+                display: none !important;
+            }
+            
+            .user-info-section {
+                flex-direction: column;
+                text-align: center;
+                gap: 8px;
+            }
+        }
+
+        </style>
 
     <script>
 
@@ -2558,12 +2759,7 @@
                 <li><a href="#faq">FAQ</a></li>
             </ul>
 
-            <!-- 汉堡菜单按钮 - 移动端显示 -->
-            <div class="hamburger-menu" onclick="toggleMobileMenu()">
-                <span></span>
-                <span></span>
-                <span></span>
-            </div>
+
 
             <div class="nav-actions">
                 <div class="credits-display" id="creditsDisplay">
@@ -2583,6 +2779,29 @@
                 </div>
             </div>
         </nav>
+        <!-- 用户信息下拉菜单 -->
+        <div id="userDropdown" class="user-dropdown" style="display: none;">
+            <div class="user-dropdown-content">
+                <div class="user-info-section">
+                    <div class="user-avatar-large">
+                        <img id="dropdownUserAvatar" src="" alt="User Avatar">
+                    </div>
+                    <div class="user-details">
+                        <div class="username" id="dropdownUsername">用户名</div>
+                        <div class="user-level" id="dropdownUserLevel">Level: Free</div>
+                        <div class="user-valid-time" id="dropdownValidTime">Valid time: --</div>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-actions">
+                    <button class="dropdown-btn" onclick="handleSignOut()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Sign out
+                    </button>
+                </div>
+            </div>
+        </div>
+
     </header>
 
     <!-- Hero Section -->
@@ -2618,12 +2837,17 @@
                     <h3>Positive Prompt</h3>
                     <textarea class="prompt-textarea" id="prompt"
                         placeholder="360 image tiny planet, tiny round planet, urban, the pand in this pic walking tiny planet Norway northern lights, perfectly centered, centered in frame."></textarea>
-                    <button class="copy-btn" onclick="pastePrompt()">
-                        <i class="fas fa-paste"></i> Paste
-                    </button>
-                    <button class="clear-btn" onclick="clearPrompt()">
-                        <i class="fas fa-trash"></i> Clear
-                    </button>
+                    <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px;">
+                        <button class="copy-btn" onclick="pastePrompt()">
+                            <i class="fas fa-paste"></i> Paste
+                        </button>
+                        <button class="clear-btn" onclick="clearPrompt()">
+                            <i class="fas fa-trash"></i> Clear
+                        </button>
+                        <button class="clear-btn" onclick="randomPrompt()" title="随机提示词">
+                            🎲 Random
+                        </button>
+                    </div>
                 </div>
 
                 <div style="margin-top: 32px;">
@@ -2659,30 +2883,24 @@
                         <span class="credits-cost">-10 Credits</span>
                     </button>
 
-                    <div class="secondary-actions"
-                        style="margin-top: 16px; display: flex; gap: 12px; justify-content: center;">
-                        <button class="secondary-btn" onclick="showGenerationHistory()" title="查看生成历史">
+
+
+
+
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button onclick="checkUserState()"
+                            style="padding: 10px; background: #6f42c1; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            👤 检查用户状态
+                        </button>
+                        <button onclick="debugGenerate()"
+                            style="padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer;">
+                            🐛 调试Generate
+                        </button>
+                        <button onclick="showGenerationHistory()" title="查看生成历史"
+                            style="padding: 10px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer;">
                             📚 生成历史
                         </button>
-                        <button class="secondary-btn" onclick="clearPrompt()" title="清空提示词">
-                            🗑️ 清空
-                        </button>
-                        <button class="secondary-btn" onclick="randomPrompt()" title="随机提示词">
-                            🎲 随机
-                        </button>
                     </div>
-
-
-
-                    <button onclick="checkUserState()"
-                        style="margin-top: 10px; padding: 10px; background: #6f42c1; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                        👤 检查用户状态
-                    </button>
-
-                    <button onclick="debugGenerate()"
-                        style="margin-top: 10px; padding: 10px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer;">
-                        🐛 调试Generate
-                    </button>
 
                     <!-- H5 Pricing Entry Button -->
                     <a href="pricing.html" class="h5-pricing-btn">
@@ -3193,19 +3411,26 @@
                 }
 
                 if (currentCredits < this.generationCost) {
-                    console.log('❌ 积分不足，跳转到Pricing页面');
+                    console.log('❌ Insufficient credits');
 
-                    // 显示更友好的积分不足提示
-                    const message = `积分不足！\n\n当前积分: ${currentCredits}\n需要积分: ${this.generationCost}\n缺少积分: ${this.generationCost - currentCredits}\n\n点击确定跳转到Pricing页面购买积分。`;
+                    if (currentCredits === 0) {
+                        // 积分为0时显示统一样式的弹窗
+                        console.log('📱 积分为0，显示弹窗');
+                        showCreditsModal(currentCredits, this.generationCost);
+                    } else {
+                        // Insufficient credits but not 0, show confirm dialog
+                        console.log('📱 Insufficient credits but not 0, showing confirm dialog');
+                        const message = `Insufficient Credits!\n\nCurrent credits: ${currentCredits}\nRequired credits: ${this.generationCost}\nMissing credits: ${this.generationCost - currentCredits}\n\nClick OK to go to Pricing page to purchase credits.`;
 
-                    if (confirm(message)) {
-                        // 保存当前提示词，以便用户购买积分后可以继续
-                        const prompt = document.getElementById('prompt')?.value?.trim();
-                        if (prompt) {
-                            localStorage.setItem('pending_generation_prompt', prompt);
+                        if (confirm(message)) {
+                            // Save current prompt so user can continue after purchasing credits
+                            const prompt = document.getElementById('prompt')?.value?.trim();
+                            if (prompt) {
+                                localStorage.setItem('pending_generation_prompt', prompt);
+                            }
+
+                            window.location.href = 'pricing.html';
                         }
-
-                        window.location.href = 'pricing.html';
                     }
                     return { canProceed: false, reason: 'insufficient_credits', currentCredits, requiredCredits: this.generationCost };
                 }
@@ -3622,7 +3847,7 @@
 
                     // 显示提示
                     setTimeout(() => {
-                        if (confirm('检测到您之前因积分不足而中断的生成任务。\n\n是否现在继续生成？')) {
+                        if (confirm('Detected a previous generation task interrupted due to insufficient credits.\n\nWould you like to continue generating now?')) {
                             window.imageGenerator.generate();
                         }
                     }, 1000);
@@ -3691,7 +3916,7 @@
 
                     return true;
                 } else {
-                    console.warn(`❌ 积分不足: 需要${amount}, 当前${this.credits}`);
+                    console.warn(`❌ Insufficient credits: need ${amount}, current ${this.credits}`);
                     return false;
                 }
             }
@@ -4847,10 +5072,25 @@
                 // (已移除showcase初始化，因为现在使用独立页面)
 
                 // 5. UnifiedStateSync已经处理认证状态变化，这里只处理特殊逻辑
+                // 增强的登录成功处理
                 supabaseClient.auth.onAuthStateChange(async (event, session) => {
                     console.log('🔐 认证状态变化:', event, session?.user?.email);
 
                     if (event === 'SIGNED_IN' && session) {
+                        // 确保积分同步
+                        setTimeout(async () => {
+                            const credits = await window.UnifiedStateSync.syncCreditsFromAPI();
+                            if (credits !== null) {
+                                console.log('✅ 登录后积分同步成功:', credits);
+                            } else {
+                                console.log('⚠️ 登录后积分同步失败，使用默认值');
+                                // 如果同步失败，确保至少有基础积分
+                                if (window.UnifiedStateSync.getCredits() === 0) {
+                                    window.UnifiedStateSync.setCredits(20);
+                                }
+                            }
+                        }, 1000);
+                        
                         // 检查是否需要跳转到pricing页面
                         const redirectTarget = localStorage.getItem('redirect_after_signin');
                         if (redirectTarget === 'pricing') {
@@ -5051,7 +5291,185 @@
 
             console.log('✅ 跨页面状态同步监听器已设置');
         }
-    </script>
+    
+        // 管理员功能：重置用户积分
+        window.resetUserCredits = async function(userEmail, newCredits = 20) {
+            if (!window.UnifiedStateSync || !window.UnifiedStateSync.getCurrentUser()) {
+                console.error('❌ 用户未登录，无法执行重置操作');
+                return false;
+            }
+
+            const currentUser = window.UnifiedStateSync.getCurrentUser();
+            
+            // 简单的管理员检查（实际应用中应该有更严格的权限控制）
+            const adminEmails = ['admin@example.com', 'test@example.com'];
+            if (!adminEmails.includes(currentUser.email)) {
+                console.error('❌ 权限不足，无法执行重置操作');
+                return false;
+            }
+
+            try {
+                console.log(`🔧 开始重置用户积分: ${userEmail} -> ${newCredits}`);
+                
+                // 如果是重置当前用户的积分
+                if (userEmail === currentUser.email) {
+                    const success = await window.UnifiedStateSync.addCredits(
+                        newCredits - window.UnifiedStateSync.getCredits(), 
+                        '管理员重置积分'
+                    );
+                    
+                    if (success) {
+                        console.log(`✅ 积分重置成功: ${userEmail} -> ${newCredits}`);
+                        alert(`Credits reset successful! Current credits: ${window.UnifiedStateSync.getCredits()}`);
+                        return true;
+                    } else {
+                        console.error('❌ 积分重置失败');
+                        alert('积分重置失败，请检查控制台日志');
+                        return false;
+                    }
+                } else {
+                    // 重置其他用户的积分需要后端API支持
+                    console.log('⚠️ 重置其他用户积分需要后端API支持');
+                    alert('重置其他用户积分功能暂未实现');
+                    return false;
+                }
+                
+            } catch (error) {
+                console.error('❌ 重置积分时发生错误:', error);
+                alert('重置积分失败: ' + error.message);
+                return false;
+            }
+        };
+
+        
+        // 用户下拉菜单功能
+        let isDropdownOpen = false;
+
+        // 切换下拉菜单显示
+        window.toggleUserDropdown = function() {
+            const dropdown = document.getElementById('userDropdown');
+            const signinBtn = document.querySelector('.signin-btn');
+            
+            if (!dropdown || !signinBtn) return;
+
+            isDropdownOpen = !isDropdownOpen;
+            
+            if (isDropdownOpen) {
+                dropdown.style.display = 'block';
+                updateDropdownUserInfo();
+                
+                // 点击外部关闭下拉菜单
+                setTimeout(() => {
+                    document.addEventListener('click', closeDropdownOnClickOutside);
+                }, 100);
+            } else {
+                dropdown.style.display = 'none';
+                document.removeEventListener('click', closeDropdownOnClickOutside);
+            }
+        };
+
+        // 点击外部关闭下拉菜单
+        function closeDropdownOnClickOutside(event) {
+            const dropdown = document.getElementById('userDropdown');
+            const signinBtn = document.querySelector('.signin-btn');
+            
+            if (!dropdown.contains(event.target) && !signinBtn.contains(event.target)) {
+                dropdown.style.display = 'none';
+                isDropdownOpen = false;
+                document.removeEventListener('click', closeDropdownOnClickOutside);
+            }
+        }
+
+        // 更新下拉菜单用户信息
+        function updateDropdownUserInfo() {
+            const currentUser = window.UnifiedStateSync?.getCurrentUser();
+            if (!currentUser) return;
+
+            // 更新头像
+            const avatarImg = document.getElementById('dropdownUserAvatar');
+            if (avatarImg) {
+                avatarImg.src = currentUser.avatar_url || 'https://via.placeholder.com/48';
+            }
+
+            // 更新用户名
+            const username = document.getElementById('dropdownUsername');
+            if (username) {
+                username.textContent = currentUser.name || currentUser.email?.split('@')[0] || 'User';
+            }
+
+            // 更新用户等级
+            const userLevel = document.getElementById('dropdownUserLevel');
+            if (userLevel) {
+                // 这里可以根据实际的会员状态来判断
+                const level = currentUser.subscription_status === 'active' ? 
+                    (currentUser.plan_type === 'pro' ? 'Pro' : 'Max') : 'Free';
+                userLevel.textContent = `Level: ${level}`;
+            }
+
+            // 更新有效期
+            const validTime = document.getElementById('dropdownValidTime');
+            if (validTime) {
+                if (currentUser.subscription_status === 'active' && currentUser.subscription_end_date) {
+                    const endDate = new Date(currentUser.subscription_end_date);
+                    validTime.textContent = `Valid time: ${endDate.toLocaleDateString()}`;
+                } else {
+                    validTime.textContent = 'Valid time: --';
+                }
+            }
+        }
+
+        // 处理登出
+        window.handleSignOut = async function() {
+            try {
+                console.log('🚪 开始登出...');
+                
+                // 关闭下拉菜单
+                const dropdown = document.getElementById('userDropdown');
+                if (dropdown) {
+                    dropdown.style.display = 'none';
+                    isDropdownOpen = false;
+                }
+
+                // 使用UnifiedStateSync登出
+                if (window.UnifiedStateSync) {
+                    await window.UnifiedStateSync.signOut();
+                }
+
+                console.log('✅ 登出成功');
+                
+                // 刷新页面以重置状态
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+                
+            } catch (error) {
+                console.error('❌ 登出失败:', error);
+                alert('登出失败，请刷新页面重试');
+            }
+        };
+
+        </script>
+
+    <!-- 积分弹窗 -->
+    <div id="creditsModal" class="credits-modal">
+        <div class="credits-modal-content">
+            <div class="credits-modal-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <h3 id="creditsModalTitle">Insufficient Credits</h3>
+            <p id="creditsModalContent">You don't have enough credits to generate images.</p>
+            <div class="credits-modal-actions">
+                <button class="credits-modal-btn primary" onclick="window.location.href='pricing.html'">
+                    <i class="fas fa-arrow-up"></i>
+                    Upgrade Now
+                </button>
+                <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
+                    <i class="fas fa-times"></i>
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>

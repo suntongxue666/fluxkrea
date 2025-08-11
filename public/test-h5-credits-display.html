@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>H5端积分显示测试</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        /* 桌面端积分显示样式 */
+        .credits-display {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            color: white;
+            font-weight: 600;
+            font-size: 14px;
+            margin: 10px 0;
+        }
+
+        .credits-display i {
+            font-size: 16px;
+            color: #ffd700;
+        }
+        
+        /* H5端积分显示样式 */
+        @media (max-width: 768px) {
+            .credits-display {
+                background: none !important;
+                border-radius: 0 !important;
+                padding: 0 !important;
+                color: #333 !important;
+                font-weight: 600;
+                font-size: 14px;
+            }
+            
+            .credits-display i {
+                font-size: 16px;
+                color: #ffd700 !important;
+            }
+        }
+        
+        .comparison {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+        }
+        
+        .device-label {
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+            background: #f8f9fa;
+        }
+        
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        
+        /* 模拟不同屏幕尺寸 */
+        .desktop-view {
+            width: 100%;
+            border: 2px solid #007bff;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        .mobile-view {
+            width: 375px;
+            border: 2px solid #28a745;
+            padding: 10px;
+            margin: 10px 0;
+        }
+        
+        @media (max-width: 768px) {
+            .desktop-view {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>H5端积分显示测试</h1>
+        
+        <div class="test-section">
+            <h3>当前积分显示效果</h3>
+            <div class="device-label">当前设备显示：</div>
+            <div class="credits-display" id="currentCreditsDisplay">
+                <i class="fas fa-coins"></i>
+                <span id="creditsAmount">25</span>
+            </div>
+            <div id="currentResult" class="result"></div>
+        </div>
+        
+        <div class="test-section desktop-view">
+            <h3>桌面端效果预览</h3>
+            <div class="device-label">桌面端（>768px）：</div>
+            <div style="display: flex; align-items: center; gap: 6px; padding: 6px 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; color: white; font-weight: 600; font-size: 14px; width: fit-content;">
+                <i class="fas fa-coins" style="font-size: 16px; color: #ffd700;"></i>
+                <span>25</span>
+            </div>
+            <p style="color: #666; font-size: 12px;">蓝紫色渐变背景，白色文字，圆角按钮样式</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>H5端效果预览</h3>
+            <div class="device-label">移动端（≤768px）：</div>
+            <div style="display: flex; align-items: center; gap: 6px; color: #333; font-weight: 600; font-size: 14px; width: fit-content;">
+                <i class="fas fa-coins" style="font-size: 16px; color: #ffd700;"></i>
+                <span>25</span>
+            </div>
+            <p style="color: #666; font-size: 12px;">无背景，黑色文字，简洁显示</p>
+        </div>
+        
+        <div class="test-section">
+            <h3>功能测试</h3>
+            <button class="test-button" onclick="testCreditsUpdate()">测试积分更新</button>
+            <button class="test-button" onclick="testResponsiveDesign()">测试响应式设计</button>
+            <button class="test-button" onclick="testIconDisplay()">测试图标显示</button>
+            <div id="testResult" class="result"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3>设备信息</h3>
+            <div id="deviceInfo" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // 检测当前显示效果
+        function checkCurrentDisplay() {
+            const creditsDisplay = document.getElementById('currentCreditsDisplay');
+            const result = document.getElementById('currentResult');
+            
+            if (!creditsDisplay) {
+                result.className = 'result error';
+                result.textContent = '❌ 未找到积分显示元素';
+                return;
+            }
+            
+            const styles = window.getComputedStyle(creditsDisplay);
+            const isMobile = window.innerWidth <= 768;
+            
+            const hasBackground = styles.background !== 'rgba(0, 0, 0, 0)' && styles.background !== 'none';
+            const hasBorderRadius = parseInt(styles.borderRadius) > 0;
+            const textColor = styles.color;
+            const padding = styles.padding;
+            
+            let status = '';
+            let className = 'result ';
+            
+            if (isMobile) {
+                // H5端检查
+                if (!hasBackground && !hasBorderRadius && textColor === 'rgb(51, 51, 51)') {
+                    status = '✅ H5端样式正确：无背景，黑色文字，无圆角';
+                    className += 'success';
+                } else {
+                    status = `❌ H5端样式异常：背景=${hasBackground}, 圆角=${hasBorderRadius}, 文字颜色=${textColor}`;
+                    className += 'error';
+                }
+            } else {
+                // 桌面端检查
+                if (hasBackground && hasBorderRadius && textColor === 'rgb(255, 255, 255)') {
+                    status = '✅ 桌面端样式正确：有背景，白色文字，有圆角';
+                    className += 'success';
+                } else {
+                    status = `❌ 桌面端样式异常：背景=${hasBackground}, 圆角=${hasBorderRadius}, 文字颜色=${textColor}`;
+                    className += 'error';
+                }
+            }
+            
+            result.className = className;
+            result.textContent = status;
+        }
+        
+        // 测试积分更新
+        function testCreditsUpdate() {
+            const creditsAmount = document.getElementById('creditsAmount');
+            const result = document.getElementById('testResult');
+            
+            if (!creditsAmount) {
+                result.className = 'result error';
+                result.textContent = '❌ 未找到积分数字元素';
+                return;
+            }
+            
+            // 模拟积分更新
+            const originalCredits = creditsAmount.textContent;
+            const newCredits = Math.floor(Math.random() * 100) + 1;
+            
+            creditsAmount.textContent = newCredits;
+            
+            setTimeout(() => {
+                result.className = 'result success';
+                result.textContent = `✅ 积分更新测试成功：${originalCredits} → ${newCredits}`;
+            }, 100);
+        }
+        
+        // 测试响应式设计
+        function testResponsiveDesign() {
+            const result = document.getElementById('testResult');
+            const isMobile = window.innerWidth <= 768;
+            
+            result.className = 'result success';
+            result.innerHTML = `
+                <strong>📱 响应式设计检测</strong><br>
+                • 屏幕宽度: ${window.innerWidth}px<br>
+                • 设备类型: ${isMobile ? 'H5移动端' : '桌面端'}<br>
+                • 样式应用: ${isMobile ? '简洁黑字样式' : '蓝紫色按钮样式'}
+            `;
+        }
+        
+        // 测试图标显示
+        function testIconDisplay() {
+            const icon = document.querySelector('.credits-display i');
+            const result = document.getElementById('testResult');
+            
+            if (!icon) {
+                result.className = 'result error';
+                result.textContent = '❌ 未找到积分图标';
+                return;
+            }
+            
+            const styles = window.getComputedStyle(icon);
+            const iconColor = styles.color;
+            const fontSize = styles.fontSize;
+            
+            result.className = 'result success';
+            result.innerHTML = `
+                <strong>🪙 图标显示检测</strong><br>
+                • 图标类名: ${icon.className}<br>
+                • 图标颜色: ${iconColor}<br>
+                • 图标大小: ${fontSize}<br>
+                • 显示状态: ${iconColor === 'rgb(255, 215, 0)' ? '✅ 金色正常' : '⚠️ 颜色异常'}
+            `;
+        }
+        
+        // 显示设备信息
+        function showDeviceInfo() {
+            const deviceInfo = document.getElementById('deviceInfo');
+            const userAgent = navigator.userAgent;
+            const isMobile = window.innerWidth <= 768;
+            
+            deviceInfo.innerHTML = `
+                <strong>设备信息：</strong><br>
+                • 屏幕尺寸: ${window.innerWidth} x ${window.innerHeight}<br>
+                • 设备类型: ${isMobile ? 'H5移动端 (≤768px)' : '桌面端 (>768px)'}<br>
+                • 用户代理: ${userAgent.includes('Mobile') ? '移动设备' : '桌面设备'}<br>
+                • 浏览器: ${getBrowserName()}
+            `;
+        }
+        
+        function getBrowserName() {
+            const userAgent = navigator.userAgent;
+            if (userAgent.includes('Chrome')) return 'Chrome';
+            if (userAgent.includes('Firefox')) return 'Firefox';
+            if (userAgent.includes('Safari')) return 'Safari';
+            if (userAgent.includes('Edge')) return 'Edge';
+            return '未知浏览器';
+        }
+        
+        // 页面加载完成后执行检查
+        window.addEventListener('load', () => {
+            checkCurrentDisplay();
+            showDeviceInfo();
+        });
+        
+        // 窗口大小改变时重新检查
+        window.addEventListener('resize', () => {
+            setTimeout(() => {
+                checkCurrentDisplay();
+                showDeviceInfo();
+            }, 100);
+        });
+    </script>
+</body>
+</html>

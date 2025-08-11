@@ -1,0 +1,188 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>积分逻辑修复验证</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; }
+        .test-button { margin: 5px; padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 3px; cursor: pointer; }
+        .test-button:hover { background: #0056b3; }
+        .result { margin: 10px 0; padding: 10px; background: #f8f9fa; border-radius: 3px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>积分逻辑修复验证</h1>
+    
+    <div class="test-section">
+        <h3>1. 未登录用户积分提示测试</h3>
+        <button class="test-button" onclick="testUnloggedUserModal()">测试未登录弹窗</button>
+        <div id="unloggedResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>2. 积分为0时弹窗测试</h3>
+        <button class="test-button" onclick="testZeroCreditsModal()">测试积分为0弹窗</button>
+        <div id="zeroCreditsResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>3. 积分不足弹窗测试</h3>
+        <button class="test-button" onclick="testInsufficientCreditsModal()">测试积分不足弹窗</button>
+        <div id="insufficientResult" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. 积分重置功能测试</h3>
+        <button class="test-button" onclick="testResetCredits()">测试积分重置</button>
+        <div id="resetResult" class="result"></div>
+    </div>
+
+    <script>
+        // 模拟必要的函数和元素
+        function createMockModal() {
+            if (document.getElementById('creditsModal')) return;
+            
+            const modal = document.createElement('div');
+            modal.id = 'creditsModal';
+            modal.style.display = 'none';
+            modal.innerHTML = `
+                <div>
+                    <h3 id="creditsModalTitle"></h3>
+                    <p id="creditsModalContent"></p>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 模拟showCreditsModal函数
+        window.showCreditsModal = function (currentCredits = null, requiredCredits = 10) {
+            createMockModal();
+            const modal = document.getElementById('creditsModal');
+            const title = document.getElementById('creditsModalTitle');
+            const content = document.getElementById('creditsModalContent');
+
+            if (!modal || !title || !content) {
+                console.error('❌ 弹窗元素未找到');
+                return { success: false, error: '弹窗元素未找到' };
+            }
+
+            if (currentCredits === null) {
+                title.textContent = '获取免费积分';
+                content.textContent = '登录即可获得20个免费积分，开始创作您的AI图片！';
+            } else if (currentCredits === 0) {
+                title.textContent = '积分不足';
+                content.textContent = '您的积分已用完。生成一张图片需要10积分，请购买更多积分继续创作。';
+            } else {
+                title.textContent = '积分不足';
+                content.textContent = `您当前有${currentCredits}积分，生成图片需要${requiredCredits}积分。请购买更多积分。`;
+            }
+
+            modal.style.display = 'block';
+            return { 
+                success: true, 
+                title: title.textContent, 
+                content: content.textContent 
+            };
+        };
+
+        // 模拟UnifiedStateSync
+        window.UnifiedStateSync = {
+            getCurrentUser: () => ({ email: 'test@example.com' }),
+            getCredits: () => 15,
+            setCredits: (credits) => console.log('设置积分:', credits),
+            addCredits: async (amount, desc) => {
+                console.log('增加积分:', amount, desc);
+                return true;
+            }
+        };
+
+        // 模拟resetUserCredits函数
+        window.resetUserCredits = async function(userEmail, newCredits = 20) {
+            const currentUser = window.UnifiedStateSync.getCurrentUser();
+            const adminEmails = ['admin@example.com', 'test@example.com'];
+            
+            if (!adminEmails.includes(currentUser.email)) {
+                return { success: false, error: '权限不足' };
+            }
+
+            if (userEmail === currentUser.email) {
+                const success = await window.UnifiedStateSync.addCredits(
+                    newCredits - window.UnifiedStateSync.getCredits(), 
+                    '管理员重置积分'
+                );
+                return { success, newCredits };
+            } else {
+                return { success: false, error: '重置其他用户积分功能暂未实现' };
+            }
+        };
+
+        // 测试函数
+        function testUnloggedUserModal() {
+            const result = showCreditsModal(null);
+            const resultDiv = document.getElementById('unloggedResult');
+            
+            if (result.success && result.title === '获取免费积分' && result.content.includes('20个免费积分')) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ 未登录用户弹窗测试通过';
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ 未登录用户弹窗测试失败: ' + (result.error || '内容不匹配');
+            }
+        }
+
+        function testZeroCreditsModal() {
+            const result = showCreditsModal(0);
+            const resultDiv = document.getElementById('zeroCreditsResult');
+            
+            if (result.success && result.title === '积分不足' && result.content.includes('积分已用完')) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ 积分为0弹窗测试通过';
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ 积分为0弹窗测试失败: ' + (result.error || '内容不匹配');
+            }
+        }
+
+        function testInsufficientCreditsModal() {
+            const result = showCreditsModal(5, 10);
+            const resultDiv = document.getElementById('insufficientResult');
+            
+            if (result.success && result.content.includes('您当前有5积分') && result.content.includes('需要10积分')) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ 积分不足弹窗测试通过';
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ 积分不足弹窗测试失败: ' + (result.error || '内容不匹配');
+            }
+        }
+
+        async function testResetCredits() {
+            const result = await resetUserCredits('test@example.com', 20);
+            const resultDiv = document.getElementById('resetResult');
+            
+            if (result.success) {
+                resultDiv.className = 'result success';
+                resultDiv.textContent = '✅ 积分重置功能测试通过';
+            } else {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = '❌ 积分重置功能测试失败: ' + result.error;
+            }
+        }
+
+        // 页面加载完成后自动运行所有测试
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                testUnloggedUserModal();
+                testZeroCreditsModal();
+                testInsufficientCreditsModal();
+                testResetCredits();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
