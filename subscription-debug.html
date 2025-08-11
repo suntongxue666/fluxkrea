@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订阅功能诊断工具</title>
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2196F3;
+            margin-top: 0;
+        }
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        .btn:hover {
+            background-color: #45a049;
+        }
+        .btn-secondary {
+            background-color: #2196F3;
+        }
+        .btn-secondary:hover {
+            background-color: #0b7dda;
+        }
+        .btn-danger {
+            background-color: #f44336;
+        }
+        .btn-danger:hover {
+            background-color: #d32f2f;
+        }
+        .instructions {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #2196F3;
+            margin: 20px 0;
+        }
+        .code {
+            background-color: #f1f1f1;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e8f5e9;
+            border-radius: 4px;
+            display: none;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>订阅功能诊断工具</h1>
+        
+        <div class="instructions">
+            <h3>使用说明</h3>
+            <p>这个工具用于诊断和修复订阅功能问题。请按照以下步骤操作：</p>
+            <ol>
+                <li>确保您已经登录到网站</li>
+                <li>点击"加载诊断工具"按钮</li>
+                <li>点击"运行诊断"按钮</li>
+                <li>查看诊断结果</li>
+                <li>如果需要，点击"尝试修复"按钮</li>
+            </ol>
+        </div>
+        
+        <div class="error" id="errorMessage"></div>
+        
+        <button class="btn" id="loadTool">加载诊断工具</button>
+        <button class="btn btn-secondary" id="runDiagnose" disabled>运行诊断</button>
+        <button class="btn btn-danger" id="fixSubscription" disabled>尝试修复</button>
+        
+        <div class="result" id="result">
+            <h3>诊断结果</h3>
+            <pre id="resultContent"></pre>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loadTool').addEventListener('click', function() {
+            const script = document.createElement('script');
+            script.src = '/public/js/subscription-debug.js';
+            script.onload = function() {
+                document.getElementById('runDiagnose').disabled = false;
+                document.getElementById('fixSubscription').disabled = false;
+                showMessage('诊断工具已加载成功！', false);
+            };
+            script.onerror = function() {
+                showMessage('加载诊断工具失败，请确保文件路径正确', true);
+            };
+            document.head.appendChild(script);
+        });
+        
+        document.getElementById('runDiagnose').addEventListener('click', async function() {
+            if (!window.SubscriptionDebug) {
+                showMessage('诊断工具未加载，请先点击"加载诊断工具"按钮', true);
+                return;
+            }
+            
+            try {
+                await window.SubscriptionDebug.diagnose();
+                showMessage('诊断完成！请查看页面上的诊断报告', false);
+            } catch (error) {
+                showMessage('诊断过程中出错: ' + error.message, true);
+                console.error(error);
+            }
+        });
+        
+        document.getElementById('fixSubscription').addEventListener('click', async function() {
+            if (!window.SubscriptionDebug) {
+                showMessage('诊断工具未加载，请先点击"加载诊断工具"按钮', true);
+                return;
+            }
+            
+            try {
+                await window.SubscriptionDebug.attemptAutoFix();
+                showMessage('修复脚本已执行，请尝试再次使用订阅功能', false);
+            } catch (error) {
+                showMessage('修复过程中出错: ' + error.message, true);
+                console.error(error);
+            }
+        });
+        
+        function showMessage(message, isError) {
+            const errorElement = document.getElementById('errorMessage');
+            errorElement.textContent = message;
+            errorElement.style.display = 'block';
+            
+            if (isError) {
+                errorElement.style.backgroundColor = '#ffebee';
+                errorElement.style.color = '#c62828';
+            } else {
+                errorElement.style.backgroundColor = '#e8f5e9';
+                errorElement.style.color = '#2e7d32';
+            }
+            
+            setTimeout(() => {
+                errorElement.style.display = 'none';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
