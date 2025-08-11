@@ -108,11 +108,12 @@ module.exports = async (req, res) => {
 
   // 6) 兼容式积分查询（按多表多列尝试）
   let credits = 0;
+  let userRecord = null;
 
   const tries = [
-    () => firstRow(`${base}/rest/v1/users?select=credits,balance&id=eq.${enc(user.id)}&limit=1`),
-    () => firstRow(`${base}/rest/v1/users?select=credits,balance&email=eq.${enc(user.email)}&limit=1`),
-    () => firstRow(`${base}/rest/v1/users?select=credits,balance&uuid=eq.${enc(user.id)}&limit=1`),
+    () => firstRow(`${base}/rest/v1/users?select=*&id=eq.${enc(user.id)}&limit=1`),
+    () => firstRow(`${base}/rest/v1/users?select=*&email=eq.${enc(user.email)}&limit=1`),
+    () => firstRow(`${base}/rest/v1/users?select=*&uuid=eq.${enc(user.id)}&limit=1`),
     () => firstRow(`${base}/rest/v1/profiles?select=credits,balance&id=eq.${enc(user.id)}&limit=1`),
     () => firstRow(`${base}/rest/v1/profiles?select=credits,balance&email=eq.${enc(user.email)}&limit=1`),
     () => firstRow(`${base}/rest/v1/user_credits?select=balance&user_id=eq.${enc(user.id)}&limit=1`),
@@ -122,11 +123,85 @@ module.exports = async (req, res) => {
     const row = await fn();
     if (row && (row.credits != null || row.balance != null)) {
       credits = Number(row.credits ?? row.balance ?? 0) || 0;
+      userRecord = row;
       break;
     }
   }
 
-  // 7) 返回标准格式（兼容前端期望的格式）
+  // 7) 如果用户不存在，创建新用户并分配20积分
+  if (!userRecord) {
+    console.log('🆕 新用户首次登录，创建用户记录并分配20积分:', user.email);
+    
+    try {
+      // 生成用户UUID
+      const userUuid = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // 创建新用户记录
+      const newUserData = {
+        uuid: userUuid,
+        google_id: user.id,
+        email: user.email,
+        name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+        avatar_url: user.user_metadata?.avatar_url || null,
+        credits: 20,
+        total_credits_earned: 20,
+        subscription_status: 'FREE',
+        is_signed_in: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      const createResponse = await fetch(`${base}/rest/v1/users`, {
+        method: 'POST',
+        headers: {
+          ...headers,
+          'Content-Type': 'application/json',
+          'Prefer': 'return=representation'
+        },
+        body: JSON.stringify(newUserData)
+      });
+      
+      if (createResponse.ok) {
+        const createdUser = await createResponse.json();
+        console.log('✅ 新用户创建成功:', user.email);
+        credits = 20;
+        
+        // 记录积分交易
+        try {
+          const transactionData = {
+            user_uuid: userUuid,
+            transaction_type: 'EARN',
+            amount: 20,
+            balance_after: 20,
+            description: '首次登录奖励',
+            source: 'first_login_bonus'
+          };
+          
+          await fetch(`${base}/rest/v1/credit_transactions`, {
+            method: 'POST',
+            headers: {
+              ...headers,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(transactionData)
+          });
+          
+          console.log('✅ 首次登录积分交易已记录');
+        } catch (transError) {
+          console.warn('⚠️ 积分交易记录失败:', transError.message);
+        }
+        
+      } else {
+        console.error('❌ 创建新用户失败:', await createResponse.text());
+        credits = 0; // 创建失败时默认为0积分
+      }
+    } catch (createError) {
+      console.error('❌ 创建新用户异常:', createError.message);
+      credits = 0;
+    }
+  }
+
+  // 8) 返回标准格式（兼容前端期望的格式）
   return res.status(200).json({ 
     success: true, 
     credits: credits,
@@ -134,6 +209,13 @@ module.exports = async (req, res) => {
     user_info: { 
       id: user.id, 
       email: user.email || null 
+    },
+    ok: true,
+    user: {
+      id: user.id,
+      email: user.email,
+      name: user.user_metadata?.full_name || user.email?.split('@')[0] || 'User',
+      avatar_url: user.user_metadata?.avatar_url || null
     }
   });
 };

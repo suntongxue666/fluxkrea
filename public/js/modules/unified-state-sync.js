@@ -148,6 +148,10 @@
                 if (event === 'SIGNED_IN' && session?.user) {
                     const user = this.formatUserFromSession(session);
                     await this.setUser(user, true);
+                    
+                    // 检查是否是新用户并处理首次登录积分
+                    await this.handleFirstLoginCredits(session.user);
+                    
                     await this.syncCreditsFromAPI();
                     
                 } else if (event === 'SIGNED_OUT') {
@@ -306,6 +310,168 @@
         }
 
         /**
+         * 处理首次登录积分
+         */
+        async handleFirstLoginCredits(authUser) {
+            try {
+                console.log('🎁 检查首次登录积分...', authUser.email);
+                
+                if (!this.supabaseClient) {
+                    console.log('⚠️ Supabase客户端未初始化');
+                    return;
+                }
+                
+                // 检查用户是否已存在（基于Google ID）
+                const { data: existingUsers, error: queryError } = await this.supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('google_id', authUser.id);
+                
+                if (queryError) {
+                    console.log('❌ 查询现有用户失败:', queryError.message);
+                    return;
+                }
+                
+                // 如果用户已存在，检查是否已有首次登录积分记录
+                if (existingUsers && existingUsers.length > 0) {
+                    const user = existingUsers[0];
+                    
+                    // 检查是否已有首次登录积分交易记录
+                    const { data: firstLoginTransactions, error: transError } = await this.supabaseClient
+                        .from('credit_transactions')
+                        .select('*')
+                        .eq('user_uuid', user.uuid)
+                        .eq('source', 'first_login');
+                    
+                    if (transError) {
+                        console.log('❌ 查询首次登录交易失败:', transError.message);
+                        return;
+                    }
+                    
+                    if (firstLoginTransactions && firstLoginTransactions.length > 0) {
+                        console.log('✅ 用户已有首次登录积分记录');
+                        return;
+                    }
+                    
+                    // 如果用户存在但没有首次登录积分记录，且当前积分为0，则补发
+                    if (user.credits === 0) {
+                        console.log('🎁 为现有用户补发首次登录积分...');
+                        await this.addFirstLoginCredits(user);
+                    }
+                    
+                } else {
+                    // 新用户，创建用户记录并给予首次登录积分
+                    console.log('🎉 检测到新用户，创建记录并给予首次登录积分...');
+                    
+                    const userUuid = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    const initialCredits = 20;
+                    
+                    // 创建新用户记录
+                    const { data: newUser, error: createError } = await this.supabaseClient
+                        .from('users')
+                        .insert({
+                            uuid: userUuid,
+                            google_id: authUser.id,
+                            email: authUser.email,
+                            name: authUser.user_metadata?.full_name || authUser.email,
+                            avatar_url: authUser.user_metadata?.avatar_url,
+                            credits: initialCredits,
+                            total_credits_earned: initialCredits,
+                            is_signed_in: true,
+                            subscription_status: 'FREE',
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString()
+                        })
+                        .select()
+                        .single();
+                    
+                    if (createError) {
+                        console.log('❌ 创建新用户失败:', createError.message);
+                        return;
+                    }
+                    
+                    console.log('✅ 新用户创建成功:', newUser.email);
+                    
+                    // 记录首次登录积分交易
+                    const { error: transactionError } = await this.supabaseClient
+                        .from('credit_transactions')
+                        .insert({
+                            user_uuid: userUuid,
+                            transaction_type: 'EARN',
+                            amount: initialCredits,
+                            balance_after: initialCredits,
+                            description: '首次Google登录奖励积分',
+                            source: 'first_login'
+                        });
+                    
+                    if (transactionError) {
+                        console.log('⚠️ 首次登录积分交易记录失败:', transactionError.message);
+                    } else {
+                        console.log('✅ 首次登录积分交易已记录');
+                    }
+                    
+                    // 更新本地用户状态
+                    this.setCredits(initialCredits);
+                    console.log('🎉 新用户首次登录积分已发放:', initialCredits);
+                }
+                
+            } catch (error) {
+                console.log('❌ 处理首次登录积分失败:', error.message);
+            }
+        }
+
+        /**
+         * 为用户添加首次登录积分
+         */
+        async addFirstLoginCredits(user) {
+            try {
+                const creditsToAdd = 20;
+                const newCredits = (user.credits || 0) + creditsToAdd;
+                
+                // 更新用户积分
+                const { error: updateError } = await this.supabaseClient
+                    .from('users')
+                    .update({
+                        credits: newCredits,
+                        total_credits_earned: (user.total_credits_earned || 0) + creditsToAdd,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', user.id);
+                
+                if (updateError) {
+                    console.log('❌ 更新用户积分失败:', updateError.message);
+                    return false;
+                }
+                
+                // 记录积分交易
+                const { error: transactionError } = await this.supabaseClient
+                    .from('credit_transactions')
+                    .insert({
+                        user_uuid: user.uuid,
+                        transaction_type: 'EARN',
+                        amount: creditsToAdd,
+                        balance_after: newCredits,
+                        description: '首次Google登录奖励积分',
+                        source: 'first_login'
+                    });
+                
+                if (transactionError) {
+                    console.log('⚠️ 积分交易记录失败:', transactionError.message);
+                }
+                
+                // 更新本地积分状态
+                this.setCredits(newCredits);
+                
+                console.log(`✅ 成功为用户 ${user.email} 添加首次登录积分: ${creditsToAdd}`);
+                return true;
+                
+            } catch (error) {
+                console.log('❌ 添加首次登录积分失败:', error.message);
+                return false;
+            }
+        }
+
+        /**
          * 设置积分
          */
         setCredits(credits, broadcast = true) {
@@ -423,14 +589,11 @@
                 const originalOnclick = signinBtn.getAttribute('onclick');
                 
                 if (this.currentUser) {
-                    // 检查是否在Pricing页面
-                    const isPricingPage = window.location.pathname.includes('pricing.html');
-                    
-                    // 已登录状态 - 根据页面显示不同样式
+                    // 已登录状态 - 所有页面都只显示头像，无用户名和边框
                     const newHTML = `
-                        <div class="user-avatar" style="${isPricingPage ? 'border: none; padding: 0; background: none;' : ''}">
+                        <div class="user-avatar" style="border: none; padding: 0; background: none;">
                             <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/32'}" 
-                                 alt="User Avatar" style="${isPricingPage ? 'border: none;' : ''}">
+                                 alt="User Avatar" style="border: none;">
                         </div>
                     `;
                     
@@ -439,12 +602,10 @@
                         signinBtn.innerHTML = newHTML;
                         signinBtn.classList.add('logged-in');
                         
-                        // Pricing页面特殊样式处理
-                        if (isPricingPage) {
-                            signinBtn.style.border = 'none';
-                            signinBtn.style.padding = '4px';
-                            signinBtn.style.background = 'none';
-                        }
+                        // 统一应用简化样式到所有页面
+                        signinBtn.style.border = 'none';
+                        signinBtn.style.padding = '4px';
+                        signinBtn.style.background = 'none';
                         
                         // 检查是否为移动端，如果是则不改变点击事件
                         const isMobile = window.innerWidth <= 768;

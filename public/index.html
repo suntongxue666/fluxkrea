@@ -357,11 +357,10 @@
                 if (!signinBtn) return;
 
                 if (this.currentUser) {
-                    // 已登录状态
+                    // 已登录状态 - 只显示头像
                     const newHTML = `
                         <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/24'}" 
-                             alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%; margin-right: 8px;">
-                        <span>${this.currentUser.name || this.currentUser.email}</span>
+                             alt="Avatar" style="width: 24px; height: 24px; border-radius: 50%;">
                     `;
                     // 只有内容不同时才更新
                     if (signinBtn.innerHTML.trim() !== newHTML.trim()) {
@@ -2702,7 +2701,6 @@
                     signinBtn.innerHTML = `
                         <img src="${user.avatar_url || 'https://via.placeholder.com/18'}" 
                              style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
-                        <span>${user.email.split('@')[0]}</span>
                     `;
                     signinBtn.style.display = 'flex';
                 }
@@ -4461,7 +4459,6 @@
                     signinBtn.innerHTML = `
                         <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/18'}" 
                              style="width: 18px; height: 18px; border-radius: 50%;" alt="Avatar">
-                        <span>${this.currentUser.email.split('@')[0]}</span>
                     `;
                     signinBtn.style.display = 'flex';
                 }
