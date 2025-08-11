@@ -263,78 +263,9 @@
         async monitorNetworkRequests() {
             console.log('🔍 监控网络请求...');
             console.log('⚠️ 请在点击订阅按钮后查看控制台网络面板，记录请求和响应');
-                    
-                    /**
-                     * 重定向到PayPal支付页面
-                     */
-                    function redirectToPayPal(planId, userId, userEmail) {
-                        // 构建PayPal支付URL
-                        const baseUrl = 'https://www.paypal.com/cgi-bin/webscr';
-                        
-                        // 确定商品ID和价格
-                        let itemName, itemAmount;
-                        
-                        if (planId === 'P-5S785818YS7424947NCJBKQA') {
-                            itemName = 'Pro Plan - 1000 Credits';
-                            itemAmount = '9.99';
-                        } else if (planId === 'P-3NJ78684DS796242VNCJBKQQ') {
-                            itemName = 'Max Plan - 5000 Credits';
-                            itemAmount = '29.99';
-                        } else {
-                            itemName = 'Subscription Plan';
-                            itemAmount = '9.99';
-                        }
-                        
-                        // 创建用户数据JSON
-                        const customData = JSON.stringify({
-                            user_id: userId,
-                            email: userEmail,
-                            plan_id: planId
-                        });
-                        
-                        // 构建查询参数
-                        const params = new URLSearchParams({
-                            cmd: '_xclick-subscriptions',
-                            business: 'sb-43wjqz28357913@business.example.com', // 测试账号
-                            item_name: itemName,
-                            custom: customData,
-                            currency_code: 'USD',
-                            a3: itemAmount,
-                            p3: 1,
-                            t3: 'M', // 月度订阅
-                            src: 1, // 重复付款
-                            no_note: 1,
-                            return: window.location.origin + '/account?success=true',
-                            cancel_return: window.location.origin + '/pricing?canceled=true',
-                            notify_url: window.location.origin + '/api/paypal-webhook'
-                        });
-                        
-                        // 重定向到PayPal
-                        const paypalUrl = baseUrl + '?' + params.toString();
-                        console.log('🔄 重定向到PayPal:', paypalUrl);
-                        
-                        window.location.href = paypalUrl;
-                    }
-                    
-                    // 执行修复
-                    fixSubscriptionButtons();
-                    
-                    console.log('✅ 订阅功能紧急修复完成');
-                })();
-            `;
             
-            document.head.appendChild(script);
+            this.results.network.message = '请在点击订阅按钮后查看控制台网络面板，记录请求和响应';
             
-            alert('订阅功能已修复，请再次尝试订阅');
-        }
-    }
-
-    // 创建全局单例实例
-    window.SubscriptionDebug = new SubscriptionDebugger();
-    
-    console.log('✅ 订阅功能诊断工具已加载，请在控制台中调用 SubscriptionDebug.diagnose() 开始诊断');
-    
-})(window);
             // 添加网络请求监听器（仅用于提示，实际监控需要在浏览器控制台中进行）
             console.log('📋 监控步骤:');
             console.log('1. 打开浏览器控制台 (F12)');
@@ -759,3 +690,66 @@
                             console.log('✅ 修复订阅按钮:', button);
                         });
                     };
+                    
+                    /**
+                     * 重定向到PayPal支付页面
+                     */
+                    function redirectToPayPal(planId, userId, userEmail) {
+                        // 构建PayPal支付URL
+                        const baseUrl = 'https://www.paypal.com/cgi-bin/webscr';
+                        
+                        // 确定商品ID和价格
+                        let itemName, itemAmount;
+                        
+                        if (planId === 'P-5S785818YS7424947NCJBKQA') {
+                            itemName = 'Pro Plan - 1000 Credits';
+                            itemAmount = '9.99';
+                        } else if (planId === 'P-3NJ78684DS796242VNCJBKQQ') {
+                            itemName = 'Max Plan - 5000 Credits';
+                            itemAmount = '29.99';
+                        } else {
+                            itemName = 'Subscription Plan';
+                            itemAmount = '9.99';
+                        }
+                        
+                        // 创建用户数据JSON
+                        const customData = JSON.stringify({
+                            user_id: userId,
+                            email: userEmail,
+                            plan_id: planId
+                        });
+                        
+                        // 构建查询参数
+                        const params = new URLSearchParams({
+                            cmd: '_xclick-subscriptions',
+                            business: 'sb-43wjqz28357913@business.example.com', // 测试账号
+                            item_name: itemName,
+                            custom: customData,
+                            currency_code: 'USD',
+                            a3: itemAmount,
+                            p3: 1,
+                            t3: 'M', // 月度订阅
+                            src: 1, // 重复付款
+                            no_note: 1,
+                            return: window.location.origin + '/account?success=true',
+                            cancel_return: window.location.origin + '/pricing?canceled=true',
+                            notify_url: window.location.origin + '/api/paypal-webhook'
+                        });
+                        
+                        // 重定向到PayPal
+                        const paypalUrl = baseUrl + '?' + params.toString();
+                        console.log('🔄 重定向到PayPal:', paypalUrl);
+                        
+                        window.location.href = paypalUrl;
+                    }
+                    
+                    // 执行修复
+                    fixSubscriptionButtons();
+                    
+                    console.log('✅ 订阅功能紧急修复完成');
+                })();
+            `;
+            
+            document.head.appendChild(script);
+            
+            alert('订阅功能已修复，请再次尝试订阅');
