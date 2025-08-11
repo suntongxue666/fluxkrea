@@ -1,87 +1,79 @@
 # Supabase RLS策略添加操作指南（更新版）
 
-本指南将详细说明如何在Supabase控制台中为`user_subscriptions`表添加允许匿名插入的RLS策略，特别是如何修改默认的策略名称。
+## 配置读取策略时的Target Roles设置
 
-## 为user_subscriptions表添加RLS策略
+在配置RLS策略时，"Target Roles"（目标角色）是一个重要的设置，它决定了策略适用于哪些用户角色。
 
-### 步骤1：登录Supabase控制台
-1. 访问 https://app.supabase.io/
-2. 使用您的账号登录
-3. 选择您的项目
+### Target Roles选项说明
 
-### 步骤2：导航到数据库策略页面
-1. 在左侧菜单中点击"Authentication"
-2. 点击"Policies"选项卡
-3. 找到并点击`user_subscriptions`表
+在Supabase中，常见的角色有：
 
-### 步骤3：创建新策略
-1. 点击"New Policy"按钮
-2. 在弹出的对话框中，您有两种方式添加策略：
+- **authenticated**：已登录的用户
+- **anon**：匿名用户（未登录）
+- **service_role**：服务角色（通常用于后端服务）
 
-#### 方式一：使用模板（推荐新手使用）
-1. 选择"Use a policy template"
-2. 在"Policy Type"下拉菜单中选择"INSERT"
-3. 在"Target roles"中选择"anon"（匿名角色）
-4. **重要：** 在"Policy name"字段中，删除默认的"Enable read access for all users"，替换为"允许匿名插入订阅"
-   ![修改策略名称](https://i.imgur.com/example.png)
-5. 点击"Review"按钮
-6. 检查生成的SQL代码，应该类似于：
-   ```sql
-   CREATE POLICY "允许匿名插入订阅" ON user_subscriptions
-   FOR INSERT TO anon
-   WITH CHECK (true);
-   ```
-7. 点击"Create Policy"按钮保存
+### 针对用户积分显示问题的推荐设置
 
-#### 方式二：使用自定义SQL（适合高级用户）
-1. 选择"Write a custom policy"
-2. **重要：** 在"Policy name"字段中，删除默认的"Enable read access for all users"，替换为"允许匿名插入订阅"
-3. 在"Target roles"中选择"anon"（匿名角色）
-4. 在"Using expression"中输入"true"
-5. 在"With check expression"中输入"true"
-6. 点击"Create Policy"按钮保存
+对于我们的用例（确保用户可以读取自己的积分数据），推荐的设置是：
 
-### 步骤4：验证策略
-1. 策略创建后，它应该出现在策略列表中
-2. 确认策略名称为"允许匿名插入订阅"（而不是默认的"Enable read access for all users"）
-3. 确认策略应用于"anon"角色
-4. 确认策略类型为"INSERT"
+1. **在配置读取策略时（步骤8）：**
+   - Target Roles: 选择 **authenticated**
+   
+   这确保只有已登录的用户才能读取数据，匿名用户无法访问。
 
-## 为webhook_events表添加RLS策略
+2. **在配置更新策略时（步骤9）：**
+   - Target Roles: 同样选择 **authenticated**
+   
+   这确保只有已登录的用户才能更新自己的数据。
 
-重复上述步骤，但在步骤2中选择`webhook_events`表，并在步骤3中使用以下信息：
-- **重要：** 删除默认的Policy name，替换为"允许匿名插入webhook事件"
-- Target roles: "anon"
-- Operation: "INSERT"
-- Using expression: "true"
-- With check expression: "true"
+3. **在配置管理员策略时（步骤10，如果适用）：**
+   - Target Roles: 选择 **authenticated**
+   
+   管理员也必须是已登录用户。
 
-## 为credit_transactions表添加RLS策略（可选）
+### 为什么不选择其他角色？
 
-重复上述步骤，但在步骤2中选择`credit_transactions`表，并在步骤3中使用以下信息：
-- **重要：** 删除默认的Policy name，替换为"允许匿名插入积分交易"
-- Target roles: "anon"
-- Operation: "INSERT"
-- Using expression: "true"
-- With check expression: "true"
+- **不选择anon**：匿名用户不应该能够读取或修改用户数据
+- **不选择service_role**：service_role默认已经有完全访问权限，不需要额外的策略
 
-## 注意事项
+### 特殊情况
 
-1. 添加策略后，可能需要几分钟才能生效
-2. 如果您在添加策略后仍然遇到问题，请尝试刷新浏览器或重新登录
-3. 为了安全起见，您可以考虑使用更严格的条件，而不是简单的"true"
-4. 例如，对于`user_subscriptions`表，您可以使用：
-   ```sql
-   google_user_email IS NOT NULL AND paypal_subscription_id IS NOT NULL
-   ```
+如果你的应用有特殊需求，例如：
 
-## 策略添加后的验证
+1. **公开部分用户数据**：如果某些用户数据需要公开（如用户名、头像），你可以为这些字段创建单独的策略，并将Target Roles设置为包括anon。
 
-添加策略后，您可以通过以下方式验证它是否生效：
+2. **多种用户角色**：如果你的应用有自定义角色（如普通用户、高级用户、管理员等），你可能需要为不同角色创建不同的策略。
 
-1. 尝试创建新订阅
-2. 检查是否能成功创建订阅记录
-3. 检查webhook事件是否正确记录
-4. 检查积分交易是否正确记录
+## 完整的策略配置示例
 
-如果一切正常，您应该能够成功创建订阅，并且不再看到"Failed to create subscription"错误。
+以下是一个完整的策略配置示例：
+
+### 用户可以读取自己的数据
+- Policy name: 用户可以读取自己的数据
+- Policy definition: SELECT
+- Target roles: authenticated
+- Using expression:
+```sql
+auth.uid() = id OR email = auth.email() OR uuid = auth.uid()::text
+```
+
+### 用户可以更新自己的数据
+- Policy name: 用户可以更新自己的数据
+- Policy definition: UPDATE
+- Target roles: authenticated
+- Using expression:
+```sql
+auth.uid() = id OR email = auth.email() OR uuid = auth.uid()::text
+```
+- With check expression:
+```sql
+auth.uid() = id OR email = auth.email() OR uuid = auth.uid()::text
+```
+
+### 管理员可以读取所有数据
+- Policy name: 管理员可以读取所有数据
+- Policy definition: ALL
+- Target roles: authenticated
+- Using expression:
+```sql
+auth.uid() IN (SELECT id FROM users WHERE is_admin = true)
