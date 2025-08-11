@@ -1,77 +1,127 @@
-# 数据库RLS策略修复指南
+# RLS策略修复指南
 
-## 需要修改RLS策略的表
+## 问题描述
+用户登录后无法正确读取自己的积分数据，这可能是由于Row Level Security (RLS)策略配置不正确导致的。
 
-根据订阅流程分析，以下表需要修改RLS策略：
+## 什么是RLS?
+Row Level Security (RLS) 是Supabase/PostgreSQL的一个安全功能，它允许我们限制哪些行可以被特定用户查询、插入、更新或删除。
 
-1. **user_subscriptions** ✅ - **必须修改**
-   - 问题：当前策略阻止匿名插入，导致订阅创建失败
-   - 修改：添加允许匿名插入的策略
+## 解决方案
+我们需要确保用户可以读取和更新自己的数据，同时保护其他用户的数据不被未授权访问。
 
-2. **webhook_events** ✅ - **必须修改**
-   - 问题：PayPal webhook无法记录事件
-   - 修改：添加允许匿名插入的策略
+## 实现步骤
 
-3. **credit_transactions** ✅ - **建议修改**
-   - 问题：积分交易记录可能失败
-   - 修改：添加允许匿名插入的策略
+### 1. 登录Supabase管理界面
+访问 https://app.supabase.io/ 并登录你的账户。
 
-## 不需要修改RLS策略的表
+### 2. 选择你的项目
+在项目列表中选择你的项目。
 
-1. **users** ❌ - **无需修改**
-   - 原因：用户表应该有严格的访问控制
-   - 当前状态：已有适当的RLS策略，允许通过API更新积分
+### 3. 进入Table Editor
+在左侧菜单中点击"Table Editor"。
 
-2. **subscriptions** ❌ - **无需修改**
-   - 原因：此表主要由后端服务访问，不需要匿名访问
-   - 当前状态：已有适当的RLS策略
+### 4. 选择users表
+在表列表中找到并点击"users"表。
 
-## 具体修改方法
+### 5. 进入Policies标签
+点击"Policies"标签。
 
-登录Supabase管理控制台，为每个需要修改的表添加以下策略：
+### 6. 启用RLS
+如果RLS尚未启用，点击"Enable RLS"按钮启用它。
 
-### 1. user_subscriptions表
+### 7. 添加策略
+点击"Add Policy"按钮，然后选择"Create a policy from scratch"。
 
+### 8. 配置读取策略
+- Policy name: 用户可以读取自己的数据
+- Policy definition: 选择"SELECT"
+- Using expression: 输入以下表达式:
 ```sql
-CREATE POLICY "允许匿名插入订阅" ON user_subscriptions
-FOR INSERT TO anon
-WITH CHECK (true);
+auth.uid() = id OR email = auth.email() OR uuid = auth.uid()::text
 ```
 
-### 2. webhook_events表
+### 9. 配置更新策略
+重复步骤7，然后:
+- Policy name: 用户可以更新自己的数据
+- Policy definition: 选择"UPDATE"
+- Using expression: 输入与读取策略相同的表达式
+- With check expression: 输入与读取策略相同的表达式
 
+### 10. 配置管理员策略(可选)
+如果你有管理员角色，可以添加管理员策略:
+- Policy name: 管理员可以读取所有数据
+- Policy definition: 选择"ALL"
+- Using expression: 输入以下表达式:
 ```sql
-CREATE POLICY "允许匿名插入webhook事件" ON webhook_events
-FOR INSERT TO anon
-WITH CHECK (true);
+auth.uid() IN (SELECT id FROM users WHERE is_admin = true)
 ```
 
-### 3. credit_transactions表
-
+### 11. 验证策略
+保存策略后，你可以在SQL编辑器中执行以下查询来验证策略是否已正确设置:
 ```sql
-CREATE POLICY "允许匿名插入积分交易" ON credit_transactions
-FOR INSERT TO anon
-WITH CHECK (true);
+SELECT * FROM pg_policies WHERE tablename = 'users';
 ```
 
-## 验证方法
+## 使用SQL脚本
+如果你有权限直接执行SQL，可以使用`fix-rls-policies.sql`脚本来设置这些策略。
 
-添加策略后，可以通过以下方法验证：
+## 测试方法
+1. 登出并重新登录应用
+2. 检查前端是否能正确显示积分
+3. 尝试访问其他用户的数据，确认无法访问
 
-1. 尝试创建新订阅
-2. 检查webhook事件是否正确记录
-3. 检查积分交易是否正确记录
+## 常见问题
 
-## 安全性考虑
+### 策略设置后仍然无法读取数据
+- 确认RLS已启用
+- 检查策略表达式是否正确
+- 验证用户认证是否正常工作
 
-虽然我们允许匿名插入，但应确保：
+### 错误消息: "new row violates row-level security policy"
+- 检查更新策略的With check表达式
+- 确保用户有权限更新自己的数据
 
-1. 在应用层面进行适当的验证
-2. 考虑添加更精细的条件，而不是简单的`WITH CHECK (true)`
-3. 定期审查数据库访问日志，检测异常活动
+### 管理员无法访问所有数据
+- 确认管理员策略已正确设置
+- 验证管理员用户的is_admin字段值为true
 
-## 长期解决方案
+## 进阶配置
 
-1. 实现服务器端API密钥验证
-2. 使用服务角色(service role)而不是匿名角色进行数据库操作
-3. 为每个表实现更精细的RLS策略
+### 添加更细粒度的控制
+你可以为不同的列设置不同的访问权限:
+
+```sql
+CREATE POLICY "用户只能读取非敏感数据" ON public.users
+FOR SELECT USING (true)
+WITH CHECK (true);
+
+CREATE POLICY "用户只能读取自己的敏感数据" ON public.users
+FOR SELECT USING (
+  auth.uid() = id OR
+  email = auth.email()
+)
+WITH CHECK (
+  auth.uid() = id OR
+  email = auth.email()
+);
+```
+
+### 使用安全定义函数
+对于复杂的权限逻辑，可以使用安全定义函数:
+
+```sql
+CREATE OR REPLACE FUNCTION public.user_can_access_data(user_id uuid)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  RETURN (
+    auth.uid() = user_id OR
+    EXISTS (SELECT 1 FROM users WHERE id = auth.uid() AND is_admin = true)
+  );
+END;
+$$;
+
+CREATE POLICY "基于函数的访问控制" ON public.users
+FOR SELECT USING (user_can_access_data(id));

@@ -1,330 +1,289 @@
-// 一键修复所有三个问题的脚本
+/**
+ * 综合修复方案
+ * 
+ * 这个脚本提供了修复Google登录、积分显示和订阅系统的综合方案
+ */
 const { createClient } = require('@supabase/supabase-js');
 
 // Supabase配置
-const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdkY2p2cWFxZ3ZjeHp1Zm1lc3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyMDY2NTEsImV4cCI6MjA2OTc4MjY1MX0.wIblNpUZLgQcCJCVbKfae5n0jtcIshL9asVIit6iUBI';
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://gdcjvqaqgvcxzufmessy.supabase.co';
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-// 创建Supabase客户端
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// 要修复的用户邮箱
-const TARGET_EMAIL = 'sunwei7482@gmail.com';
-
-// 计划配置
-const SUBSCRIPTION_PLANS = {
-    'P-5S785818YS7424947NCJBKQA': { 
-        name: 'Pro Plan', 
-        credits: 1000, 
-        price: 9.99,
-        type: 'pro'
-    },
-    'P-3NJ78684DS796242VNCJBKQQ': { 
-        name: 'Max Plan', 
-        credits: 5000, 
-        price: 29.99,
-        type: 'max'
+/**
+ * 检查并修复Google登录可能导致的用户重复问题
+ * @param {string} email - 用户邮箱
+ * @param {string} googleId - Google ID
+ * @returns {Promise<object>} - 返回用户信息
+ */
+async function checkAndFixGoogleUser(email, googleId) {
+  console.log(`检查Google用户: ${email}`);
+  
+  try {
+    // 1. 查询是否存在相同邮箱的用户
+    const { data: existingUsers, error: queryError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email);
+    
+    if (queryError) {
+      console.error('查询用户失败:', queryError.message);
+      throw queryError;
     }
+    
+    // 2. 如果存在多个用户记录，进行合并处理
+    if (existingUsers && existingUsers.length > 1) {
+      console.log(`发现${existingUsers.length}个重复用户记录，准备合并`);
+      
+      // 找出积分最高的用户记录作为主记录
+      const mainUser = existingUsers.reduce((prev, current) => 
+        (prev.credits > current.credits) ? prev : current
+      );
+      
+      // 收集需要删除的用户ID
+      const userIdsToDelete = existingUsers
+        .filter(user => user.id !== mainUser.id)
+        .map(user => user.id);
+      
+      // 收集需要合并的交易记录
+      for (const user of existingUsers) {
+        if (user.id === mainUser.id) continue;
+        
+        // 获取该用户的交易记录
+        const { data: transactions } = await supabase
+          .from('credit_transactions')
+          .select('*')
+          .eq('user_uuid', user.uuid);
+        
+        // 将交易记录转移到主用户
+        if (transactions && transactions.length > 0) {
+          for (const trans of transactions) {
+            // 创建新的交易记录
+            await supabase
+              .from('credit_transactions')
+              .insert({
+                ...trans,
+                id: undefined, // 让数据库自动生成新ID
+                user_uuid: mainUser.uuid,
+                description: `${trans.description} (合并自用户 ${user.uuid})`
+              });
+          }
+        }
+      }
+      
+      // 删除重复的用户记录
+      for (const userId of userIdsToDelete) {
+        await supabase
+          .from('users')
+          .delete()
+          .eq('id', userId);
+      }
+      
+      console.log(`成功合并用户记录，保留ID为${mainUser.id}的记录`);
+      return mainUser;
+    }
+    
+    // 3. 如果只有一个用户记录或没有记录，直接返回
+    return existingUsers?.[0] || null;
+    
+  } catch (error) {
+    console.error('处理Google用户时出错:', error);
+    throw error;
+  }
+}
+
+/**
+ * 检查并修复前端积分显示问题
+ * @param {string} email - 用户邮箱
+ * @returns {Promise<object>} - 返回用户信息
+ */
+async function checkAndFixCreditsDisplay(email) {
+  console.log(`检查用户积分显示: ${email}`);
+  
+  try {
+    // 1. 获取用户数据
+    const { data: user, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (error) {
+      console.error('获取用户数据失败:', error.message);
+      
+      // 检查是否是RLS策略问题
+      if (error.code === 'PGRST301') {
+        console.error('这可能是RLS策略问题，请检查users表的RLS策略');
+      }
+      
+      return null;
+    }
+    
+    console.log('用户数据:', user);
+    console.log('积分:', user.credits);
+    
+    return user;
+    
+  } catch (error) {
+    console.error('检查积分显示时出错:', error);
+    return null;
+  }
+}
+
+/**
+ * 检查并修复用户订阅状态
+ * @param {string} email - 用户邮箱
+ * @returns {Promise<object>} - 返回用户信息
+ */
+async function checkAndFixSubscription(email) {
+  console.log(`检查用户订阅状态: ${email}`);
+  
+  try {
+    // 1. 获取用户信息
+    const { data: user, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    if (userError) {
+      console.error('获取用户信息失败:', userError.message);
+      return null;
+    }
+    
+    // 2. 检查订阅状态与积分是否匹配
+    const hasSubscription = user.subscription_status === 'ACTIVE';
+    const hasEnoughCredits = user.credits >= 1000;
+    
+    if (hasSubscription && !hasEnoughCredits) {
+      console.log('⚠️ 用户有订阅但积分不足1000，添加积分...');
+      
+      // 添加积分
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          credits: 1000,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (updateError) {
+        console.error('更新积分失败:', updateError.message);
+        return user;
+      }
+      
+      // 记录交易
+      await supabase
+        .from('credit_transactions')
+        .insert({
+          user_uuid: user.uuid,
+          transaction_type: 'EARN',
+          amount: 1000 - user.credits,
+          balance_after: 1000,
+          description: '订阅积分修复',
+          source: 'subscription_fix'
+        });
+      
+      console.log('✅ 已添加积分到1000');
+      
+    } else if (!hasSubscription && hasEnoughCredits) {
+      console.log('⚠️ 用户有足够积分但没有订阅状态，更新订阅状态...');
+      
+      // 更新订阅状态
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ 
+          subscription_status: 'ACTIVE',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', user.id);
+      
+      if (updateError) {
+        console.error('更新订阅状态失败:', updateError.message);
+        return user;
+      }
+      
+      console.log('✅ 已更新订阅状态为ACTIVE');
+    }
+    
+    // 3. 重新获取更新后的用户信息
+    const { data: updatedUser } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
+      .single();
+    
+    return updatedUser;
+    
+  } catch (error) {
+    console.error('修复订阅状态时出错:', error);
+    return null;
+  }
+}
+
+/**
+ * 综合修复所有问题
+ * @param {string} email - 用户邮箱
+ * @returns {Promise<object>} - 返回修复结果
+ */
+async function fixAllIssues(email) {
+  console.log(`开始综合修复: ${email}`);
+  
+  try {
+    // 1. 修复Google登录问题
+    const user = await checkAndFixGoogleUser(email);
+    
+    if (!user) {
+      console.log('没有找到用户，跳过后续修复');
+      return { success: false, message: '没有找到用户' };
+    }
+    
+    // 2. 修复积分显示问题
+    await checkAndFixCreditsDisplay(email);
+    
+    // 3. 修复订阅系统问题
+    const updatedUser = await checkAndFixSubscription(email);
+    
+    return {
+      success: true,
+      user: updatedUser,
+      message: '所有问题已修复'
+    };
+    
+  } catch (error) {
+    console.error('综合修复失败:', error);
+    return {
+      success: false,
+      message: `修复失败: ${error.message}`
+    };
+  }
+}
+
+// 导出函数
+module.exports = {
+  checkAndFixGoogleUser,
+  checkAndFixCreditsDisplay,
+  checkAndFixSubscription,
+  fixAllIssues
 };
 
-async function main() {
-    console.log('===== 一键修复工具 =====');
-    console.log(`目标用户: ${TARGET_EMAIL}`);
-    console.log('');
-    
-    // 1. 修复问题1: 用户登录后积分为0
-    console.log('1. 修复问题1: 用户登录后积分为0');
-    await fixZeroCreditsIssue();
-    
-    // 2. 修复问题2: 用户信息在数据库中不可见
-    console.log('\n2. 修复问题2: 用户信息在数据库中不可见');
-    await fixUserVisibilityIssue();
-    
-    // 3. 修复问题3: 购买订阅失败
-    console.log('\n3. 修复问题3: 购买订阅失败');
-    await fixSubscriptionIssue();
-    
-    console.log('\n===== 修复完成 =====');
-    console.log('请刷新页面并重新尝试登录和购买订阅');
+// 如果直接运行此脚本
+if (require.main === module) {
+  const email = process.argv[2];
+  
+  if (!email) {
+    console.log('请提供用户邮箱作为参数');
+    console.log('例如: node fix-all-three-issues.js sunwei7482@gmail.com');
+    process.exit(1);
+  }
+  
+  fixAllIssues(email)
+    .then(result => {
+      console.log('修复结果:', result);
+      process.exit(0);
+    })
+    .catch(error => {
+      console.error('执行失败:', error);
+      process.exit(1);
+    });
 }
-
-async function fixZeroCreditsIssue() {
-    try {
-        // 查找用户
-        const { data: users, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', TARGET_EMAIL);
-        
-        if (userError) {
-            console.error('❌ 查询用户失败:', userError.message);
-            return false;
-        }
-        
-        if (!users || users.length === 0) {
-            console.log('⚠️ 用户不存在，将在下一步创建');
-            return false;
-        }
-        
-        const user = users[0];
-        console.log(`找到用户: ${user.email}, 当前积分: ${user.credits}`);
-        
-        // 如果积分为0，添加初始积分
-        if (user.credits === 0) {
-            const creditsToAdd = 20;
-            
-            const { error: updateError } = await supabase
-                .from('users')
-                .update({
-                    credits: creditsToAdd,
-                    updated_at: new Date().toISOString()
-                })
-                .eq('id', user.id);
-            
-            if (updateError) {
-                console.error('❌ 更新积分失败:', updateError.message);
-                return false;
-            }
-            
-            console.log(`✅ 已添加 ${creditsToAdd} 积分`);
-            
-            // 记录积分交易
-            const { error: transError } = await supabase
-                .from('credit_transactions')
-                .insert({
-                    user_uuid: user.uuid,
-                    transaction_type: 'EARN',
-                    amount: creditsToAdd,
-                    balance_after: creditsToAdd,
-                    description: '系统修复积分',
-                    source: 'system_fix'
-                });
-            
-            if (transError) {
-                console.warn('⚠️ 积分交易记录失败:', transError.message);
-            } else {
-                console.log('✅ 积分交易已记录');
-            }
-            
-            return true;
-        } else {
-            console.log('✅ 用户积分正常，无需修复');
-            return true;
-        }
-    } catch (err) {
-        console.error('修复积分问题时出错:', err);
-        return false;
-    }
-}
-
-async function fixUserVisibilityIssue() {
-    try {
-        // 查找用户
-        const { data: users, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', TARGET_EMAIL);
-        
-        if (userError) {
-            console.error('❌ 查询用户失败:', userError.message);
-            return false;
-        }
-        
-        if (!users || users.length === 0) {
-            console.log('⚠️ 用户不存在，创建新用户');
-            
-            // 生成用户UUID
-            const userUuid = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            
-            // 创建新用户记录
-            const { data: newUser, error: createError } = await supabase
-                .from('users')
-                .insert({
-                    uuid: userUuid,
-                    email: TARGET_EMAIL,
-                    name: TARGET_EMAIL.split('@')[0],
-                    credits: 20,
-                    total_credits_earned: 20,
-                    subscription_status: 'FREE',
-                    is_signed_in: true,
-                    created_at: new Date().toISOString(),
-                    updated_at: new Date().toISOString()
-                })
-                .select();
-            
-            if (createError) {
-                console.error('❌ 创建用户失败:', createError.message);
-                return false;
-            }
-            
-            console.log('✅ 新用户创建成功!');
-            
-            // 记录积分交易
-            const { error: transError } = await supabase
-                .from('credit_transactions')
-                .insert({
-                    user_uuid: userUuid,
-                    transaction_type: 'EARN',
-                    amount: 20,
-                    balance_after: 20,
-                    description: '首次登录奖励',
-                    source: 'first_login_bonus'
-                });
-            
-            if (transError) {
-                console.warn('⚠️ 积分交易记录失败:', transError.message);
-            } else {
-                console.log('✅ 首次登录积分交易已记录');
-            }
-            
-            return true;
-        } else {
-            console.log('✅ 用户记录存在，无需修复');
-            return true;
-        }
-    } catch (err) {
-        console.error('修复用户可见性问题时出错:', err);
-        return false;
-    }
-}
-
-async function fixSubscriptionIssue() {
-    try {
-        // 查找用户
-        const { data: users, error: userError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('email', TARGET_EMAIL);
-        
-        if (userError || !users || users.length === 0) {
-            console.error('❌ 找不到用户，无法修复订阅');
-            return false;
-        }
-        
-        const user = users[0];
-        
-        // 检查RLS策略
-        console.log('检查RLS策略...');
-        
-        // 尝试插入一条测试记录到webhook_events表
-        const testEvent = {
-            event_type: 'TEST_EVENT',
-            resource_data: { test: true },
-            processed_at: new Date().toISOString()
-        };
-        
-        const { error: eventError } = await supabase
-            .from('webhook_events')
-            .insert(testEvent);
-        
-        if (eventError) {
-            console.error('❌ webhook_events表RLS策略可能有问题:', eventError.message);
-            console.log('   建议: 检查Supabase控制台中的RLS策略，确保webhook_events表允许匿名插入');
-        } else {
-            console.log('✅ webhook_events表RLS策略正常');
-        }
-        
-        // 尝试插入一条测试记录到user_subscriptions表
-        const testSub = {
-            google_user_id: 'test_id',
-            google_user_email: 'test@example.com',
-            paypal_subscription_id: `test_${Date.now()}`,
-            plan_id: 'P-5S785818YS7424947NCJBKQA',
-            plan_type: 'pro',
-            status: 'TEST',
-            created_at: new Date().toISOString()
-        };
-        
-        const { error: subError } = await supabase
-            .from('user_subscriptions')
-            .insert(testSub);
-        
-        if (subError) {
-            console.error('❌ user_subscriptions表RLS策略可能有问题:', subError.message);
-            console.log('   建议: 检查Supabase控制台中的RLS策略，确保user_subscriptions表允许匿名插入');
-        } else {
-            console.log('✅ user_subscriptions表RLS策略正常');
-        }
-        
-        // 修复订阅问题
-        console.log('模拟订阅购买...');
-        
-        // 选择Pro计划
-        const planId = 'P-5S785818YS7424947NCJBKQA';
-        const plan = SUBSCRIPTION_PLANS[planId];
-        
-        // 创建模拟订阅ID
-        const subscriptionId = `MANUAL_${Date.now()}`;
-        
-        // 1. 创建订阅关联
-        const { error: createSubError } = await supabase
-            .from('user_subscriptions')
-            .insert({
-                google_user_id: user.uuid,
-                google_user_email: user.email,
-                paypal_subscription_id: subscriptionId,
-                plan_id: planId,
-                plan_type: plan.type,
-                status: 'ACTIVE',
-                created_at: new Date().toISOString()
-            });
-        
-        if (createSubError) {
-            console.error('❌ 创建订阅关联失败:', createSubError.message);
-        } else {
-            console.log('✅ 订阅关联创建成功');
-        }
-        
-        // 2. 更新用户积分和订阅状态
-        const currentCredits = user.credits || 0;
-        const newCredits = currentCredits + plan.credits;
-        
-        const { error: updateError } = await supabase
-            .from('users')
-            .update({
-                credits: newCredits,
-                subscription_status: 'ACTIVE',
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', user.id);
-        
-        if (updateError) {
-            console.error('❌ 更新用户状态失败:', updateError.message);
-            return false;
-        }
-        
-        console.log(`✅ 用户积分已更新: ${currentCredits} + ${plan.credits} = ${newCredits}`);
-        
-        // 3. 记录积分交易
-        const { error: transError } = await supabase
-            .from('credit_transactions')
-            .insert({
-                user_uuid: user.uuid,
-                transaction_type: 'EARN',
-                amount: plan.credits,
-                balance_after: newCredits,
-                description: `${plan.name}订阅激活`,
-                source: 'manual_fix'
-            });
-        
-        if (transError) {
-            console.warn('⚠️ 积分交易记录失败:', transError.message);
-        } else {
-            console.log('✅ 积分交易已记录');
-        }
-        
-        console.log('\n✅ 订阅问题修复完成');
-        console.log(`用户 ${user.email} 现在有 ${newCredits} 积分`);
-        console.log('订阅状态已设置为 ACTIVE');
-        
-        return true;
-    } catch (err) {
-        console.error('修复订阅问题时出错:', err);
-        return false;
-    }
-}
-
-// 运行主函数
-main().catch(err => {
-    console.error('程序执行错误:', err);
-});
