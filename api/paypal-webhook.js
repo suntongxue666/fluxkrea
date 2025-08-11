@@ -146,7 +146,6 @@ async function logWebhookEvent(eventType, resource) {
         const logData = {
             event_type: eventType,
             resource_data: resource || {},
-            processing_status: 'SUCCESS',
             processed_at: new Date().toISOString()
         };
         
@@ -154,6 +153,7 @@ async function logWebhookEvent(eventType, resource) {
         
         if (result.error) {
             console.warn('Webhook事件日志记录失败:', result.error.message);
+            console.warn('错误详情:', JSON.stringify(result.error));
         } else {
             console.log('Webhook事件已记录');
         }

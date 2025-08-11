@@ -255,6 +255,13 @@
             
             .showcase-subtitle {
                 font-size: 1rem;
+                width: 387px;
+                height: 54px;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                text-align: center;
             }
             
             .showcase-actions {
@@ -280,18 +287,19 @@
                 display: none !important;
             }
             
-            /* H5端Indicators调整位置（原上移120px，现下移64px，最终上移56px） */
+            /* H5端Indicators下移36px（从-56px调整为-20px） */
             .showcase-indicators {
-                transform: translateY(-56px);
+                transform: translateY(-20px);
             }
             
-            /* H5端Start Creating按钮屏幕居中 */
+            /* H5端Start Creating按钮下移24px并居中 */
             .showcase-actions {
                 justify-content: center !important;
                 align-items: center !important;
                 display: flex !important;
                 width: 100% !important;
                 margin: 0 auto !important;
+                transform: translateY(24px);
             }
             
             /* H5端Indicator圆点尺寸调整为6x6px */

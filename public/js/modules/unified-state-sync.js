@@ -423,11 +423,14 @@
                 const originalOnclick = signinBtn.getAttribute('onclick');
                 
                 if (this.currentUser) {
-                    // 已登录状态 - 只显示头像
+                    // 检查是否在Pricing页面
+                    const isPricingPage = window.location.pathname.includes('pricing.html');
+                    
+                    // 已登录状态 - 根据页面显示不同样式
                     const newHTML = `
-                        <div class="user-avatar">
+                        <div class="user-avatar" style="${isPricingPage ? 'border: none; padding: 0; background: none;' : ''}">
                             <img src="${this.currentUser.avatar_url || 'https://via.placeholder.com/32'}" 
-                                 alt="User Avatar">
+                                 alt="User Avatar" style="${isPricingPage ? 'border: none;' : ''}">
                         </div>
                     `;
                     
@@ -435,6 +438,13 @@
                     if (signinBtn.innerHTML.trim() !== newHTML.trim()) {
                         signinBtn.innerHTML = newHTML;
                         signinBtn.classList.add('logged-in');
+                        
+                        // Pricing页面特殊样式处理
+                        if (isPricingPage) {
+                            signinBtn.style.border = 'none';
+                            signinBtn.style.padding = '4px';
+                            signinBtn.style.background = 'none';
+                        }
                         
                         // 检查是否为移动端，如果是则不改变点击事件
                         const isMobile = window.innerWidth <= 768;

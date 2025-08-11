@@ -138,6 +138,10 @@
                 return;
             }
 
+            // 获取按钮元素
+            const primaryBtn = modal.querySelector('.credits-modal-btn.primary');
+            const primaryBtnSpan = primaryBtn?.querySelector('span');
+            
             if (currentCredits === null) {
                 // Not logged in user - emphasize first login bonus of 20 credits
                 title.textContent = '🎁 Get Free Credits';
@@ -151,6 +155,12 @@
                         </p>
                     </div>
                 `;
+                
+                // 设置为登录按钮
+                if (primaryBtn && primaryBtnSpan) {
+                    primaryBtn.onclick = () => signInFromModal();
+                    primaryBtnSpan.textContent = 'Sign in';
+                }
                 console.log('📱 Showing not logged in modal - emphasizing first login 20 credits bonus');
             } else if (currentCredits === 0) {
                 // Logged in user with 0 credits
@@ -165,6 +175,20 @@
                         </p>
                     </div>
                 `;
+                
+                // 设置为购买按钮，跳转到Pricing页面
+                if (primaryBtn && primaryBtnSpan) {
+                    // 修改图标为皇冠
+                    const iconElement = primaryBtn.querySelector('.google-icon') || primaryBtn.querySelector('i');
+                    if (iconElement) {
+                        iconElement.className = 'fas fa-crown';
+                    }
+                    primaryBtn.onclick = () => {
+                        closeCreditsModal();
+                        window.location.href = 'pricing.html';
+                    };
+                    primaryBtnSpan.textContent = 'Purchase Premium';
+                }
                 console.log('📱 Showing 0 credits modal');
             } else {
                 // Logged in but insufficient credits (not 0)
@@ -179,6 +203,20 @@
                         </p>
                     </div>
                 `;
+                
+                // 设置为购买按钮，跳转到Pricing页面
+                if (primaryBtn && primaryBtnSpan) {
+                    // 修改图标为皇冠
+                    const iconElement = primaryBtn.querySelector('.google-icon') || primaryBtn.querySelector('i');
+                    if (iconElement) {
+                        iconElement.className = 'fas fa-crown';
+                    }
+                    primaryBtn.onclick = () => {
+                        closeCreditsModal();
+                        window.location.href = 'pricing.html';
+                    };
+                    primaryBtnSpan.textContent = 'Purchase Premium';
+                }
                 console.log(`📱 Showing insufficient credits modal: ${currentCredits}/${requiredCredits}`);
             }
 
@@ -4777,6 +4815,21 @@
                 
                 if (error) throw error;
                 
+                // 强制确保积分设置为20（防止数据库默认值问题）
+                const { error: creditsError } = await supabaseClient
+                    .from('users')
+                    .update({ 
+                        credits: 20, 
+                        total_credits_earned: 20 
+                    })
+                    .eq('id', data.id);
+                
+                if (creditsError) {
+                    console.error('❌ 强制设置积分失败:', creditsError);
+                } else {
+                    console.log('✅ 强制设置积分成功: 20');
+                }
+                
                 // 记录初始积分
                 await this.addCreditTransaction(
                     data.id, 
@@ -4786,6 +4839,16 @@
                     '新用户注册奖励', 
                     'signup_bonus'
                 );
+                
+                // 立即同步到前端状态
+                if (window.UnifiedStateSync) {
+                    window.UnifiedStateSync.setCredits(20);
+                    console.log('✅ 前端积分状态已同步: 20');
+                }
+                
+                // 确保返回的数据包含正确的积分
+                data.credits = 20;
+                data.total_credits_earned = 20;
                 
                 return data;
             }
