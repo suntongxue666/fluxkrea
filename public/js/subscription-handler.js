@@ -34,6 +34,7 @@
 
             try {
                 console.log('🚀 初始化订阅处理器...');
+                this.updateButtonsState(false, '正在验证身份...'); // 初始化时禁用按钮
 
                 // 获取Supabase客户端
                 this.supabaseClient = window.supabaseClient;
@@ -55,18 +56,18 @@
                 if (!this.supabaseClient) {
                     throw new Error('无法获取Supabase客户端');
                 }
-                
-                // 获取当前用户
-                if (window.UnifiedStateSync) {
-                    this.currentUser = window.UnifiedStateSync.getCurrentUser();
-                } else if (window.currentUser) {
-                    this.currentUser = window.currentUser;
-                } else {
-                    const { data: { session } } = await this.supabaseClient.auth.getSession();
-                    if (session?.user) {
-                        this.currentUser = session.user;
-                    }
-                }
+
+                // 监听认证状态变化，动态更新UI
+                this.supabaseClient.auth.onAuthStateChange((event, session) => {
+                    console.log('Supabase auth state changed:', event);
+                    this.currentUser = session?.user || null;
+                    this.updateButtonsState(!!this.currentUser);
+                });
+
+                // 检查初始会话状态
+                const { data: { session } } = await this.supabaseClient.auth.getSession();
+                this.currentUser = session?.user || null;
+                this.updateButtonsState(!!this.currentUser);
                 
                 // 添加订阅按钮事件监听器
                 this.setupSubscriptionButtons();
@@ -76,9 +77,33 @@
                 
             } catch (error) {
                 console.error('❌ 订阅处理器初始化失败:', error);
+                this.updateButtonsState(false, '初始化失败');
             }
         }
         
+        /**
+         * 更新所有订阅按钮的状态
+         */
+        updateButtonsState(enabled, message = '请先登录') {
+            const subscriptionButtons = document.querySelectorAll('.subscription-btn, .buy-credits-btn, [data-plan-id]');
+            subscriptionButtons.forEach(button => {
+                if (enabled) {
+                    button.disabled = false;
+                    // 恢复按钮原始文本
+                    if (button.dataset.originalText) {
+                        button.innerHTML = button.dataset.originalText;
+                    }
+                } else {
+                    // 保存按钮原始文本（如果尚未保存）
+                    if (!button.dataset.originalText) {
+                        button.dataset.originalText = button.innerHTML;
+                    }
+                    button.innerHTML = message;
+                    button.disabled = true;
+                }
+            });
+        }
+
         /**
          * 设置订阅按钮事件监听器
          */
@@ -127,9 +152,11 @@
          * 创建订阅
          */
         async createSubscription(planId, planType, buttonElement) {
+            // 按钮状态已确保用户登录，但作为安全保障，再次检查
             if (!this.currentUser) {
-                // 如果用户未登录，先触发登录
-                await this.handleLogin();
+                console.error('❌ 创建订阅错误: 用户未认证。按钮本应被禁用。');
+                this.showError('请先登录后再试。');
+                await this.handleLogin(); // 再次尝试触发登录
                 return;
             }
             
