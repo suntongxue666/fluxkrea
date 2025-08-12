@@ -1,7 +1,6 @@
-// 导入必要的模块
-const { createClient } = require('@supabase/supabase-js');
-// 使用内置的 fetch API 而不是 node-fetch
-// const fetch = require('node-fetch');
+// 使用 ESM 语法，更好地兼容 Vercel Edge 函数
+import { createClient } from '@supabase/supabase-js';
+// 使用内置的 fetch API
 
 // Supabase配置
 const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
@@ -25,7 +24,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 async function getPayPalAccessToken() {
     try {
         console.log('🔄 正在获取PayPal访问令牌...');
-        const auth = Buffer.from(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`).toString('base64');
+        
+        // 使用 btoa 代替 Buffer 进行 base64 编码，兼容浏览器环境
+        const auth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
         
         const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
             method: 'POST',
@@ -53,8 +54,8 @@ async function getPayPalAccessToken() {
     }
 }
 
-// Vercel Serverless Function 格式 - 使用CommonJS模块
-module.exports = async (req, res) => {
+// Vercel Serverless Function 格式 - 使用 ESM 语法
+export default async function handler(req, res) {
     // 设置CORS头，允许特定域名访问
     const allowedOrigins = ['https://www.fluxkrea.me', 'http://localhost:3000'];
     const origin = req.headers.origin;
@@ -121,7 +122,7 @@ module.exports = async (req, res) => {
         }
 
         // 准备传递给PayPal的自定义用户信息
-        const userInfo = { user_id, email, plan_type: planType };
+        const userInfo = { user_id, email, plan_type: planType }
         console.log('👤 用户信息:', userInfo);
         const requestId = `sub-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
 
