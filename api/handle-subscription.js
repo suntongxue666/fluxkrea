@@ -37,81 +37,23 @@ module.exports = async (req, res) => {
             });
         }
         
-        // 1. 确保用户存在于users表中 - 修复版本
-        let user = null;
-        
-        // 先通过UUID查找用户
-        const { data: existingUser, error: findError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('uuid', googleUserId)
-            .single();
-        
-        if (findError && findError.code === 'PGRST116') {
-            // 用户不存在，尝试通过邮箱查找
-            console.log('👤 通过UUID未找到用户，尝试邮箱查找:', googleUserEmail);
-            
-            const { data: emailUser, error: emailError } = await supabase
-                .from('users')
-                .select('*')
-                .eq('email', googleUserEmail)
-                .single();
-            
-            if (!emailError && emailUser) {
-                // 通过邮箱找到用户，更新UUID
-                console.log('✅ 通过邮箱找到用户，更新UUID');
-                
-                const { data: updatedUser, error: updateError } = await supabase
-                    .from('users')
-                    .update({ uuid: googleUserId })
-                    .eq('id', emailUser.id)
-                    .select()
-                    .single();
-                
-                if (updateError) {
-                    console.error('❌ 更新用户UUID失败:', updateError);
-                    return res.status(500).json({ error: 'Failed to update user UUID' });
-                }
-                
-                user = updatedUser;
-            } else {
-                // 用户不存在，创建新用户
-                console.log('👤 创建新用户:', googleUserEmail);
-                
-                const { data: newUser, error: createError } = await supabase
-                    .from('users')
-                    .insert({
-                        uuid: googleUserId,
-                        email: googleUserEmail,
-                        name: googleUserEmail ? googleUserEmail.split('@')[0] : 'User',
-                        credits: 0,
-                        subscription_status: 'PENDING',
-                        created_at: new Date().toISOString()
-                    })
-                    .select()
-                    .single();
-                
-                if (createError) {
-                    console.error('❌ 创建用户失败:', createError);
-                    return res.status(500).json({ error: 'Failed to create user' });
-                }
-                
-                user = newUser;
-            }
-        } else if (findError) {
-            console.error('❌ 查找用户失败:', findError);
-            return res.status(500).json({ error: 'Database query failed' });
-        } else {
-            user = existingUser;
-            
-            // 更新用户邮箱（如果提供了）
-            if (googleUserEmail && user.email !== googleUserEmail) {
-                await supabase
-                    .from('users')
-                    .update({ email: googleUserEmail })
-                    .eq('uuid', googleUserId);
-            }
+        // 步骤 1: 调用数据库函数 `get_or_create_user`
+        // 这是一个原子操作，可以安全地获取或创建用户，从而完全避免竞态条件。
+        console.log('👤 正在调用数据库函数 `get_or_create_user`...', { googleUserId, googleUserEmail });
+
+        const { data: user, error: rpcError } = await supabase
+            .rpc('get_or_create_user', {
+                user_uuid: googleUserId,
+                user_email: googleUserEmail
+            });
+
+        // 如果函数调用失败或没有返回用户，则记录错误并中止
+        if (rpcError || !user) {
+            console.error('❌ 调用 `get_or_create_user` RPC 失败:', rpcError);
+            return res.status(500).json({ error: '无法获取或创建用户。请稍后重试。' });
         }
+
+        console.log('✅ 成功获取或创建用户:', user.email, '用户ID:', user.id);
         
         // 2. 保存用户订阅关联
         const { error: subscriptionError } = await supabase
