@@ -1408,42 +1408,46 @@
                         label: 'subscribe',
                         height: 50
                     },
-                    createSubscription: async function (data, actions) {
-                        // 关键修复：在创建订阅的瞬间，强制从 Supabase 获取最新的用户会话。
-                        // 这可以彻底解决因会话状态陈旧或未同步而导致的“User not authenticated”错误。
-                        console.log('🔄 [PayPal CreateSubscription] 正在验证用户身份...');
-                        const { data: { user } } = await supabaseClient.auth.getUser();
+                    createSubscription: async function(data, actions) {
+                        console.log('🔄 [服务器驱动] 正在调用后端API创建订阅...');
+                        
+                        const user = window.UnifiedStateSync.getCurrentUser();
 
-                        if (!user) {
-                            console.error('❌ [PayPal CreateSubscription] 验证失败：用户未登录。');
-                            // 向用户显示需要登录的提示，并中止支付流程。
+                        if (!user || !user.uuid) {
                             showError('您的登录会话已过期，请关闭此窗口并重新登录后再试。');
-                            // 抛出错误，让 PayPal SDK 的 onError 回调能够捕获到。
                             throw new Error('User not authenticated');
                         }
-                        
-                        console.log('✅ [PayPal CreateSubscription] 用户已认证:', user.email);
 
-                        const userInfo = {
-                            user_id: user.id, // 直接使用最新获取的用户ID
-                            email: user.email, // 直接使用最新获取的用户邮箱
-                            plan_type: planType
-                        };
+                        try {
+                            const response = await fetch('/api/create-paypal-subscription', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    planType: planType,
+                                    user_id: user.uuid,
+                                    email: user.email
+                                }),
+                            });
 
-                        console.log('🔄 创建订阅，用户信息:', userInfo);
+                            const result = await response.json();
 
-                        return actions.subscription.create({
-                            'plan_id': planId,
-                            'custom_id': JSON.stringify(userInfo), // 保存完整用户信息
-                            'application_context': {
-                                'brand_name': 'Flux Krea AI',
-                                'locale': 'en-US',
-                                'shipping_preference': 'NO_SHIPPING',
-                                'user_action': 'SUBSCRIBE_NOW',
-                                'return_url': window.location.origin + '/subscription-success.html',
-                                'cancel_url': window.location.origin + '/pricing.html?cancelled=true'
+                            if (!response.ok || !result.success) {
+                                console.error('❌ 后端API创建订阅失败:', result);
+                                const errorMessage = result.details?.message || result.error || '无法创建订阅，请联系客服。';
+                                showError(`创建订阅失败: ${errorMessage}`);
+                                throw new Error(errorMessage);
                             }
-                        });
+
+                            console.log('✅ 后端API成功返回订阅ID:', result.subscriptionID);
+                            return result.subscriptionID;
+
+                        } catch (error) {
+                            console.error('❌ 调用后端API时发生网络或服务器错误:', error);
+                            showError('无法连接到服务器，请检查您的网络并重试。');
+                            throw error; // 将错误传递给PayPal SDK
+                        }
                     },
                     onApprove: async function (data, actions) {
                         console.log('Subscription approved:', data.subscriptionID);
