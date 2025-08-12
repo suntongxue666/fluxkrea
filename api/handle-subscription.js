@@ -83,7 +83,7 @@ module.exports = async (req, res) => {
                     .insert({
                         uuid: googleUserId,
                         email: googleUserEmail,
-                        name: googleUserEmail ? googleUserEmail.split('@')[0] : 'User',,
+                        name: googleUserEmail ? googleUserEmail.split('@')[0] : 'User',
                         credits: 0,
                         subscription_status: 'PENDING',
                         created_at: new Date().toISOString()

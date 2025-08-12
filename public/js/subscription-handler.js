@@ -114,7 +114,7 @@
                         
                     } catch (error) {
                         console.error('❌ 创建订阅失败:', error);
-                        this.showError('创建订阅失败，请重试或联系客服');
+                        this.showError(error.message || '创建订阅失败，请重试或联系客服');
                         
                         // 恢复按钮状态
                         this.hideLoading(button);
@@ -178,7 +178,7 @@
                 
             } catch (error) {
                 console.error('❌ 创建订阅失败:', error);
-                this.showError('Failed to create subscription. Please try again or contact support.');
+                this.showError(error.message || 'Failed to create subscription. Please try again or contact support.');
                 throw error;
             }
         }
