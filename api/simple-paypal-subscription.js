@@ -12,27 +12,19 @@ const PAYPAL_PLANS = {
     max: 'P-8XB43994LV7189516MVKVPMA'
 };
 
-// 简单的Base64编码函数
-function simpleBase64Encode(str) {
-    const base64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
-    let result = '';
-    let i = 0;
-    
-    while (i < str.length) {
-        const char1 = str.charCodeAt(i++) & 0xff;
-        const char2 = i < str.length ? str.charCodeAt(i++) & 0xff : NaN;
-        const char3 = i < str.length ? str.charCodeAt(i++) & 0xff : NaN;
-        
-        const enc1 = char1 >> 2;
-        const enc2 = ((char1 & 3) << 4) | (char2 >> 4);
-        const enc3 = isNaN(char2) ? 64 : ((char2 & 15) << 2) | (char3 >> 6);
-        const enc4 = isNaN(char2) || isNaN(char3) ? 64 : (char3 & 63);
-        
-        result += base64chars.charAt(enc1) + base64chars.charAt(enc2) + 
-                 base64chars.charAt(enc3) + base64chars.charAt(enc4);
+// 安全的Base64编码函数
+function safeBase64Encode(str) {
+    // 检测环境并使用适当的方法
+    if (typeof Buffer !== 'undefined') {
+        // Node.js环境
+        return Buffer.from(str).toString('base64');
+    } else if (typeof btoa === 'function') {
+        // 浏览器环境
+        return btoa(str);
+    } else {
+        // 如果两种方法都不可用，抛出错误
+        throw new Error('无法执行Base64编码，环境不支持');
     }
-    
-    return result;
 }
 
 // 获取PayPal访问令牌
@@ -40,8 +32,8 @@ async function getPayPalAccessToken() {
     try {
         console.log('正在获取PayPal访问令牌...');
         
-        // 使用简单的Base64编码函数
-        const auth = simpleBase64Encode(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
+        // 使用安全的Base64编码函数
+        const auth = safeBase64Encode(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
         
         const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
             method: 'POST',
@@ -113,6 +105,9 @@ async function createPayPalSubscription(accessToken, planId, userInfo, origin) {
 
 // Vercel Serverless Function
 module.exports = async (req, res) => {
+    // 检查是否在Node.js HTTP服务器环境中
+    const isNodeHttpServer = !res.status && typeof res.writeHead === 'function';
+    
     // 设置CORS头
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -120,12 +115,22 @@ module.exports = async (req, res) => {
     
     // 处理预检请求
     if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        if (isNodeHttpServer) {
+            res.writeHead(200);
+            return res.end();
+        } else {
+            return res.status(200).end();
+        }
     }
     
     // 只允许POST请求
     if (req.method !== 'POST') {
-        return res.status(405).json({ success: false, error: '方法不允许' });
+        if (isNodeHttpServer) {
+            res.writeHead(405, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify({ success: false, error: '方法不允许' }));
+        } else {
+            return res.status(405).json({ success: false, error: '方法不允许' });
+        }
     }
     
     try {
@@ -172,20 +177,35 @@ module.exports = async (req, res) => {
         );
         
         // 返回成功响应
-        return res.status(200).json({
+        const successResponse = {
             success: true,
             subscriptionID: subscriptionData.id,
             plan_type: planType,
             plan_id: planId,
             links: subscriptionData.links
-        });
+        };
+        
+        if (isNodeHttpServer) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify(successResponse));
+        } else {
+            return res.status(200).json(successResponse);
+        }
         
     } catch (error) {
         console.error('服务器内部错误:', error);
-        return res.status(500).json({
+        
+        const errorResponse = {
             success: false,
             error: '服务器内部错误',
             message: error.message
-        });
+        };
+        
+        if (isNodeHttpServer) {
+            res.writeHead(500, { 'Content-Type': 'application/json' });
+            return res.end(JSON.stringify(errorResponse));
+        } else {
+            return res.status(500).json(errorResponse);
+        }
     }
 };
