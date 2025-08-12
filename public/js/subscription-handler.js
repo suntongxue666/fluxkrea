@@ -186,7 +186,55 @@
                     planType
                 };
                 
-                // 调用API创建订阅
+                // 调用API创建PayPal订阅
+                console.log('🔄 调用 create-paypal-subscription API...');
+                const paypalResponse = await fetch('/api/create-paypal-subscription', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        planType: planType.toLowerCase(), // PayPal API 需要小写的计划类型
+                        user_id: googleUserId,
+                        email: googleUserEmail
+                    })
+                });
+                
+                if (!paypalResponse.ok) {
+                    let errorMessage = '创建订阅失败';
+                    try {
+                        const errorData = await paypalResponse.json();
+                        console.error('PayPal API 错误:', errorData);
+                        errorMessage = errorData.error || errorData.details?.message || '创建订阅失败';
+                    } catch (e) {
+                        console.error('解析错误响应失败:', e);
+                    }
+                    throw new Error(errorMessage);
+                }
+                
+                const paypalData = await paypalResponse.json();
+                console.log('✅ PayPal订阅创建成功:', paypalData);
+                
+                if (!paypalData.success || !paypalData.links) {
+                    throw new Error('PayPal 返回的数据格式不正确');
+                }
+                
+                // 查找PayPal批准链接
+                const approveLink = paypalData.links.find(link => link.rel === 'approve');
+                if (!approveLink || !approveLink.href) {
+                    throw new Error('未找到PayPal批准链接');
+                }
+                
+                // 保存订阅关联
+                const subscriptionData = {
+                    googleUserId,
+                    googleUserEmail,
+                    paypalSubscriptionId: paypalData.subscriptionID,
+                    planId,
+                    planType
+                };
+                
+                // 调用API保存订阅关联
                 const response = await fetch('/api/handle-subscription', {
                     method: 'POST',
                     headers: {
@@ -197,14 +245,15 @@
                 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || '创建订阅失败');
+                    console.warn('保存订阅关联失败，但继续PayPal流程:', errorData);
+                } else {
+                    const data = await response.json();
+                    console.log('✅ 订阅关联保存成功:', data);
                 }
                 
-                const data = await response.json();
-                console.log('✅ 订阅创建成功:', data);
-                
-                // 重定向到PayPal支付页面
-                this.redirectToPayPal(planId, googleUserId, googleUserEmail);
+                // 重定向到PayPal批准页面
+                console.log('🔄 重定向到PayPal批准页面:', approveLink.href);
+                window.location.href = approveLink.href;
                 
             } catch (error) {
                 console.error('❌ 创建订阅失败:', error);
@@ -213,57 +262,7 @@
             }
         }
         
-        /**
-         * 重定向到PayPal支付页面
-         */
-        redirectToPayPal(planId, userId, userEmail) {
-            // 构建PayPal支付URL
-            const baseUrl = 'https://www.paypal.com/cgi-bin/webscr';
-            
-            // 确定商品ID和价格
-            let itemName, itemAmount;
-            
-            if (planId === 'P-5S785818YS7424947NCJBKQA') {
-                itemName = 'Pro Plan - 1000 Credits';
-                itemAmount = '9.99';
-            } else if (planId === 'P-3NJ78684DS796242VNCJBKQQ') {
-                itemName = 'Max Plan - 5000 Credits';
-                itemAmount = '29.99';
-            } else {
-                itemName = 'Subscription Plan';
-                itemAmount = '9.99';
-            }
-            
-            // 创建用户数据JSON
-            const customData = JSON.stringify({
-                user_id: userId,
-                email: userEmail,
-                plan_id: planId
-            });
-            
-            // 构建查询参数
-            const params = new URLSearchParams({
-                cmd: '_xclick-subscriptions',
-                business: 'sb-43wjqz28357913@business.example.com', // 测试账号
-                item_name: itemName,
-                custom: customData,
-                currency_code: 'USD',
-                a3: itemAmount,
-                p3: 1,
-                t3: 'M', // 月度订阅
-                src: 1, // 重复付款
-                no_note: 1,
-                return: window.location.origin + '/account?success=true',
-                cancel_return: window.location.origin + '/pricing?canceled=true',
-                notify_url: window.location.origin + '/api/paypal-webhook'
-            });
-            
-            // 重定向到PayPal
-            const paypalUrl = baseUrl + '?' + params.toString();
-            console.log('🔄 重定向到PayPal:', paypalUrl);
-            
-            window.location.href = paypalUrl;
-        }
+        // 已移除旧的redirectToPayPal方法，现在使用PayPal API返回的批准链接
         
         /**
          * 处理登录
