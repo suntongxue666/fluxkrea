@@ -163,12 +163,15 @@
             try {
                 console.log('🔄 创建订阅...', planId, planType);
                 
-                // 获取用户信息
+                // 关键步骤: 从已认证的 this.currentUser 对象中安全地获取 Google 用户 ID 和邮箱。
+                // 这是整个订阅流程的核心身份标识，确保了订阅与正确的用户关联。
                 const googleUserId = this.currentUser.id || this.currentUser.uuid;
                 const googleUserEmail = this.currentUser.email;
                 
                 if (!googleUserId || !googleUserEmail) {
-                    throw new Error('用户信息不完整');
+                    // 这个错误理论上不应该发生，因为按钮在用户认证前是禁用的。
+                    // 但作为一道额外的保险，我们在这里进行检查。
+                    throw new Error('用户信息不完整，无法创建订阅');
                 }
                 
                 // 生成临时订阅ID
