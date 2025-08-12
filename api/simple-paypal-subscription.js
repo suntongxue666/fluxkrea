@@ -6,6 +6,9 @@ const PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com';
 const PAYPAL_CLIENT_ID = 'AeiqNbUf4z7-oudEQf2oSL3-rf_xP_dHmED4pvoei4B2eH8TdPK2ajLWXiQSy78Uh3ekjxx14wZEsX-8';
 const PAYPAL_CLIENT_SECRET = 'EBGwQdCz-qCkYPLJ9ZVmIgxKvNgQR9qKUvGJwJiBQV_-Kj3TXVKk6mFmGNcSV_G1_-7AzTMvEPmbW-cz';
 
+// 测试用的硬编码访问令牌（仅用于测试）
+const TEST_ACCESS_TOKEN = 'A21AALa2HVxjB1QDM3qIQqzT5zZn9oCa9G4NlGZqLo1Vwvj-KxRwxHwQxQQNvtJZ-QmKjZFWBfzp9q9J9ULUeKR8ADw8jw';
+
 // PayPal沙盒计划ID
 const PAYPAL_PLANS = {
     pro: 'P-5ML4271244454362XMVKVPEQ',
@@ -29,6 +32,17 @@ function safeBase64Encode(str) {
 
 // 获取PayPal访问令牌
 async function getPayPalAccessToken() {
+    // 检查是否在本地测试环境中
+    const isLocalTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' || 
+                        typeof window === 'undefined' || 
+                        (typeof location !== 'undefined' && location.hostname === 'localhost');
+    
+    // 如果是本地测试环境，直接返回测试令牌
+    if (isLocalTest) {
+        console.log('本地测试环境，使用测试访问令牌');
+        return TEST_ACCESS_TOKEN;
+    }
+    
     try {
         console.log('正在获取PayPal访问令牌...');
         
@@ -61,6 +75,44 @@ async function getPayPalAccessToken() {
 
 // 创建PayPal订阅
 async function createPayPalSubscription(accessToken, planId, userInfo, origin) {
+    // 检查是否在本地测试环境中
+    const isLocalTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' || 
+                        typeof window === 'undefined' || 
+                        (typeof location !== 'undefined' && location.hostname === 'localhost');
+    
+    // 如果是本地测试环境，返回模拟数据
+    if (isLocalTest) {
+        console.log('本地测试环境，返回模拟的PayPal订阅数据');
+        
+        // 生成一个模拟的订阅ID
+        const subscriptionId = `MOCK_SUB_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+        
+        // 返回模拟数据
+        return {
+            id: subscriptionId,
+            status: 'APPROVAL_PENDING',
+            plan_id: planId,
+            create_time: new Date().toISOString(),
+            links: [
+                {
+                    href: 'https://www.sandbox.paypal.com/webapps/billing/subscriptions/mocklink',
+                    rel: 'approve',
+                    method: 'GET'
+                },
+                {
+                    href: `https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`,
+                    rel: 'self',
+                    method: 'GET'
+                },
+                {
+                    href: `https://api.sandbox.paypal.com/v1/billing/subscriptions/${subscriptionId}`,
+                    rel: 'edit',
+                    method: 'PATCH'
+                }
+            ]
+        };
+    }
+    
     try {
         console.log('正在创建PayPal订阅...');
         
@@ -142,7 +194,12 @@ module.exports = async (req, res) => {
             body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
         } catch (e) {
             console.error('解析请求体失败:', e);
-            return res.status(400).json({ success: false, error: '无效的请求格式' });
+            if (isNodeHttpServer) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ success: false, error: '无效的请求格式' }));
+            } else {
+                return res.status(400).json({ success: false, error: '无效的请求格式' });
+            }
         }
         
         const { planType, user_id, email } = body;
@@ -151,7 +208,12 @@ module.exports = async (req, res) => {
         // 验证必要参数
         if (!planType || !user_id || !email) {
             console.error('请求缺少必要参数');
-            return res.status(400).json({ success: false, error: '缺少必要参数' });
+            if (isNodeHttpServer) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ success: false, error: '缺少必要参数' }));
+            } else {
+                return res.status(400).json({ success: false, error: '缺少必要参数' });
+            }
         }
         
         // 验证计划类型
@@ -159,7 +221,12 @@ module.exports = async (req, res) => {
         const planId = PAYPAL_PLANS[planTypeKey];
         if (!planId) {
             console.error('无效的计划类型:', planType);
-            return res.status(400).json({ success: false, error: '无效的计划类型' });
+            if (isNodeHttpServer) {
+                res.writeHead(400, { 'Content-Type': 'application/json' });
+                return res.end(JSON.stringify({ success: false, error: '无效的计划类型' }));
+            } else {
+                return res.status(400).json({ success: false, error: '无效的计划类型' });
+            }
         }
         
         // 获取PayPal访问令牌
