@@ -186,9 +186,9 @@
                     planType
                 };
                 
-                // 调用API创建PayPal订阅
-                console.log('🔄 调用 create-paypal-subscription API...');
-                const paypalResponse = await fetch('/api/create-paypal-subscription', {
+                // 调用简化版API创建PayPal订阅
+                console.log('🔄 调用 simple-paypal-subscription API...');
+                const paypalResponse = await fetch('/api/simple-paypal-subscription', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
