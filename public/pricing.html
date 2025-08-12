@@ -1408,10 +1408,25 @@
                         label: 'subscribe',
                         height: 50
                     },
-                    createSubscription: function (data, actions) {
+                    createSubscription: async function (data, actions) {
+                        // 关键修复：在创建订阅的瞬间，强制从 Supabase 获取最新的用户会话。
+                        // 这可以彻底解决因会话状态陈旧或未同步而导致的“User not authenticated”错误。
+                        console.log('🔄 [PayPal CreateSubscription] 正在验证用户身份...');
+                        const { data: { user } } = await supabaseClient.auth.getUser();
+
+                        if (!user) {
+                            console.error('❌ [PayPal CreateSubscription] 验证失败：用户未登录。');
+                            // 向用户显示需要登录的提示，并中止支付流程。
+                            showError('您的登录会话已过期，请关闭此窗口并重新登录后再试。');
+                            // 抛出错误，让 PayPal SDK 的 onError 回调能够捕获到。
+                            throw new Error('User not authenticated');
+                        }
+                        
+                        console.log('✅ [PayPal CreateSubscription] 用户已认证:', user.email);
+
                         const userInfo = {
-                            user_id: getUserId(),
-                            email: getUserEmail(),
+                            user_id: user.id, // 直接使用最新获取的用户ID
+                            email: user.email, // 直接使用最新获取的用户邮箱
                             plan_type: planType
                         };
 
