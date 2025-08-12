@@ -1,6 +1,5 @@
-// 使用 ESM 语法，更好地兼容 Vercel Edge 函数
-import { createClient } from '@supabase/supabase-js';
-// 使用内置的 fetch API
+// 使用 CommonJS 语法，确保与 Vercel 服务器兼容
+const { createClient } = require('@supabase/supabase-js');
 
 // Supabase配置
 const SUPABASE_URL = 'https://gdcjvqaqgvcxzufmessy.supabase.co';
@@ -20,13 +19,51 @@ const PAYPAL_PLANS = {
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+/**
+ * 安全的Base64编码函数，兼容Node.js和浏览器环境
+ * @param {string} str 要编码的字符串
+ * @returns {string} Base64编码后的字符串
+ */
+function safeBase64Encode(str) {
+    // 检测环境并使用适当的方法
+    if (typeof Buffer !== 'undefined') {
+        // Node.js环境
+        return Buffer.from(str).toString('base64');
+    } else if (typeof btoa === 'function') {
+        // 浏览器环境
+        return btoa(str);
+    } else {
+        // 如果两种方法都不可用，实现一个简单的Base64编码
+        // 这只是一个应急方案，不建议在生产环境中使用
+        const base64chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+        let result = '';
+        let i = 0;
+        
+        while (i < str.length) {
+            const char1 = str.charCodeAt(i++) & 0xff;
+            const char2 = i < str.length ? str.charCodeAt(i++) & 0xff : NaN;
+            const char3 = i < str.length ? str.charCodeAt(i++) & 0xff : NaN;
+            
+            const enc1 = char1 >> 2;
+            const enc2 = ((char1 & 3) << 4) | (char2 >> 4);
+            const enc3 = isNaN(char2) ? 64 : ((char2 & 15) << 2) | (char3 >> 6);
+            const enc4 = isNaN(char2) || isNaN(char3) ? 64 : (char3 & 63);
+            
+            result += base64chars.charAt(enc1) + base64chars.charAt(enc2) + 
+                     base64chars.charAt(enc3) + base64chars.charAt(enc4);
+        }
+        
+        return result;
+    }
+}
+
 // 获取PayPal的OAuth2访问令牌
 async function getPayPalAccessToken() {
     try {
         console.log('🔄 正在获取PayPal访问令牌...');
         
-        // 使用 btoa 代替 Buffer 进行 base64 编码，兼容浏览器环境
-        const auth = btoa(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
+        // 使用安全的Base64编码函数
+        const auth = safeBase64Encode(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
         
         const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
             method: 'POST',
@@ -54,8 +91,8 @@ async function getPayPalAccessToken() {
     }
 }
 
-// Vercel Serverless Function 格式 - 使用 ESM 语法
-export default async function handler(req, res) {
+// Vercel Serverless Function 格式 - 使用 CommonJS 语法
+module.exports = async (req, res) => {
     // 设置CORS头，允许特定域名访问
     const allowedOrigins = ['https://www.fluxkrea.me', 'http://localhost:3000'];
     const origin = req.headers.origin;
@@ -102,7 +139,7 @@ export default async function handler(req, res) {
         }
 
         // 验证计划类型
-        const planId = PAYPAL_PLANS[planType];
+        const planId = PAYPAL_PLANS[planType.toLowerCase()]; // 确保小写匹配
         if (!planId) {
             console.error('❌ 无效的计划类型:', planType);
             return res.status(400).json({ success: false, error: '无效的 planType' });
