@@ -3,8 +3,17 @@
 
 // PayPal沙盒环境配置
 const PAYPAL_API_BASE = 'https://api-m.sandbox.paypal.com';
-const PAYPAL_CLIENT_ID = 'AeiqNbUf4z7-oudEQf2oSL3-rf_xP_dHmED4pvoei4B2eH8TdPK2ajLWXiQSy78Uh3ekjxx14wZEsX-8';
-const PAYPAL_CLIENT_SECRET = 'EBGwQdCz-qCkYPLJ9ZVmIgxKvNgQR9qKUvGJwJiBQV_-Kj3TXVKk6mFmGNcSV_G1_-7AzTMvEPmbW-cz';
+// 注意：这些是示例凭证，实际使用时会被环境变量中的值覆盖
+const PAYPAL_CLIENT_ID = 'YOUR_PAYPAL_CLIENT_ID'; // 请替换为有效的PayPal客户端ID
+const PAYPAL_CLIENT_SECRET = 'YOUR_PAYPAL_CLIENT_SECRET'; // 请替换为有效的PayPal客户端密钥
+
+// 环境变量中的PayPal凭证（优先使用）
+const ENV_PAYPAL_CLIENT_ID = typeof process !== 'undefined' && process.env && process.env.PAYPAL_CLIENT_ID;
+const ENV_PAYPAL_CLIENT_SECRET = typeof process !== 'undefined' && process.env && process.env.PAYPAL_CLIENT_SECRET;
+
+// 使用环境变量中的凭证（如果存在）
+const ACTIVE_PAYPAL_CLIENT_ID = ENV_PAYPAL_CLIENT_ID || PAYPAL_CLIENT_ID;
+const ACTIVE_PAYPAL_CLIENT_SECRET = ENV_PAYPAL_CLIENT_SECRET || PAYPAL_CLIENT_SECRET;
 
 // 测试用的硬编码访问令牌（仅用于测试）
 const TEST_ACCESS_TOKEN = 'A21AALa2HVxjB1QDM3qIQqzT5zZn9oCa9G4NlGZqLo1Vwvj-KxRwxHwQxQQNvtJZ-QmKjZFWBfzp9q9J9ULUeKR8ADw8jw';
@@ -30,12 +39,28 @@ function safeBase64Encode(str) {
     }
 }
 
+// 记录PayPal凭证状态（不记录实际值，只记录是否存在）
+console.log('PayPal凭证状态:', {
+    clientIdHardcoded: PAYPAL_CLIENT_ID !== 'YOUR_PAYPAL_CLIENT_ID',
+    clientSecretHardcoded: PAYPAL_CLIENT_SECRET !== 'YOUR_PAYPAL_CLIENT_SECRET',
+    clientIdFromEnv: !!ENV_PAYPAL_CLIENT_ID,
+    clientSecretFromEnv: !!ENV_PAYPAL_CLIENT_SECRET,
+    usingEnvVars: !!(ENV_PAYPAL_CLIENT_ID && ENV_PAYPAL_CLIENT_SECRET)
+});
+
 // 获取PayPal访问令牌
 async function getPayPalAccessToken() {
     // 检查是否在本地测试环境中
-    const isLocalTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' || 
-                        typeof window === 'undefined' || 
-                        (typeof location !== 'undefined' && location.hostname === 'localhost');
+    const isLocalTest = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') || 
+                        (typeof process !== 'undefined' && process.env.LOCAL_TEST === 'true');
+    
+    // 记录环境信息以便调试
+    console.log('环境信息:', {
+        processEnv: typeof process !== 'undefined' ? process.env.NODE_ENV : 'undefined',
+        windowDefined: typeof window !== 'undefined',
+        locationHostname: typeof location !== 'undefined' ? location.hostname : 'undefined',
+        isLocalTest: isLocalTest
+    });
     
     // 如果是本地测试环境，直接返回测试令牌
     if (isLocalTest) {
@@ -47,7 +72,7 @@ async function getPayPalAccessToken() {
         console.log('正在获取PayPal访问令牌...');
         
         // 使用安全的Base64编码函数
-        const auth = safeBase64Encode(`${PAYPAL_CLIENT_ID}:${PAYPAL_CLIENT_SECRET}`);
+        const auth = safeBase64Encode(`${ACTIVE_PAYPAL_CLIENT_ID}:${ACTIVE_PAYPAL_CLIENT_SECRET}`);
         
         const response = await fetch(`${PAYPAL_API_BASE}/v1/oauth2/token`, {
             method: 'POST',
@@ -76,9 +101,20 @@ async function getPayPalAccessToken() {
 // 创建PayPal订阅
 async function createPayPalSubscription(accessToken, planId, userInfo, origin) {
     // 检查是否在本地测试环境中
-    const isLocalTest = typeof process !== 'undefined' && process.env.NODE_ENV === 'test' || 
-                        typeof window === 'undefined' || 
-                        (typeof location !== 'undefined' && location.hostname === 'localhost');
+    const isLocalTest = (typeof process !== 'undefined' && process.env.NODE_ENV === 'test') || 
+                        (typeof process !== 'undefined' && process.env.LOCAL_TEST === 'true');
+    
+    // 记录环境信息以便调试
+    console.log('创建订阅环境信息:', {
+        processEnv: typeof process !== 'undefined' ? process.env.NODE_ENV : 'undefined',
+        windowDefined: typeof window !== 'undefined',
+        locationHostname: typeof location !== 'undefined' ? location.hostname : 'undefined',
+        isLocalTest: isLocalTest,
+        accessToken: accessToken ? '已提供' : '未提供',
+        planId: planId,
+        userInfo: JSON.stringify(userInfo),
+        origin: origin
+    });
     
     // 如果是本地测试环境，返回模拟数据
     if (isLocalTest) {
@@ -118,6 +154,21 @@ async function createPayPalSubscription(accessToken, planId, userInfo, origin) {
         
         const requestId = `sub-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`;
         
+        const requestBody = JSON.stringify({
+            plan_id: planId,
+            custom_id: JSON.stringify(userInfo),
+            application_context: {
+                brand_name: 'Flux Krea AI',
+                locale: 'zh-CN',
+                shipping_preference: 'NO_SHIPPING',
+                user_action: 'SUBSCRIBE_NOW',
+                return_url: `${origin || 'https://www.fluxkrea.me'}/subscription-success.html`,
+                cancel_url: `${origin || 'https://www.fluxkrea.me'}/pricing.html?cancelled=true`
+            }
+        });
+        
+        console.log('PayPal API 请求体:', requestBody);
+        
         const response = await fetch(`${PAYPAL_API_BASE}/v1/billing/subscriptions`, {
             method: 'POST',
             headers: {
@@ -126,29 +177,37 @@ async function createPayPalSubscription(accessToken, planId, userInfo, origin) {
                 'PayPal-Request-Id': requestId,
                 'Prefer': 'return=representation'
             },
-            body: JSON.stringify({
-                plan_id: planId,
-                custom_id: JSON.stringify(userInfo),
-                application_context: {
-                    brand_name: 'Flux Krea AI',
-                    locale: 'zh-CN',
-                    shipping_preference: 'NO_SHIPPING',
-                    user_action: 'SUBSCRIBE_NOW',
-                    return_url: `${origin || 'https://www.fluxkrea.me'}/subscription-success.html`,
-                    cancel_url: `${origin || 'https://www.fluxkrea.me'}/pricing.html?cancelled=true`
-                }
-            })
+            body: requestBody
         });
         
+        // 获取响应文本以便调试
+        const responseText = await response.text();
+        console.log('PayPal API 响应状态:', response.status);
+        console.log('PayPal API 响应文本:', responseText);
+        
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('创建PayPal订阅失败:', response.status, errorText);
-            throw new Error(`创建PayPal订阅失败: ${response.status}`);
+            let errorDetails = '未知错误';
+            try {
+                const errorData = JSON.parse(responseText);
+                errorDetails = JSON.stringify(errorData);
+                console.error('创建PayPal订阅失败:', response.status, errorData);
+            } catch (e) {
+                console.error('创建PayPal订阅失败 (无法解析错误):', response.status, responseText);
+                errorDetails = responseText.substring(0, 200); // 限制长度以防止过长
+            }
+            throw new Error(`创建PayPal订阅失败: ${response.status} - ${errorDetails}`);
         }
         
-        const data = await response.json();
-        console.log('PayPal订阅创建成功:', data.id);
-        return data;
+        // 重新解析响应文本为JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+            console.log('PayPal订阅创建成功:', data.id);
+            return data;
+        } catch (e) {
+            console.error('解析PayPal成功响应失败:', e);
+            throw new Error('无法解析PayPal响应: ' + responseText.substring(0, 200));
+        }
     } catch (error) {
         console.error('创建PayPal订阅异常:', error);
         throw error;
