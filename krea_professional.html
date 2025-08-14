@@ -2111,7 +2111,7 @@
                 console.error('加载系统配置失败:', error);
                 // 使用默认值
                 systemSettings = {
-                    default_credits: 20,
+                    default_credits: 0,
                     generation_cost: 10,
                     daily_free_credits: 5,
                     max_daily_generations: 10,
@@ -2271,8 +2271,8 @@
                                 platform: navigator.platform,
                                 timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                                 screen_resolution: `${screen.width}x${screen.height}`,
-                                credits: systemSettings.default_credits || 20,
-                                total_credits_earned: systemSettings.default_credits || 20
+                                credits: systemSettings.default_credits || 0,
+                                total_credits_earned: systemSettings.default_credits || 0
                             })
                             .select()
                             .single();
@@ -2281,7 +2281,7 @@
                         user = newUser;
                         
                         // 记录初始积分
-                        await this.addCreditTransaction(user.id, uuid, 'EARN', systemSettings.default_credits || 20, 
+                        await this.addCreditTransaction(user.id, uuid, 'EARN', systemSettings.default_credits || 0,
                             '新用户奖励', 'signup_bonus');
                     } else if (error) {
                         throw error;
@@ -2290,7 +2290,7 @@
                         // 检查用户积分是否为0（可能记录被重置了）
                         if (user.credits === 0) {
                             console.log('用户积分为0，重新分配初始积分');
-                            const initialCredits = systemSettings.default_credits || 20;
+                            const initialCredits = systemSettings.default_credits || 0;
                             await supabaseClient
                                 .from('users')
                                 .update({ 
@@ -2357,7 +2357,7 @@
                     platform: navigator.platform,
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     screen_resolution: `${screen.width}x${screen.height}`,
-                    credits: systemSettings.default_credits || 20,
+                    credits: systemSettings.default_credits || 0,
                     total_credits_earned: systemSettings.default_credits || 20
                 };
                 
@@ -2392,7 +2392,7 @@
                     data.id, 
                     userUuid, 
                     'EARN', 
-                    systemSettings.default_credits || 20, 
+                    systemSettings.default_credits || 0,
                     authUser ? '新用户注册奖励' : '新用户奖励', 
                     authUser ? 'signup_bonus' : 'anonymous_bonus'
                 );
@@ -2809,36 +2809,22 @@
             }
         });
         
-        // 图像生成功能 - 完全使用模拟模式
+        // 图像生成功能 - 强制要求Google登录
         async function generateImage() {
             console.log('=== 🎯 开始图像生成 ===');
-            console.log('当前用户:', currentUser);
-            console.log('积分管理器状态:', { 
-                credits: creditsManager.credits, 
-                isInitialized: creditsManager.isInitialized 
-            });
-            console.log('系统设置:', systemSettings);
             
-            // 1. 强制检查Google登录状态
-            console.log('🔍 严格登录检查:', {
-                currentUser: currentUser,
-                exists: !!currentUser,
-                is_signed_in: currentUser?.is_signed_in,
-                has_google_id: !!currentUser?.google_id,
-                has_email: !!currentUser?.email
-            });
-            
-            // 必须满足：用户存在 + 已登录 + 有Google ID + 有邮箱
+            // 🚫 第一道防线：强制Google登录检查
+            // 如果没有Google登录，直接返回，不执行任何后续逻辑
             if (!currentUser || 
-                !currentUser.is_signed_in || 
                 !currentUser.google_id || 
-                !currentUser.email) {
-                console.log('❌ 未通过Google登录验证，显示登录弹窗');
-                showCreditsModal(0, 10);
+                !currentUser.email || 
+                !currentUser.is_signed_in) {
+                console.log('🚫 BLOCKED: 未登录用户尝试生成图像');
+                alert('请先使用Google账号登录后再生成图像');
                 return;
             }
             
-            console.log('✅ Google登录验证通过，继续生成流程');
+            console.log('✅ Google登录验证通过:', currentUser.email);
             
             // 检查维护模式
             if (systemSettings.maintenance_mode) {

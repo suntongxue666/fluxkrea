@@ -182,9 +182,10 @@
                 this.state.isAuthenticated = !!session;
                 this.state.user = session?.user || null;
 
-                // 如果已认证，获取用户积分和订阅信息
+                // 如果已认证，只获取用户订阅信息，不再获取积分信息
                 if (this.state.isAuthenticated) {
-                    await this._fetchUserCredits();
+                    // 不再获取用户积分
+                    // await this._fetchUserCredits();
                     await this._fetchUserSubscription();
                 }
             } catch (error) {
@@ -202,16 +203,16 @@
                 clearInterval(this.creditsUpdateTimer);
             }
 
-            // 设置新的定时器
-            this.creditsUpdateTimer = setInterval(async () => {
-                if (this.state.isAuthenticated) {
-                    try {
-                        await this._fetchUserCredits();
-                    } catch (error) {
-                        console.error('❌ 定时更新积分失败:', error);
-                    }
-                }
-            }, this.config.creditsUpdateInterval);
+            // 不再设置积分更新定时器
+            // this.creditsUpdateTimer = setInterval(async () => {
+            //     if (this.state.isAuthenticated) {
+            //         try {
+            //             await this._fetchUserCredits();
+            //         } catch (error) {
+            //             console.error('❌ 定时更新积分失败:', error);
+            //         }
+            //     }
+            // }, this.config.creditsUpdateInterval);
         }
 
         /**

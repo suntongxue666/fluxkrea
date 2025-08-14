@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FLUX Krea AI - Pricing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --primary-hover: #4f46e5;
+            --secondary-color: #f1f5f9;
+            --text-color: #1e293b;
+            --light-text: #64748b;
+            --border-color: #e2e8f0;
+            --background: #ffffff;
+            --card-bg: #ffffff;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background-color: var(--background);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        header {
+            background-color: var(--background);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+        }
+
+        .nav-links a {
+            color: var(--text-color);
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .signin-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .signin-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 500;
+        }
+
+        .user-name {
+            font-weight: 500;
+        }
+
+        .hero {
+            padding: 80px 0;
+            text-align: center;
+            background: linear-gradient(to bottom, #f9fafb, #ffffff);
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            background: linear-gradient(to right, var(--primary-color), #818cf8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--light-text);
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+
+        .pricing-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 48px;
+            gap: 16px;
+        }
+
+        .toggle-label {
+            font-weight: 500;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        .save-text {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .pricing-plans {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 64px;
+        }
+
+        .pricing-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 32px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        .popular-tag {
+            position: absolute;
+            top: 12px;
+            right: -30px;
+            background-color: var(--primary-color);
+            color: white;
+            padding: 4px 30px;
+            font-size: 12px;
+            font-weight: 600;
+            transform: rotate(45deg);
+        }
+
+        .plan-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .plan-price {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+            color: var(--primary-color);
+        }
+
+        .plan-price .period {
+            font-size: 16px;
+            color: var(--light-text);
+            font-weight: 500;
+        }
+
+        .plan-features {
+            list-style: none;
+            margin-bottom: 24px;
+        }
+
+        .plan-features li {
+            padding: 8px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .plan-features i {
+            color: var(--primary-color);
+        }
+
+        .subscription-btn {
+            width: 100%;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .subscription-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .subscription-btn.outline {
+            background-color: transparent;
+            border: 2px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .subscription-btn.outline:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .faq-section {
+            padding: 64px 0;
+            background-color: var(--secondary-color);
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 48px;
+        }
+
+        .faq-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .faq-item {
+            margin-bottom: 16px;
+            border-radius: 8px;
+            background-color: var(--background);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .faq-question i {
+            transition: transform 0.3s;
+        }
+
+        .faq-answer {
+            padding: 0 20px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.3s ease;
+        }
+
+        .faq-item.active .faq-question i {
+            transform: rotate(180deg);
+        }
+
+        .faq-item.active .faq-answer {
+            padding: 0 20px 20px;
+            max-height: 1000px;
+        }
+
+        .cta-section {
+            padding: 80px 0;
+            text-align: center;
+            background: linear-gradient(to right, var(--primary-color), #818cf8);
+            color: white;
+        }
+
+        .cta-title {
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .cta-text {
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto 32px;
+            opacity: 0.9;
+        }
+
+        .cta-btn {
+            background-color: white;
+            color: var(--primary-color);
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 18px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        footer {
+            background-color: var(--text-color);
+            color: white;
+            padding: 48px 0 24px;
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+
+        .footer-column h3 {
+            font-size: 18px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 8px;
+        }
+
+        .footer-links a {
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: white;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .social-links a {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 20px;
+            transition: color 0.2s;
+        }
+
+        .social-links a:hover {
+            color: white;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 24px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .nav-links {
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero p {
+                font-size: 18px;
+            }
+
+            .pricing-plans {
+                grid-template-columns: 1fr;
+                max-width: 400px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .footer-content {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+
+            .social-links {
+                justify-content: center;
+            }
+        }
+
+        /* Loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <i class="fas fa-bolt"></i>
+                    FLUX Krea AI
+                </a>
+                <nav class="nav-links">
+                    <a href="/">Features</a>
+                    <a href="/">Showcase</a>
+                    <a href="/pricing.html" class="active">Pricing</a>
+                    <a href="/">FAQ</a>
+                </nav>
+                <div class="nav-actions">
+                    <button class="signin-btn" id="signinBtn">
+                        <i class="fab fa-google"></i>
+                        Sign In
+                    </button>
+                    <div class="user-profile" id="userProfile" style="display: none;">
+                        <div class="user-avatar" id="userAvatar">U</div>
+                        <span class="user-name" id="userName">User</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="hero">
+        <div class="container">
+            <h1>Simple, Affordable Pricing</h1>
+            <p>Choose and Start creating amazing AI images today with our flexible credit packages.</p>
+        </div>
+    </section>
+
+    <div class="container">
+        <div class="pricing-plans" id="pricingPlans">
+            <!-- Free Plan -->
+            <div class="pricing-card">
+                <div class="plan-name">Free</div>
+                <div class="plan-price">$0<span class="period">/month</span></div>
+                <p>Perfect for trying out Flux Krea AI</p>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> 20 free credits to start</li>
+                    <li><i class="fas fa-check"></i> 2 times creation</li>
+                    <li><i class="fas fa-check"></i> Standard image quality</li>
+                    <li><i class="fas fa-check"></i> Basic image sizes</li>
+                    <li><i class="fas fa-check"></i> No signup required</li>
+                    <li><i class="fas fa-check"></i> Commercial use allowed</li>
+                </ul>
+                <button class="subscription-btn outline" data-plan-id="free" data-plan-type="FREE">
+                    You've got the luck
+                </button>
+            </div>
+
+            <!-- Pro Plan -->
+            <div class="pricing-card">
+                <div class="popular-tag">Most Popular</div>
+                <div class="plan-name">Pro</div>
+                <div class="plan-price">$9.9<span class="period">/month</span></div>
+                <p>Best value for regular users</p>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> 1000 credits per month</li>
+                    <li><i class="fas fa-check"></i> 1000 monthly credits</li>
+                    <li><i class="fas fa-check"></i> HD image quality</li>
+                    <li><i class="fas fa-check"></i> All image sizes</li>
+                    <li><i class="fas fa-check"></i> Priority generation</li>
+                    <li><i class="fas fa-check"></i> Commercial use allowed</li>
+                    <li><i class="fas fa-check"></i> Email support</li>
+                    <li><i class="fas fa-check"></i> No Ads</li>
+                </ul>
+                <button class="subscription-btn" data-plan-id="pro" data-plan-type="PRO">
+                    Choose Pro
+                </button>
+            </div>
+
+            <!-- Max Plan -->
+            <div class="pricing-card">
+                <div class="discount-tag">40% Discount</div>
+                <div class="plan-name">Max</div>
+                <div class="plan-price">$29.9<span class="period">/month</span></div>
+                <p>For power users and professionals</p>
+                <ul class="plan-features">
+                    <li><i class="fas fa-check"></i> 5000 credits per month</li>
+                    <li><i class="fas fa-check"></i> 5000 monthly credits</li>
+                    <li><i class="fas fa-check"></i> Ultra-HD image quality</li>
+                    <li><i class="fas fa-check"></i> All image sizes</li>
+                    <li><i class="fas fa-check"></i> Fastest generation</li>
+                    <li><i class="fas fa-check"></i> Commercial use allowed</li>
+                    <li><i class="fas fa-check"></i> Priority email support</li>
+                    <li><i class="fas fa-check"></i> No Ads</li>
+                </ul>
+                <button class="subscription-btn" data-plan-id="max" data-plan-type="MAX">
+                    Choose Max
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <section class="faq-section">
+        <div class="container">
+            <h2 class="section-title">Frequently Asked Questions</h2>
+            <div class="faq-container">
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>What is FLUX Krea AI?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>FLUX Krea AI is an advanced AI image generation platform that uses cutting-edge artificial intelligence technology to help users easily create high-quality images. Whether you're a designer, artist, or content creator, our tools can help bring your creative ideas to life.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>How do I choose the right plan for me?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Choosing a plan depends on your usage needs. If you're an occasional user, the Free plan is enough to get started. For regular creators who need more generations and advanced features, the Pro plan is ideal. Power users and professionals who need maximum quality and volume should consider the Max plan.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Can I cancel my subscription anytime?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Yes, you can cancel your subscription at any time. After cancellation, your subscription will continue until the end of the current billing cycle. We don't provide partial refunds, but you can continue using the service until your subscription period ends.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>Who owns the copyright to generated images?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Images generated using our platform belong to you. You can use these images for personal or commercial purposes without any restrictions. However, please note that you should comply with relevant laws and regulations and not generate illegal or infringing content.</p>
+                    </div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <span>What payment methods do you support?</span>
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We support various payment methods, including credit cards and PayPal. All payments are securely encrypted, and we don't store your complete payment information.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="cta-title">Ready to start creating?</h2>
+            <p class="cta-text">Join thousands of creators using FLUX Krea AI to unleash your creative potential</p>
+            <button class="cta-btn" id="ctaBtn">Get Started Now</button>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-column">
+                    <h3>FLUX Krea AI</h3>
+                    <p>Using advanced AI technology to help creators easily generate high-quality images.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+                <div class="footer-column">
+                    <h3>Product</h3>
+                    <ul class="footer-links">
+                        <li><a href="/">AI Image Generation</a></li>
+                        <li><a href="/pricing.html">Pricing</a></li>
+                        <li><a href="#">API Documentation</a></li>
+                        <li><a href="#">Enterprise Solutions</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Support</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">Help Center</a></li>
+                        <li><a href="#">Tutorials</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">Contact Us</a></li>
+                    </ul>
+                </div>
+                <div class="footer-column">
+                    <h3>Legal</h3>
+                    <ul class="footer-links">
+                        <li><a href="/terms.html">Terms of Service</a></li>
+                        <li><a href="/privacy.html">Privacy Policy</a></li>
+                        <li><a href="#">Copyright Information</a></li>
+                        <li><a href="#">Cookie Policy</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 FLUX Krea AI. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="js/modules/unified-state-sync.js"></script>
+    <script src="js/subscription-handler.js"></script>
+    <script>
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle FAQ collapse
+            const faqItems = document.querySelectorAll('.faq-item');
+            faqItems.forEach(item => {
+                const question = item.querySelector('.faq-question');
+                question.addEventListener('click', () => {
+                    item.classList.toggle('active');
+                });
+            });
+
+            // Handle CTA button
+            const ctaBtn = document.getElementById('ctaBtn');
+            ctaBtn.addEventListener('click', function() {
+                window.location.href = '/';
+            });
+
+            // Handle sign in button
+            const signinBtn = document.getElementById('signinBtn');
+            signinBtn.addEventListener('click', async function() {
+                try {
+                    if (window.UnifiedStateSync) {
+                        await window.UnifiedStateSync.signIn();
+                    }
+                } catch (error) {
+                    console.error('Sign in failed:', error);
+                    alert('Sign in failed, please try again');
+                }
+            });
+
+            // Listen for auth state changes
+            if (window.UnifiedStateSync) {
+                window.UnifiedStateSync.addEventListener('auth-state-change', function(data) {
+                    updateUserInterface(data.isAuthenticated, data.user);
+                });
+
+                // Check auth state on initialization
+                const state = window.UnifiedStateSync.getState();
+                updateUserInterface(state.isAuthenticated, state.user);
+            }
+
+            // Update user interface
+            function updateUserInterface(isAuthenticated, user) {
+                const signinBtn = document.getElementById('signinBtn');
+                const userProfile = document.getElementById('userProfile');
+                const userAvatar = document.getElementById('userAvatar');
+                const userName = document.getElementById('userName');
+
+                if (isAuthenticated && user) {
+                    // User is logged in
+                    signinBtn.style.display = 'none';
+                    userProfile.style.display = 'flex';
+                    
+                    // Set user avatar and name
+                    if (user.user_metadata && user.user_metadata.avatar_url) {
+                        userAvatar.innerHTML = `<img src="${user.user_metadata.avatar_url}" alt="User Avatar" style="width: 100%; height: 100%; border-radius: 50%;">`;
+                    } else {
+                        userAvatar.textContent = user.email ? user.email.charAt(0).toUpperCase() : 'U';
+                    }
+                    
+                    // Set user name
+                    userName.textContent = user.user_metadata && user.user_metadata.full_name ? 
+                        user.user_metadata.full_name : 
+                        (user.email ? user.email.split('@')[0] : 'User');
+                } else {
+                    // User is not logged in
+                    signinBtn.style.display = 'block';
+                    userProfile.style.display = 'none';
+                }
+            }
+        });
+    </script>
