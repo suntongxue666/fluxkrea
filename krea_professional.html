@@ -2795,12 +2795,21 @@
             console.log('系统设置:', systemSettings);
             
             // 1. 首先检查用户是否已登录
+            console.log('🔍 登录状态检查:', {
+                currentUser: currentUser,
+                exists: !!currentUser,
+                is_signed_in: currentUser?.is_signed_in,
+                is_local_mode: currentUser?.is_local_mode
+            });
+            
             if (!currentUser || !currentUser.is_signed_in) {
-                console.log('用户未登录，显示登录弹窗');
+                console.log('❌ 用户未登录，显示登录弹窗');
                 // 保持积分显示为20，不传递实际积分数
                 showCreditsModal(20, 10); // 显示获取免费20积分弹窗
                 return;
             }
+            
+            console.log('✅ 用户已登录，继续生成流程');
             
             // 检查维护模式
             if (systemSettings.maintenance_mode) {
