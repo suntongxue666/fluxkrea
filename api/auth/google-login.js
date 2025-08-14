@@ -55,7 +55,7 @@ export default async function handler(req, res) {
             email: email,
             name: name,
             avatar_url: avatar_url,
-            credits: 20, // 首次登录给20积分
+            credits: 0, // 首次登录不给积分
             subscription_status: 'FREE',
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
@@ -78,9 +78,9 @@ export default async function handler(req, res) {
             .insert([{
                 user_uuid: user.uuid,
                 transaction_type: 'EARN',
-                amount: 20,
-                balance_after: 20,
-                description: '首次登录奖励',
+                amount: 0,
+                balance_after: 0,
+                description: '首次登录记录',
                 source: 'first_login_bonus',
                 created_at: new Date().toISOString()
             }]);
@@ -96,7 +96,7 @@ export default async function handler(req, res) {
             success: true,
             user: user,
             credits: user.credits,
-            message: '注册成功，获得20积分奖励！'
+            message: '注册成功！'
         });
         
     } catch (error) {
