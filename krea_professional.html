@@ -1809,7 +1809,7 @@
                         <i class="fas fa-chevron-down"></i>
                     </div>
                     <div class="faq-answer">
-                        <p>Yes! We offer free credits for new users to try FLUX.1 Krea. You can generate several images to experience the quality and speed before upgrading.</p>
+                        <p>You can sign in with your Google account to start using FLUX.1 Krea. Experience the quality and speed of our image generation before upgrading to a premium plan.</p>
                     </div>
                 </div>
             </div>
@@ -2626,8 +2626,8 @@
                             .limit(1);
                         
                         if (!transError && (!transactions || transactions.length === 0)) {
-                            console.log('新用户，没有积分交易记录，给予20积分初始奖励');
-                            await this.addCredits(20, '首次登录奖励');
+                            console.log('新用户，没有积分交易记录，不给予初始积分奖励');
+                            await this.addCredits(0, '首次登录奖励');
                         } else {
                             console.log('用户已有积分交易记录，不重复给予初始积分');
                         }
@@ -3317,7 +3317,7 @@
                 return;
             }
             
-            // 未登录用户，显示登录提示弹窗（固定文案：获取免费20积分）
+            // 未登录用户，显示登录提示弹窗
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
