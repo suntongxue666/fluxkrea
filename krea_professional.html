@@ -2902,56 +2902,44 @@
                 let imageUrl, generationTime;
                 
                 try {
-                    // 调用HuggingFace API生成图像
-                    const response = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
-                        method: "POST",
+                    // 调用Replicate API生成图像
+                    console.log('📡 调用Replicate API生成图像...');
+                    const response = await fetch('/api/replicate-generate', {
+                        method: 'POST',
                         headers: {
-                            "Authorization": `Bearer hf_your_token_here`, // 需要替换为实际token
-                            "Content-Type": "application/json",
+                            'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            inputs: prompt,
-                            parameters: {
-                                num_inference_steps: steps,
-                                guidance_scale: 0.0,
-                                width: parseInt(imageSize.split('x')[0]),
-                                height: parseInt(imageSize.split('x')[1])
-                            }
+                            prompt: prompt,
+                            width: parseInt(imageSize.split('x')[0]),
+                            height: parseInt(imageSize.split('x')[1]),
+                            steps: steps
                         }),
                     });
                     
                     if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('HuggingFace API错误:', errorText);
-                        
-                        // 如果是模型加载中，使用模拟模式
-                        if (response.status === 503 || errorText.includes('loading')) {
-                            console.log('模型加载中，使用模拟模式...');
-                            const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
-                            imageUrl = simulationResult.imageUrl;
-                            generationTime = simulationResult.generationTime;
-                        } else {
-                            throw new Error(`API Error: ${response.status} - ${errorText}`);
-                        }
-                    } else {
-                        // 成功获取图像
-                        const blob = await response.blob();
-                        const imageBuffer = await blob.arrayBuffer();
-                        const imageBase64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
-                        imageUrl = `data:image/png;base64,${imageBase64}`;
+                        const errorData = await response.json();
+                        console.error('Replicate API错误:', errorData);
+                        throw new Error(`Replicate API Error: ${response.status} - ${errorData.error || 'Unknown error'}`);
+                    }
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        imageUrl = result.image;
                         generationTime = Date.now() - startTime;
                         
-                        console.log('✅ 真实API生成完成:', { 
+                        console.log('✅ Replicate API生成完成:', { 
                             generationTime,
-                            imageSize: imageBuffer.byteLength 
+                            model: result.model,
+                            provider: result.provider
                         });
+                    } else {
+                        throw new Error(result.error || '图像生成失败');
                     }
                 } catch (apiError) {
-                    console.error('API调用失败，使用模拟模式:', apiError);
-                    // API失败时使用模拟模式作为备选
-                    const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
-                    imageUrl = simulationResult.imageUrl;
-                    generationTime = simulationResult.generationTime;
+                    console.error('❌ Replicate API调用失败:', apiError);
+                    // 不使用模拟模式，直接抛出错误
+                    throw new Error(`图像生成失败: ${apiError.message}`);
                 }
                 
                 // 更新数据库记录
