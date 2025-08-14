@@ -1915,7 +1915,8 @@
         // Demo generation function
         function demoGenerate(prompt) {
             document.getElementById('prompt').value = prompt;
-            generateImage();
+            // 不直接调用generateImage，让用户手动点击Generate按钮
+            // 这样会经过完整的登录检查流程
             
             // Scroll to generator
             document.getElementById('generator').scrollIntoView({ 
