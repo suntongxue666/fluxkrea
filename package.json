@@ -1,0 +1,24 @@
+{
+  "name": "flux-krea",
+  "version": "1.0.0",
+  "description": "![banner](assets/banner.jpg)",
+  "main": "check-database-tables.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/suntongxue666/fluxkrea.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/suntongxue666/fluxkrea/issues"
+  },
+  "homepage": "https://github.com/suntongxue666/fluxkrea#readme",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.55.0",
+    "whatwg-url": "^14.2.0"
+  }
+}

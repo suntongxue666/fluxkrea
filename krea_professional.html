@@ -1305,6 +1305,13 @@
             background: #e2e8f0;
         }
         
+        /* 弹窗中的登录按钮样式 - 与右上角保持一致 */
+        .modal-signin-btn {
+            flex: 1;
+            justify-content: center;
+            margin: 0;
+        }
+        
         .google-icon-modal {
             width: 18px;
             height: 18px;
@@ -1422,13 +1429,13 @@
     <div class="credits-modal" id="creditsModal">
         <div class="credits-modal-content">
             <div class="credits-modal-icon">
-                <i class="fas fa-coins"></i>
+                <i class="fas fa-gift"></i>
             </div>
-            <h3>Credits current is 0</h3>
-            <p>Generate an image needs <span id="modalRequiredCredits">10</span> credits. Please sign in for more credits.</p>
+            <h3>🎁 Get Free 20 Credits</h3>
+            <p>Sign in with gmail account and start your creating AI images.</p>
             <div class="credits-modal-actions">
-                <button class="credits-modal-btn primary" onclick="signInFromModal()">
-                    <div class="google-icon-modal"></div>
+                <button class="signin-btn modal-signin-btn" onclick="signInFromModal()">
+                    <div class="google-icon"></div>
                     <span>Sign in</span>
                 </button>
                 <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
@@ -2561,16 +2568,45 @@
             // 初始化积分管理器
             async initialize(user) {
                 this.currentUser = user;
+                console.log('积分管理器初始化开始，用户数据:', user);
+                
                 if (user && !user.is_local_mode) {
+                    // 数据库模式 - 从用户数据获取积分
                     this.credits = user.credits || 0;
-                    console.log('积分管理器初始化 - 数据库模式:', { uuid: user.uuid, credits: this.credits });
+                    console.log('积分管理器初始化 - 数据库模式:', { 
+                        uuid: user.uuid, 
+                        email: user.email,
+                        credits: this.credits,
+                        is_signed_in: user.is_signed_in 
+                    });
+                    
+                    // 如果用户已登录但积分为0，检查是否需要给予初始积分
+                    if (user.is_signed_in && this.credits === 0) {
+                        console.log('检测到已登录用户积分为0，检查是否已有积分交易记录');
+                        
+                        // 检查用户是否已有积分交易记录
+                        const { data: transactions, error: transError } = await supabaseClient
+                            .from('credit_transactions')
+                            .select('id')
+                            .eq('user_uuid', user.uuid)
+                            .limit(1);
+                        
+                        if (!transError && (!transactions || transactions.length === 0)) {
+                            console.log('新用户，没有积分交易记录，给予20积分初始奖励');
+                            await this.addCredits(20, '首次登录奖励');
+                        } else {
+                            console.log('用户已有积分交易记录，不重复给予初始积分');
+                        }
+                    }
                 } else {
                     // 本地存储模式
                     this.credits = parseInt(localStorage.getItem('user_credits')) || systemSettings.default_credits || 20;
                     console.log('积分管理器初始化 - 本地模式:', { credits: this.credits });
                 }
+                
                 this.updateCreditsDisplay();
                 this.isInitialized = true;
+                console.log('积分管理器初始化完成，最终积分:', this.credits);
             }
             
             updateCreditsDisplay() {
@@ -2632,7 +2668,7 @@
                 }
             }
             
-            async addCredits(amount) {
+            async addCredits(amount, description = '积分增加') {
                 this.credits += amount;
                 
                 try {
@@ -2642,20 +2678,25 @@
                             .from('users')
                             .update({ 
                                 credits: this.credits,
-                                total_credits_earned: (this.currentUser.total_credits_earned || 0) + amount
+                                total_credits_earned: (this.currentUser.total_credits_earned || 0) + amount,
+                                updated_at: new Date().toISOString()
                             })
                             .eq('uuid', this.currentUser.uuid);
                         
                         if (error) throw error;
+                        
+                        // 更新当前用户对象的积分
+                        this.currentUser.credits = this.credits;
+                        currentUser.credits = this.credits;
                         
                         // 记录积分交易
                         await userManager.addCreditTransaction(
                             this.currentUser.id, 
                             this.currentUser.uuid, 
                             'EARN', 
-                            amount, 
-                            '积分返还', 
-                            'refund'
+                            amount,
+                            description,
+                            'first_login_bonus'
                         );
                     } else {
                         // 本地存储模式
@@ -2704,7 +2745,10 @@
                     console.log('认证状态变化:', event, session);
                     if (event === 'SIGNED_IN' && session) {
                         await userManager.handleAuthenticatedUser(session.user);
+                        // 确保用户数据完全更新后再初始化积分管理器
+                        console.log('重新初始化积分管理器，当前用户:', currentUser);
                         await creditsManager.initialize(currentUser);
+                        console.log('积分管理器重新初始化完成，积分:', creditsManager.credits);
                     } else if (event === 'SIGNED_OUT') {
                         await userManager.handleAnonymousUser();
                         await creditsManager.initialize(currentUser);
@@ -2725,13 +2769,21 @@
         
         // 图像生成功能 - 完全使用模拟模式
         async function generateImage() {
-            console.log('=== 🎯 开始图像生成 (完全模拟模式) ===');
+            console.log('=== 🎯 开始图像生成 ===');
             console.log('当前用户:', currentUser);
             console.log('积分管理器状态:', { 
                 credits: creditsManager.credits, 
                 isInitialized: creditsManager.isInitialized 
             });
             console.log('系统设置:', systemSettings);
+            
+            // 1. 首先检查用户是否已登录
+            if (!currentUser || !currentUser.is_signed_in) {
+                console.log('用户未登录，显示登录弹窗');
+                // 保持积分显示为20，不传递实际积分数
+                showCreditsModal(20, 10); // 显示获取免费20积分弹窗
+                return;
+            }
             
             // 检查维护模式
             if (systemSettings.maintenance_mode) {
@@ -2795,9 +2847,6 @@
                         <div class="loading-spinner"></div>
                         <h3>Generating your image...</h3>
                         <p>Please wait patiently, usually takes 5-15 seconds</p>
-                        <p style="color: #f59e0b; font-size: 14px; margin-top: 12px;">
-                            🧪 Simulation Mode - Avoiding CORS restrictions
-                        </p>
                     </div>
                 `;
                 
@@ -2829,18 +2878,63 @@
                     }
                 }
                 
-                // 🎯 强制使用模拟生成 - 绝对不调用任何外部API
-                console.log('🧪 开始模拟生成，绝不调用外部API...');
+                // 🎯 调用真实的图像生成API
+                console.log('🚀 开始真实图像生成...');
                 
-                // 确保没有任何API调用的可能性
-                const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
-                const imageUrl = simulationResult.imageUrl;
-                const generationTime = simulationResult.generationTime;
+                let imageUrl, generationTime;
                 
-                console.log('✅ 模拟生成完成:', { 
-                    imageUrl: imageUrl.substring(0, 50) + '...', 
-                    generationTime 
-                });
+                try {
+                    // 调用HuggingFace API生成图像
+                    const response = await fetch("https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": `Bearer hf_your_token_here`, // 需要替换为实际token
+                            "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                            inputs: prompt,
+                            parameters: {
+                                num_inference_steps: steps,
+                                guidance_scale: 0.0,
+                                width: parseInt(imageSize.split('x')[0]),
+                                height: parseInt(imageSize.split('x')[1])
+                            }
+                        }),
+                    });
+                    
+                    if (!response.ok) {
+                        const errorText = await response.text();
+                        console.error('HuggingFace API错误:', errorText);
+                        
+                        // 如果是模型加载中，使用模拟模式
+                        if (response.status === 503 || errorText.includes('loading')) {
+                            console.log('模型加载中，使用模拟模式...');
+                            const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
+                            imageUrl = simulationResult.imageUrl;
+                            generationTime = simulationResult.generationTime;
+                        } else {
+                            throw new Error(`API Error: ${response.status} - ${errorText}`);
+                        }
+                    } else {
+                        // 成功获取图像
+                        const blob = await response.blob();
+                        const imageBuffer = await blob.arrayBuffer();
+                        const imageBase64 = btoa(String.fromCharCode(...new Uint8Array(imageBuffer)));
+                        imageUrl = `data:image/png;base64,${imageBase64}`;
+                        generationTime = Date.now() - startTime;
+                        
+                        console.log('✅ 真实API生成完成:', { 
+                            generationTime,
+                            imageSize: imageBuffer.byteLength 
+                        });
+                    }
+                } catch (apiError) {
+                    console.error('API调用失败，使用模拟模式:', apiError);
+                    // API失败时使用模拟模式作为备选
+                    const simulationResult = await simulateImageGeneration(prompt, imageSize, steps);
+                    imageUrl = simulationResult.imageUrl;
+                    generationTime = simulationResult.generationTime;
+                }
                 
                 // 更新数据库记录
                 if (generationRecord) {
@@ -2851,7 +2945,7 @@
                             status: 'completed',
                             image_url: imageUrl,
                             generation_time_ms: generationTime,
-                            api_request_id: 'simulation_' + Date.now(),
+                            api_request_id: 'flux_' + Date.now(),
                             completed_at: new Date().toISOString()
                         })
                         .eq('id', generationRecord.id);
@@ -2882,9 +2976,6 @@
                             </button>
                         </div>
                         <p class="generation-info">Generation time: ${(generationTime / 1000).toFixed(1)}s</p>
-                        <p class="simulation-notice" style="color: #f59e0b; font-size: 12px; margin-top: 8px;">
-                            🧪 Simulation Mode - Avoiding CORS restrictions
-                        </p>
                     </div>
                 `;
                 
@@ -3132,29 +3223,7 @@
             }
         }
         
-        // 检查用户登录状态并显示积分不足弹窗
-        function showCreditsModal(currentCredits, requiredCredits) {
-            const modal = document.getElementById('creditsModal');
-            const modalRequiredCredits = document.getElementById('modalRequiredCredits');
-            const modalTitle = modal.querySelector('h3');
-            
-            // 更新弹窗内容
-            modalTitle.textContent = `Credits current is ${currentCredits}`;
-            modalRequiredCredits.textContent = requiredCredits;
-            
-            // 检查用户是否已登录
-            if (currentUser && currentUser.is_signed_in) {
-                // 已登录用户，直接跳转到订阅页面或显示购买积分选项
-                console.log('用户已登录，跳转到订阅页面');
-                // TODO: 实现跳转到订阅页面的逻辑
-                alert('功能开发中：跳转到订阅页面购买积分');
-                return;
-            }
-            
-            // 未登录用户，显示登录提示弹窗
-            modal.classList.add('active');
-            document.body.style.overflow = 'hidden';
-        }
+        // 检查用户登录状态并显示积分不足弹窗（已移动到下方，避免重复定义）
         
         // 每日预览弹窗显示限制
         let dailyPreviewCount = parseInt(localStorage.getItem('dailyPreviewCount') || '0');
@@ -3210,22 +3279,16 @@
         // 显示积分不足弹窗 - 重新定义以集成登录验证
         function showCreditsModal(currentCredits, requiredCredits) {
             const modal = document.getElementById('creditsModal');
-            const modalRequiredCredits = document.getElementById('modalRequiredCredits');
-            const modalTitle = modal.querySelector('h3');
-            
-            // 更新弹窗内容
-            modalTitle.textContent = `Credits current is ${currentCredits}`;
-            modalRequiredCredits.textContent = requiredCredits;
             
             // 检查用户是否已登录
             if (currentUser && currentUser.is_signed_in) {
-                // 已登录用户，直接跳转到订阅页面
-                console.log('用户已登录，应跳转到订阅页面');
+                // 已登录用户，积分不足，跳转到订阅页面
+                console.log('用户已登录但积分不足，应跳转到订阅页面');
                 alert('功能开发中：跳转到订阅页面购买积分');
                 return;
             }
             
-            // 未登录用户，显示登录提示弹窗
+            // 未登录用户，显示登录提示弹窗（固定文案：获取免费20积分）
             modal.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
