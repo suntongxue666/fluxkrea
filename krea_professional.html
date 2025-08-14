@@ -2298,7 +2298,11 @@
                             .eq('uuid', uuid);
                     }
                     
-                    this.currentUser = user;
+                    // 确保匿名用户被标记为未登录
+                    this.currentUser = {
+                        ...user,
+                        is_signed_in: false  // 明确标记匿名用户为未登录
+                    };
                     currentUser = this.currentUser;
                     
                     this.updateUIForAnonymousUser();
@@ -2317,11 +2321,12 @@
                 this.currentUser = {
                     uuid: uuid,
                     credits: credits,
-                    is_local_mode: true
+                    is_local_mode: true,
+                    is_signed_in: false  // 明确标记为未登录
                 };
                 currentUser = this.currentUser;
                 
-                console.log('使用本地存储模式');
+                console.log('使用本地存储模式 - 用户未登录');
                 this.updateUIForAnonymousUser();
             }
             
