@@ -1431,15 +1431,12 @@
             <div class="credits-modal-icon">
                 <i class="fas fa-gift"></i>
             </div>
-            <h3>🎁 Get Free 20 Credits</h3>
+            <h3>Credits current is 0</h3>
             <p>Sign in with gmail account and start your creating AI images.</p>
             <div class="credits-modal-actions">
                 <button class="signin-btn modal-signin-btn" onclick="signInFromModal()">
                     <div class="google-icon"></div>
                     <span>Sign in</span>
-                </button>
-                <button class="credits-modal-btn secondary" onclick="closeCreditsModal()">
-                    <span>Close</span>
                 </button>
             </div>
         </div>
@@ -2155,18 +2152,30 @@
             
             // 处理已认证用户
             async handleAuthenticatedUser(authUser) {
+                console.log('🔐 开始处理Google登录用户:', {
+                    authUser: authUser,
+                    id: authUser.id,
+                    email: authUser.email,
+                    name: authUser.user_metadata?.full_name
+                });
+                
                 try {
                     const anonymousUuid = getUserUUID(); // 获取本地匿名 UUID
+                    console.log('📱 本地UUID:', anonymousUuid);
                     
                     // 设置用户上下文（使用匿名 UUID保持连续性）
+                    console.log('🔧 设置用户上下文...');
                     await supabaseClient.rpc('set_user_context', { user_uuid: anonymousUuid });
                     
                     // 查找现有的用户记录（优先查找匿名用户）
+                    console.log('🔍 查找现有用户记录...');
                     let { data: user, error } = await supabaseClient
                         .from('users')
                         .select('*')
                         .eq('uuid', anonymousUuid)
                         .single();
+                    
+                    console.log('📊 用户查询结果:', { user, error });
                     
                     if (error && error.code === 'PGRST116') {
                         // 匿名用户不存在，检查是否已有Google用户记录
@@ -2176,12 +2185,16 @@
                             .eq('google_id', authUser.id)
                             .single();
                         
+                        console.log('🔍 Google用户查询结果:', { existingGoogleUser, googleError });
+                        
                         if (!googleError && existingGoogleUser) {
                             // 已有Google用户记录，更新本地UUID为数据库中UUID
+                            console.log('✅ 找到现有Google用户，更新本地UUID');
                             localStorage.setItem('user_uuid', existingGoogleUser.uuid);
                             user = existingGoogleUser;
                         } else {
                             // 创建新的用户记录（使用本地UUID作主键）
+                            console.log('🆕 创建新用户记录...');
                             user = await this.createUserRecord(authUser, anonymousUuid);
                         }
                     } else if (error) {
@@ -2325,10 +2338,14 @@
             
             // 创建用户记录（保持相同UUID）
             async createUserRecord(authUser, existingUuid = null) {
+                console.log('🆕 开始创建用户记录:', { authUser, existingUuid });
+                
                 const userUuid = existingUuid || authUser.id;
                 const fingerprint = generateUserFingerprint();
                 const ip = await getUserIP();
                 const userIdentifier = `${userUuid}_${fingerprint}_${ip}`.replace(/[^a-zA-Z0-9_]/g, '');
+                
+                console.log('📝 用户数据准备:', { userUuid, fingerprint, ip, userIdentifier });
                 
                 const userData = {
                     uuid: userUuid,
@@ -2353,13 +2370,22 @@
                     userData.avatar_url = authUser.user_metadata?.avatar_url;
                 }
                 
+                console.log('💾 准备插入用户数据:', userData);
+                
                 const { data, error } = await supabaseClient
                     .from('users')
                     .insert(userData)
                     .select()
                     .single();
                 
-                if (error) throw error;
+                console.log('📊 用户插入结果:', { data, error });
+                
+                if (error) {
+                    console.error('❌ 用户插入失败:', error);
+                    throw error;
+                }
+                
+                console.log('✅ 用户创建成功:', data);
                 
                 // 记录初始积分
                 await this.addCreditTransaction(
@@ -2483,25 +2509,36 @@
             
             // 添加积分交易记录
             async addCreditTransaction(userId, userUuid, type, amount, description, source, relatedResourceId = null) {
+                console.log('💳 开始记录积分交易:', { userId, userUuid, type, amount, description, source });
+                
                 try {
                     const balanceAfter = this.currentUser.credits + (type === 'EARN' ? amount : -amount);
                     
+                    const transactionData = {
+                        user_id: userId,
+                        user_uuid: userUuid,
+                        transaction_type: type,
+                        amount: type === 'EARN' ? amount : -amount,
+                        balance_after: balanceAfter,
+                        description: description,
+                        source: source,
+                        related_resource_id: relatedResourceId
+                    };
+                    
+                    console.log('💾 准备插入积分交易:', transactionData);
+                    
                     const { error } = await supabaseClient
                         .from('credit_transactions')
-                        .insert({
-                            user_id: userId,
-                            user_uuid: userUuid,
-                            transaction_type: type,
-                            amount: type === 'EARN' ? amount : -amount,
-                            balance_after: balanceAfter,
-                            description: description,
-                            source: source,
-                            related_resource_id: relatedResourceId
-                        });
+                        .insert(transactionData);
                     
-                    if (error) throw error;
+                    if (error) {
+                        console.error('❌ 积分交易插入失败:', error);
+                        throw error;
+                    }
+                    
+                    console.log('✅ 积分交易记录成功');
                 } catch (error) {
-                    console.error('添加积分交易记录失败:', error);
+                    console.error('❌ 添加积分交易记录失败:', error);
                 }
             }
         }
@@ -2609,11 +2646,11 @@
             updateCreditsDisplay() {
                 const creditsElement = document.getElementById('creditsAmount');
                 if (creditsElement) {
-                    // 只有真正登录的用户才显示真实积分，否则显示20来吸引登录
+                    // 只有真正登录的用户才显示真实积分，否则显示0
                     if (this.currentUser && this.currentUser.is_signed_in && this.currentUser.google_id) {
                         creditsElement.textContent = this.credits;
                     } else {
-                        creditsElement.textContent = '20';
+                        creditsElement.textContent = '0';
                     }
                 }
             }
@@ -2797,7 +2834,7 @@
                 !currentUser.google_id || 
                 !currentUser.email) {
                 console.log('❌ 未通过Google登录验证，显示登录弹窗');
-                showCreditsModal(20, 10);
+                showCreditsModal(0, 10);
                 return;
             }
             
