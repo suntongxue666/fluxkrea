@@ -1431,12 +1431,12 @@
             <div class="credits-modal-icon">
                 <i class="fas fa-gift"></i>
             </div>
-            <h3>Credits current is 0</h3>
-            <p>Sign in with gmail account and start your creating AI images.</p>
+            <h3>您当前的积分为 0</h3>
+            <p>登录以获取更多积分，开始创作精彩内容</p>
             <div class="credits-modal-actions">
                 <button class="signin-btn modal-signin-btn" onclick="signInFromModal()">
                     <div class="google-icon"></div>
-                    <span>Sign in</span>
+                    <span>使用Google登录</span>
                 </button>
             </div>
         </div>
@@ -1474,7 +1474,7 @@
             <div class="nav-actions">
                 <div class="credits-display" id="creditsDisplay">
                     <i class="fas fa-coins"></i>
-                    <span id="creditsAmount">20</span>
+                    <span id="creditsAmount">0</span>
                 </div>
                 <!-- 管理员调试按钮 - 仅对特定账户显示 -->
                 <button id="debugRefreshBtn" onclick="reinitializeUser()" style="padding: 4px 8px; font-size: 12px; background: #f59e0b; color: white; border: none; border-radius: 4px; margin-right: 8px; cursor: pointer; display: none;" title="重新加载用户状态 (管理员功能)">
@@ -2113,7 +2113,7 @@
                 systemSettings = {
                     default_credits: 0,
                     generation_cost: 10,
-                    daily_free_credits: 5,
+                    daily_free_credits: 0,
                     max_daily_generations: 10,
                     maintenance_mode: false,
                     welcome_message: 'Welcome to Flux Krea AI!'
@@ -2358,7 +2358,7 @@
                     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
                     screen_resolution: `${screen.width}x${screen.height}`,
                     credits: systemSettings.default_credits || 0,
-                    total_credits_earned: systemSettings.default_credits || 20
+                    total_credits_earned: systemSettings.default_credits || 0
                 };
                 
                 // 如果是认证用户，添加认证信息

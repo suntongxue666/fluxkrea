@@ -495,6 +495,102 @@
             }
         }
 
+        /* Credits Modal */
+        .credits-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .credits-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .credits-modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+
+        .credits-modal.active .credits-modal-content {
+            transform: scale(1);
+        }
+
+        .credits-modal-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 20px;
+            background-color: #f1f5f9;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            color: var(--primary-color);
+        }
+
+        .credits-modal h3 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .credits-modal p {
+            color: #64748b;
+            margin-bottom: 24px;
+        }
+
+        .credits-modal-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .google-signin-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background-color: #ffffff;
+            color: #757575;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            padding: 10px 20px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s, box-shadow 0.2s;
+            width: 100%;
+        }
+
+        .google-signin-btn:hover {
+            background-color: #f8f9fa;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        .google-icon {
+            width: 18px;
+            height: 18px;
+            background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48"><path fill="%23EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="%234285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="%23FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="%2334A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></svg>');
+            background-size: contain;
+            background-repeat: no-repeat;
+        }
+
         /* Loading spinner */
         .loading-spinner {
             display: inline-block;
@@ -512,6 +608,23 @@
     </style>
 </head>
 <body>
+    <!-- Credits Modal -->
+    <div class="credits-modal" id="creditsModal">
+        <div class="credits-modal-content">
+            <div class="credits-modal-icon">
+                <i class="fas fa-coins"></i>
+            </div>
+            <h3>您当前的积分为 0</h3>
+            <p>登录以获取更多积分，开始创作精彩内容</p>
+            <div class="credits-modal-actions">
+                <button id="closeCreditsModal" class="btn btn-secondary">关闭</button>
+                <button id="googleSignIn" class="google-signin-btn">
+                    <span class="google-icon"></span>
+                    使用Google登录
+                </button>
+            </div>
+        </div>
+    </div>
     <header>
         <div class="container">
             <div class="header-content">
@@ -723,6 +836,29 @@
     <script>
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
+            // 显示积分弹窗
+            const creditsModal = document.getElementById('creditsModal');
+            const closeCreditsModal = document.getElementById('closeCreditsModal');
+            const googleSignIn = document.getElementById('googleSignIn');
+            
+            // 显示积分弹窗
+            setTimeout(() => {
+                creditsModal.classList.add('active');
+            }, 1500);
+            
+            // 关闭积分弹窗
+            closeCreditsModal.addEventListener('click', () => {
+                creditsModal.classList.remove('active');
+            });
+            
+            // Google登录按钮点击事件
+            googleSignIn.addEventListener('click', () => {
+                // 重定向到Google登录页面
+                if (window.UnifiedStateSync) {
+                    window.UnifiedStateSync.signIn();
+                }
+            });
+            
             // Handle FAQ collapse
             const faqItems = document.querySelectorAll('.faq-item');
             faqItems.forEach(item => {
