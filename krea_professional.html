@@ -2298,13 +2298,11 @@
                             .eq('uuid', uuid);
                     }
                     
-                    // 确保匿名用户被标记为未登录
-                    this.currentUser = {
-                        ...user,
-                        is_signed_in: false  // 明确标记匿名用户为未登录
-                    };
-                    currentUser = this.currentUser;
+                    // 匿名用户不给予任何积分或权限
+                    this.currentUser = null;
+                    currentUser = null;
                     
+                    console.log('匿名用户 - 无权限，需要Google登录');
                     this.updateUIForAnonymousUser();
                     
                 } catch (error) {
@@ -2315,18 +2313,11 @@
             
             // 本地存储模式（数据库不可用时的降级方案）
             handleLocalMode() {
-                const uuid = getUserUUID();
-                const credits = parseInt(localStorage.getItem('user_credits')) || systemSettings.default_credits || 20;
+                // 本地模式下不创建任何用户，强制要求Google登录
+                this.currentUser = null;
+                currentUser = null;
                 
-                this.currentUser = {
-                    uuid: uuid,
-                    credits: credits,
-                    is_local_mode: true,
-                    is_signed_in: false  // 明确标记为未登录
-                };
-                currentUser = this.currentUser;
-                
-                console.log('使用本地存储模式 - 用户未登录');
+                console.log('本地模式 - 无用户状态，需要Google登录');
                 this.updateUIForAnonymousUser();
             }
             
@@ -2604,16 +2595,9 @@
                         }
                     }
                 } else {
-                    // 本地存储模式 - 检查用户是否已登录
-                    if (user && user.is_signed_in) {
-                        // 已登录用户，使用本地存储的积分
-                        this.credits = parseInt(localStorage.getItem('user_credits')) || systemSettings.default_credits || 20;
-                        console.log('积分管理器初始化 - 本地模式（已登录）:', { credits: this.credits });
-                    } else {
-                        // 未登录用户，不给予真实积分
-                        this.credits = 0;
-                        console.log('积分管理器初始化 - 本地模式（未登录）:', { credits: this.credits });
-                    }
+                    // 非数据库模式下，不给予任何积分
+                    this.credits = 0;
+                    console.log('积分管理器初始化 - 无数据库连接，积分为0');
                 }
                 
                 this.updateCreditsDisplay();
@@ -2624,11 +2608,11 @@
             updateCreditsDisplay() {
                 const creditsElement = document.getElementById('creditsAmount');
                 if (creditsElement) {
-                    // 如果用户未登录，显示20积分来吸引登录，但实际积分为0
-                    if (!this.currentUser || !this.currentUser.is_signed_in) {
-                        creditsElement.textContent = '20';
-                    } else {
+                    // 只有真正登录的用户才显示真实积分，否则显示20来吸引登录
+                    if (this.currentUser && this.currentUser.is_signed_in && this.currentUser.google_id) {
                         creditsElement.textContent = this.credits;
+                    } else {
+                        creditsElement.textContent = '20';
                     }
                 }
             }
@@ -2775,11 +2759,14 @@
                 console.log('系统初始化完成');
             } catch (error) {
                 console.error('系统初始化失败:', error);
-                // 降级到本地模式
+                // 不降级到本地模式，强制要求数据库连接
+                alert('系统初始化失败，请刷新页面重试。如果问题持续存在，请联系技术支持。');
+                
+                // 设置空的管理器，确保无法绕过登录
                 userManager = new UserManager();
-                userManager.handleLocalMode();
+                currentUser = null;
                 creditsManager = new CreditsManager();
-                await creditsManager.initialize(currentUser);
+                await creditsManager.initialize(null);
                 initializeShowcase();
             }
         });
@@ -2794,22 +2781,26 @@
             });
             console.log('系统设置:', systemSettings);
             
-            // 1. 首先检查用户是否已登录
-            console.log('🔍 登录状态检查:', {
+            // 1. 强制检查Google登录状态
+            console.log('🔍 严格登录检查:', {
                 currentUser: currentUser,
                 exists: !!currentUser,
                 is_signed_in: currentUser?.is_signed_in,
-                is_local_mode: currentUser?.is_local_mode
+                has_google_id: !!currentUser?.google_id,
+                has_email: !!currentUser?.email
             });
             
-            if (!currentUser || !currentUser.is_signed_in) {
-                console.log('❌ 用户未登录，显示登录弹窗');
-                // 保持积分显示为20，不传递实际积分数
-                showCreditsModal(20, 10); // 显示获取免费20积分弹窗
+            // 必须满足：用户存在 + 已登录 + 有Google ID + 有邮箱
+            if (!currentUser || 
+                !currentUser.is_signed_in || 
+                !currentUser.google_id || 
+                !currentUser.email) {
+                console.log('❌ 未通过Google登录验证，显示登录弹窗');
+                showCreditsModal(20, 10);
                 return;
             }
             
-            console.log('✅ 用户已登录，继续生成流程');
+            console.log('✅ Google登录验证通过，继续生成流程');
             
             // 检查维护模式
             if (systemSettings.maintenance_mode) {
